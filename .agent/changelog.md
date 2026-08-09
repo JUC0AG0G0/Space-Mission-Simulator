@@ -196,3 +196,8 @@ Aucun changement de code dans ce run — tâche de planification uniquement.
   renderers Canvas" (`src/rendering/*.ts`) est promue en item #1 détaillé
   et scopé, l'idée sur les tests de composants React `src/ui/*.tsx` reste
   en note pour plus tard (dépendance supplémentaire nécessaire).
+
+## 2026-08-09T21-06-21-718Z — planning
+- Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
+- Branche/push: main (direct)
+- Coût estimé: 0.8801612999999997 USD
