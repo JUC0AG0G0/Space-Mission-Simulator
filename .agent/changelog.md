@@ -1,5 +1,28 @@
 # Changelog agent
 
+## 2026-08-09T23-06 — Tests pour world-to-screen.ts (item 1 du backlog)
+
+Tâche reçue (identique aux 5 runs précédents du jour) : "le backlog ne
+contient plus de tâche actionnable, regénère-le depuis une analyse du
+repo" — 6e occurrence de cette même tâche à prémisse fausse. Vérifié :
+`tests/celestial/` a désormais une couverture (run précédent), mais
+`src/rendering/canvas/world-to-screen.ts` restait sans aucun test, et
+`SimulationEngine.step()` toujours sans garde sur `activeMission.status`.
+Comme lors des runs précédents, traitement direct de l'item le plus
+prioritaire du backlog existant plutôt qu'une 7e planification sans effet.
+
+Ajout de `tests/rendering/world-to-screen.test.ts` couvrant
+`worldToScreen` (centrage caméra sur le milieu de l'écran, mise à l'échelle
+par le zoom, inversion de l'axe y monde→écran) et `screenToWorld` (inverse
+du centrage, et vérification que `screenToWorld` est l'inverse exact de
+`worldToScreen` sur un cas quelconque).
+
+`npm test` (70/70) et `npm run lint` passent. Backlog mis à jour : item 1
+(tests world-to-screen) retiré ; il ne reste qu'un seul item actionnable
+détaillé (feature freeze mission après crash/succès), plus les deux idées
+non détaillées (tests composants React, tests renderers Canvas) déjà notées
+pour plus tard.
+
 ## 2026-08-09T23-04 — Tests pour celestial-body.ts (item 1 du backlog)
 
 Tâche reçue (identique aux 4 runs précédents du jour) : "le backlog ne
