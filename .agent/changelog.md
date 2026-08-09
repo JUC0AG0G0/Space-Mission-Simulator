@@ -1,5 +1,26 @@
 # Changelog agent
 
+## 2026-08-09T23-02 — Tests pour vectors.ts (item 1 du backlog)
+
+Tâche reçue : "le backlog ne contient plus de tâche actionnable, regénère-le
+depuis une analyse du repo" — 4e occurrence de cette même tâche à prémisse
+fausse (voir runs `5ce759b`, `6703d12`, `1a8bf47`) : le backlog contenait
+toujours 4 items actionnables et non traités (aucun fichier de test
+correspondant dans `tests/`, `SimulationEngine.step()` toujours sans garde
+sur `activeMission.status`). Comme lors du run `462cf20`, traitement direct
+de l'item le plus prioritaire plutôt qu'une 5e planification sans effet.
+
+Ajout de `tests/physics/vectors.test.ts` couvrant `add`, `subtract`,
+`scale`, `magnitude`, `normalize` (y compris le cas limite du vecteur nul)
+et `fromAngle`, sur le modèle de `tests/physics/gravity.test.ts` existant.
+Un test initial sur `scale(v, 0)` échouait à cause de `-0` en JavaScript
+(`-3 * 0 === -0`, non égal à `+0` par `toEqual`) ; remplacé par une
+assertion sur `magnitude(...) === 0`, insensible au signe du zéro.
+
+`npm test` (60/60) et `npm run lint` passent. Backlog mis à jour : item 1
+(tests vectors) retiré, items renumérotés (1-3 restants : tests
+celestial-body, tests world-to-screen, puis feature freeze mission).
+
 ## 2026-08-09T23-00 — Correction du bug fuel (item 1 du backlog)
 
 Tâche reçue (identique aux deux runs précédents) : "le backlog ne contient

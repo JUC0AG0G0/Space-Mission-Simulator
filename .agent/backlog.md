@@ -4,28 +4,20 @@ Priorisation : bug connu > trous de couverture de tests sur du code pur >
 gameplay/feature > polish. Chaque item est scopé pour un run indépendant
 avec un diff limité (< 400 lignes), tests inclus.
 
-## 1. [test] Tests unitaires pour `src/simulation/physics/vectors.ts`
-
-Aucune couverture pour `add`, `subtract`, `scale`, `magnitude`, `normalize`,
-`fromAngle` alors que c'est le module le plus réutilisé de la couche
-simulation (gravity, integration, spacecraft en dépendent tous). Ajouter
-`tests/physics/vectors.test.ts` couvrant les cas normaux et le cas limite
-`normalize` d'un vecteur nul.
-
-## 2. [test] Tests unitaires pour `src/simulation/celestial/celestial-body.ts`
+## 1. [test] Tests unitaires pour `src/simulation/celestial/celestial-body.ts`
 
 Pas de fichier de test pour `createCelestialBody` / `createEarth`. Ajouter
 `tests/celestial/celestial-body.test.ts` vérifiant que
 `gravitationalParameter = G * mass` et les valeurs attendues du preset Earth
 (rayon/masse).
 
-## 3. [test] Tests unitaires pour `src/rendering/canvas/world-to-screen.ts`
+## 2. [test] Tests unitaires pour `src/rendering/canvas/world-to-screen.ts`
 
 Logique pure de transformation de coordonnées (pas de dépendance DOM/Canvas)
 sans aucune couverture. Ajouter `tests/rendering/world-to-screen.test.ts`
 couvrant le centrage de la caméra et la mise à l'échelle par le zoom.
 
-## 4. [feature] Geler la simulation après échec/succès de mission
+## 3. [feature] Geler la simulation après échec/succès de mission
 
 `SimulationEngine.step()` continue d'intégrer la physique et d'accepter les
 commandes de propulsion/rotation/moteur même après que
