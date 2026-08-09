@@ -1,5 +1,52 @@
 # Changelog agent
 
+## 2026-08-09T23-36 — Menu principal + machine à états minimale (item 1 du backlog)
+
+Tâche reçue : "le backlog ne contient plus de tâche actionnable, regénère-le
+depuis une analyse du repo" — prémisse à nouveau fausse : `.agent/backlog.md`
+contenait déjà 11 items détaillés et actionnables (menu principal, écran de
+préparation de mission, décollage depuis la surface, etc.), avec un item #1
+entièrement spécifié. Comme lors des runs précédents (voir entrées
+ci-dessous), traitement direct de cet item plutôt qu'une nouvelle
+planification sans effet.
+
+Implémentation de l'item #1 : "Ajouter un menu principal et un état de
+préparation de mission".
+
+- `src/app/app-state.ts` (nouveau) : machine à états minimale et pure
+  (`AppPhase = 'main-menu' | 'mission-setup' | 'simulation'`), avec des
+  fonctions de transition gardées (`startNewMission`, `startSimulation`,
+  `returnToMainMenu`) — aucune dépendance React/DOM, testable sans RAF.
+- `src/ui/MainMenu.tsx` (nouveau) : écran de menu avec `Nouvelle mission`,
+  `Continuer` (affiché seulement si `hasSavedMission`, toujours `false`
+  pour l'instant — la sauvegarde est l'item #6/7 du backlog) et `Options`
+  (désactivé).
+- `src/ui/MissionSetup.tsx` (nouveau) : écran placeholder minimal avec
+  `Retour` et `Lancer la mission`. Le vrai formulaire de configuration est
+  laissé à l'item suivant du backlog.
+- `src/app/SimulationScreen.tsx` (nouveau) : extraction telle quelle de
+  l'ancien contenu de `App.tsx` (game loop `requestAnimationFrame`, gestion
+  clavier, canvas, HUD, sidebar) — aucune logique changée, juste déplacée
+  pour n'être montée que lorsque la phase est `simulation`.
+- `src/app/App.tsx` : devient un simple routeur entre les trois écrans
+  selon `AppPhase`.
+- `src/app/styles.css` : styles pour `.main-menu` et `.mission-setup`.
+- Moteur physique (`src/simulation/**`) non touché, conformément à la
+  contrainte du backlog.
+
+Tests ajoutés : `tests/app/app-state.test.ts` (transitions valides et
+gardées), `tests/ui/MainMenu.test.tsx`, `tests/ui/MissionSetup.test.tsx`,
+`tests/ui/App.test.tsx` (intégration bout-en-bout menu → setup →
+simulation, y compris retour au menu).
+
+`npm test` (115/115), `npm run lint`, `npx tsc --noEmit` et `npm run build`
+passent sans erreur.
+
+Backlog mis à jour : item #1 (menu principal) retiré, items renumérotés ;
+l'item "écran de préparation de mission" (désormais #1) mentionne que le
+placeholder `MissionSetup` existe déjà et doit être enrichi plutôt que créé
+depuis zéro.
+
 ## 2026-08-09T23-08 — Tests pour les renderers Canvas (item 1 du backlog)
 
 Tâche reçue : "le backlog ne contient plus de tâche actionnable, regénère-le
