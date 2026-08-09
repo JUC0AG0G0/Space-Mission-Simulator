@@ -4,20 +4,13 @@ Priorisation : bug connu > trous de couverture de tests sur du code pur >
 gameplay/feature > polish. Chaque item est scopé pour un run indépendant
 avec un diff limité (< 400 lignes), tests inclus.
 
-## 1. [test] Tests unitaires pour `src/simulation/celestial/celestial-body.ts`
-
-Pas de fichier de test pour `createCelestialBody` / `createEarth`. Ajouter
-`tests/celestial/celestial-body.test.ts` vérifiant que
-`gravitationalParameter = G * mass` et les valeurs attendues du preset Earth
-(rayon/masse).
-
-## 2. [test] Tests unitaires pour `src/rendering/canvas/world-to-screen.ts`
+## 1. [test] Tests unitaires pour `src/rendering/canvas/world-to-screen.ts`
 
 Logique pure de transformation de coordonnées (pas de dépendance DOM/Canvas)
 sans aucune couverture. Ajouter `tests/rendering/world-to-screen.test.ts`
 couvrant le centrage de la caméra et la mise à l'échelle par le zoom.
 
-## 3. [feature] Geler la simulation après échec/succès de mission
+## 2. [feature] Geler la simulation après échec/succès de mission
 
 `SimulationEngine.step()` continue d'intégrer la physique et d'accepter les
 commandes de propulsion/rotation/moteur même après que

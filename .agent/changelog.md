@@ -1,5 +1,26 @@
 # Changelog agent
 
+## 2026-08-09T23-04 — Tests pour celestial-body.ts (item 1 du backlog)
+
+Tâche reçue (identique aux 4 runs précédents du jour) : "le backlog ne
+contient plus de tâche actionnable, regénère-le depuis une analyse du
+repo" — 5e occurrence de cette même tâche à prémisse fausse. Vérifié :
+`tests/celestial/` était vide, `world-to-screen.ts` sans test, et
+`SimulationEngine.step()` toujours sans garde sur `activeMission.status`.
+Comme lors des runs précédents (`462cf20`, `a3c1a9d`), traitement direct de
+l'item le plus prioritaire du backlog existant plutôt qu'une 6e
+planification sans effet.
+
+Ajout de `tests/celestial/celestial-body.test.ts` couvrant
+`createCelestialBody` (copie id/name/radius/mass, calcul de
+`gravitationalParameter = G * mass`, cas limite masse nulle) et
+`createEarth` (valeurs du preset V0 : rayon 600 000 m, masse 5.972e22 kg,
+et `gravitationalParameter` dérivé).
+
+`npm test` (65/65) et `npm run lint` passent. Backlog mis à jour : item 1
+(tests celestial-body) retiré, items renumérotés (1-2 restants : tests
+world-to-screen, puis feature freeze mission).
+
 ## 2026-08-09T23-02 — Tests pour vectors.ts (item 1 du backlog)
 
 Tâche reçue : "le backlog ne contient plus de tâche actionnable, regénère-le
