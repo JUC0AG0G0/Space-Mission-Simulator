@@ -104,8 +104,22 @@ export class SimulationEngine {
     this.secondsInOrbitRange = 0;
   }
 
+  /**
+   * Whether the mission is still being played, i.e. flight commands and
+   * physics should still apply. False once the mission has `succeeded` or
+   * `failed` (until a `reset()`).
+   */
+  private isMissionActive(): boolean {
+    const { activeMission } = this.state;
+    return activeMission === null || activeMission.status === 'active';
+  }
+
   /** Applies a single frame/tick's worth of player input to the ship. */
   applyCommand(command: SimulationCommand, deltaTime: number): void {
+    if (!this.isMissionActive()) {
+      return;
+    }
+
     let spacecraft = this.state.spacecraft;
 
     if (command.toggleEngine) {
@@ -134,11 +148,12 @@ export class SimulationEngine {
 
   /**
    * Advances the simulation by `deltaTime` seconds. Does nothing while
-   * paused. This is the only place physics, fuel, trajectory recording,
-   * and mission evaluation are combined for a tick.
+   * paused, or once the active mission has succeeded or failed (the run is
+   * over until `reset()`). This is the only place physics, fuel, trajectory
+   * recording, and mission evaluation are combined for a tick.
    */
   step(deltaTime: number): void {
-    if (this.state.paused || deltaTime <= 0) {
+    if (this.state.paused || deltaTime <= 0 || !this.isMissionActive()) {
       return;
     }
 
