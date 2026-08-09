@@ -22,3 +22,8 @@ dans `.agent/backlog.md` :
    pour `src/ui/*.tsx` et tests des renderers Canvas.
 
 Aucun changement de code dans ce run — tâche de planification uniquement.
+
+## 2026-08-09T20-52-24-021Z — planning
+- Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
+- Branche/push: main (direct)
+- Coût estimé: 0.5740209 USD
