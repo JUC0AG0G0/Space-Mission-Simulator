@@ -1,0 +1,260 @@
+@font-face {
+  font-family: 'ui-monospace-fallback';
+  src: local('SF Mono'), local('Consolas'), local('Menlo');
+}
+
+:root {
+  --color-bg: #05070d;
+  --color-panel: #0c1220;
+  --color-panel-border: #1f3350;
+  --color-text: #d7e6f5;
+  --color-text-dim: #6c85a3;
+  --color-accent: #7dd8ff;
+  --color-warn: #ffb454;
+  --color-danger: #ff5d5d;
+  --color-success: #6bf2a1;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Consolas', ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+}
+
+.app {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.app__sidebar {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 2;
+}
+
+.panel {
+  background: rgba(12, 18, 32, 0.85);
+  border: 1px solid var(--color-panel-border);
+  border-radius: 4px;
+  padding: 12px 14px;
+  backdrop-filter: blur(4px);
+}
+
+.panel h2 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+  display: flex;
+  justify-content: space-between;
+}
+
+/* --- HUD ------------------------------------------------------------- */
+
+.hud {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 2;
+  background: rgba(12, 18, 32, 0.85);
+  border: 1px solid var(--color-panel-border);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 4px;
+  padding: 14px 18px;
+  min-width: 220px;
+  backdrop-filter: blur(4px);
+}
+
+.hud__mission {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--color-text-dim);
+  margin-bottom: 10px;
+}
+
+.hud__grid {
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 18px;
+  row-gap: 4px;
+  margin: 0;
+}
+
+.hud__grid dt {
+  font-size: 11px;
+  color: var(--color-text-dim);
+  letter-spacing: 0.08em;
+}
+
+.hud__grid dd {
+  margin: 0;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent);
+  text-align: right;
+}
+
+.hud__engine {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-panel-border);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--color-success);
+}
+
+/* --- Controls panel ---------------------------------------------------- */
+
+.controls-panel ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.controls-panel li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.controls-panel kbd {
+  background: #10192c;
+  border: 1px solid var(--color-panel-border);
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text);
+  min-width: 48px;
+  text-align: center;
+}
+
+.controls-panel span {
+  color: var(--color-text-dim);
+}
+
+/* --- Mission panel ------------------------------------------------------ */
+
+.mission-panel p {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--color-text-dim);
+}
+
+.mission-panel__status {
+  font-weight: 600;
+}
+
+.mission-panel--succeeded .mission-panel__status {
+  color: var(--color-success);
+}
+
+.mission-panel--failed .mission-panel__status {
+  color: var(--color-danger);
+}
+
+.mission-panel--active .mission-panel__status {
+  color: var(--color-warn);
+}
+
+.mission-panel ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.objective {
+  font-size: 12px;
+  color: var(--color-text-dim);
+  display: flex;
+  gap: 8px;
+}
+
+.objective__marker {
+  color: var(--color-text-dim);
+}
+
+.objective--done {
+  color: var(--color-text);
+}
+
+.objective--done .objective__marker {
+  color: var(--color-success);
+}
+
+/* --- Simulation controls ------------------------------------------------ */
+
+.simulation-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.simulation-controls button {
+  flex: 1;
+  background: #10192c;
+  border: 1px solid var(--color-panel-border);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  padding: 8px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.simulation-controls button:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.simulation-controls button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .app__sidebar {
+    width: calc(100% - 32px);
+    top: auto;
+    bottom: 16px;
+  }
+
+  .hud {
+    min-width: 0;
+  }
+}
