@@ -1,5 +1,29 @@
 # Changelog agent
 
+## 2026-08-09T22-55 — Vérification du backlog (pas de régénération)
+
+Tâche reçue : "le backlog ne contient plus de tâche actionnable, regénère-le
+depuis une analyse du repo". Constat : cette prémisse était fausse — le
+backlog contenait déjà 5 items actionnables issus du run de planification
+précédent (`4f8ed6d`), et aucun n'avait encore été traité (aucun commit de
+code depuis). Probable double déclenchement du même trigger de planning.
+
+Plutôt que de régénérer un contenu déjà correct, vérification de chaque
+item contre l'état actuel du dépôt :
+
+- Bug fuel (`computeFuelConsumed`) : toujours présent dans
+  `src/simulation/spacecraft/engine.ts` (troncature en sous-pas de 0.1s).
+- Trous de tests sur `vectors.ts`, `celestial-body.ts`, `world-to-screen.ts` :
+  confirmés, toujours aucun fichier de test correspondant dans `tests/`.
+- Freeze mission après crash/succès : confirmé, `SimulationEngine.step()`
+  ne garde que sur `paused`, pas sur `activeMission.status`.
+- `npm run lint` et `npm test` (46/46) passent sans erreur sur l'état
+  actuel.
+
+Ajout d'une note de vérification datée en tête de `.agent/backlog.md`.
+Aucun changement de code ni de contenu du backlog lui-même (les 5 items
+restent la suite logique à traiter, dans l'ordre existant).
+
 ## 2026-08-09 — Planification
 
 Le backlog était vide. Analyse du repo (structure `src/`, couverture de

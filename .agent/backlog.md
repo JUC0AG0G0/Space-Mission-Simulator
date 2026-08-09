@@ -4,6 +4,10 @@ Priorisation : bug connu > trous de couverture de tests sur du code pur >
 gameplay/feature > polish. Chaque item est scopé pour un run indépendant
 avec un diff limité (< 400 lignes), tests inclus.
 
+> Vérifié le 2026-08-09 : les 5 items ci-dessous restent exacts et
+> actionnables (relecture du code source concerné + `npm run lint` +
+> `npm test`, tous verts). Aucun n'a encore été traité.
+
 ## 1. [bug] La consommation de carburant sous-compte les grands `deltaTime`
 
 `computeFuelConsumed` (`src/simulation/spacecraft/engine.ts`) brûle le
