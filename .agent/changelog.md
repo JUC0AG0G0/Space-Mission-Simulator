@@ -1,5 +1,37 @@
 # Changelog agent
 
+## 2026-08-09T23-08 — Tests pour les renderers Canvas (item 1 du backlog)
+
+Tâche reçue : "le backlog ne contient plus de tâche actionnable, regénère-le
+depuis une analyse du repo" — prémisse à nouveau fausse : le run précédent
+(`7b20395`) avait déjà promu l'item "couvrir les renderers Canvas" en item
+#1 détaillé du backlog, non encore traité. Comme lors des runs précédents,
+traitement direct de cet item plutôt qu'une nouvelle planification sans
+effet.
+
+Ajout de `tests/rendering/fake-context.ts` (faux `CanvasRenderingContext2D`
+minimal : objet plain avec un `vi.fn()` par méthode de dessin utilisée, pas
+de dépendance externe) et de quatre fichiers de tests :
+
+- `tests/rendering/planet-renderer.test.ts` : arc dessiné au centre projeté
+  à l'écran avec le rayon projeté, dégradé radial positionné correctement.
+- `tests/rendering/spacecraft-renderer.test.ts` : translation/rotation vers
+  la position et le heading projetés, forme de la coque, couleur et flamme
+  du moteur (dimensionnée par le throttle) selon `engine.active`.
+- `tests/rendering/trajectory-renderer.test.ts` : aucun tracé sous 2 points,
+  sinon `moveTo` sur le premier point puis `lineTo` sur les suivants en
+  coordonnées écran.
+- `tests/rendering/canvas-renderer.test.ts` : `buildCamera` (centre et zoom
+  dérivés du rayon du corps central et de la taille d'écran) et `renderScene`
+  (fond peint, délégation aux trois renderers de couche).
+
+`npm test` (82/82), `npm run lint` et `npx tsc --noEmit` passent sans
+erreur. Backlog mis à jour : item 1 (tests renderers Canvas) retiré ; l'idée
+"tests de composants React `src/ui/*.tsx`" (seule idée non détaillée
+restante) est promue en item #1 détaillé, avec la dépendance de test
+(`@testing-library/react` + environnement `jsdom`) et un point d'entrée
+(`ControlsPanel`) explicités.
+
 ## 2026-08-09T23-06 — Tests pour world-to-screen.ts (item 1 du backlog)
 
 Tâche reçue (identique aux 5 runs précédents du jour) : "le backlog ne
