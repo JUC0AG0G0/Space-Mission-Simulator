@@ -142,27 +142,16 @@ describe('applyFuelConsumption', () => {
     expect(result.engine.active).toBe(false);
   });
 
-  // --- Known bug: see .agent/backlog.md -------------------------------
-  //
-  // computeFuelConsumed() burns fuel in fixed 0.1s sub-ticks and drops the
-  // remaining partial tick for any deltaTime above that sub-tick size, so
-  // large deltaTime steps under-count how much fuel was actually burned.
-  it('BUG: under-counts fuel burned for a large deltaTime that is not a multiple of the 0.1s sub-tick', () => {
+  it('burns fuel linearly for a large deltaTime, with no under-counting', () => {
     const engine = createEngine({ thrust: 1000, fuelConsumption: 10 });
     const active = toggleEngine(engine);
 
-    // Correct linear expectation: 10 kg/s * 0.25s = 2.5 kg.
-    const correctExpectation = 10 * 0.25;
+    // 10 kg/s * 0.25s = 2.5 kg.
     const actual = computeFuelConsumed(active, 0.25);
-
-    // Today this fails to match the correct linear expectation because the
-    // 0.25s step only contains two whole 0.1s sub-ticks (0.2s worth), and
-    // the trailing 0.05s is dropped.
-    expect(actual).toBeCloseTo(10 * 0.1 * 2, 8);
-    expect(actual).not.toBeCloseTo(correctExpectation, 8);
+    expect(actual).toBeCloseTo(2.5, 8);
   });
 
-  it('is accurate for deltaTime at or below the 0.1s sub-tick size', () => {
+  it('is accurate for small deltaTime steps', () => {
     const engine = createEngine({ thrust: 1000, fuelConsumption: 10 });
     const active = toggleEngine(engine);
 
