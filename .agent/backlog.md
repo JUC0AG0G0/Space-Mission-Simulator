@@ -4,19 +4,7 @@ Priorisation : bug connu > trous de couverture de tests sur du code pur >
 gameplay/feature > polish. Chaque item est scopé pour un run indépendant
 avec un diff limité (< 400 lignes), tests inclus.
 
-## 1. [test] Tests de composants pour `src/ui/*.tsx`
-
-`Hud`, `MissionPanel`, `SimulationControls`, `ControlsPanel` (dans
-`src/ui/`) n'ont aucun test. Nécessite l'ajout d'une dépendance de test
-supplémentaire (`@testing-library/react` + `@testing-library/jest-dom`,
-et un environnement `jsdom` pour Vitest — actuellement `environment: 'node'`
-dans `vite.config.ts`, à passer en `'jsdom'` ou à surcharger uniquement
-pour ces tests via un `environmentMatchGlobs`). Commencer par le composant
-le plus simple (`ControlsPanel`, purement statique) pour poser le pattern,
-puis `Hud`/`MissionPanel`/`SimulationControls` qui lisent des props issues
-du `GameState`. Tests dans `tests/ui/*.test.tsx`.
-
-## 2. [feature] Ajouter un menu principal et un état de préparation de mission
+## 1. [feature] Ajouter un menu principal et un état de préparation de mission
 
 Actuellement, le jeu démarre directement avec une fusée déjà en orbite.
 Modifier le flux de démarrage afin que l'application commence sur un
@@ -49,7 +37,7 @@ une boucle `requestAnimationFrame`.
 
 Ajouter les tests correspondant à la nouvelle logique d'état.
 
-## 3. [feature] Ajouter l'écran de préparation de mission
+## 2. [feature] Ajouter l'écran de préparation de mission
 
 Créer un écran `MissionSetup` affiché après `Nouvelle mission`.
 
@@ -109,7 +97,7 @@ interface MissionConfiguration {
 
 Ajouter des tests sur la création et la validation d'une configuration.
 
-## 4. [feature] Démarrer la mission depuis la surface de la Terre
+## 3. [feature] Démarrer la mission depuis la surface de la Terre
 
 Modifier l'état initial du vaisseau.
 
@@ -131,7 +119,7 @@ Le joueur doit devoir activer le moteur pour commencer réellement le vol.
 
 Ajouter des tests déterministes vérifiant l'état initial du vaisseau.
 
-## 5. [feature] Ajouter une phase de compte à rebours
+## 4. [feature] Ajouter une phase de compte à rebours
 
 Avant le début du contrôle manuel de la fusée, ajouter une courte phase de
 compte à rebours.
@@ -159,7 +147,7 @@ Pendant le compte à rebours :
 Le compte à rebours doit être basé sur le temps de simulation et être
 testable sans attendre réellement plusieurs secondes dans les tests.
 
-## 6. [feature] Ajouter une vraie phase de lancement
+## 5. [feature] Ajouter une vraie phase de lancement
 
 Après le compte à rebours, le joueur doit pouvoir lancer la fusée.
 
@@ -195,7 +183,7 @@ de mission existant.
 
 Ajouter les tests couvrant les transitions principales.
 
-## 7. [feature] Ajouter un écran de résumé de mission
+## 6. [feature] Ajouter un écran de résumé de mission
 
 À la fin d'une mission, ne pas retourner directement au menu.
 
@@ -234,7 +222,7 @@ Carburant épuisé
 Les statistiques affichées doivent provenir de l'état réel de la simulation,
 pas être calculées directement dans le composant d'interface.
 
-## 8. [feature] Ajouter la sauvegarde de la configuration de mission
+## 7. [feature] Ajouter la sauvegarde de la configuration de mission
 
 Permettre de sauvegarder localement la configuration préparée par le joueur.
 
@@ -256,7 +244,7 @@ ignorées proprement et ne doivent pas empêcher le jeu de démarrer.
 
 Ajouter des tests unitaires de la couche de persistance.
 
-## 9. [feature] Ajouter plusieurs profils de mission
+## 8. [feature] Ajouter plusieurs profils de mission
 
 Ajouter plusieurs missions prédéfinies afin que le menu de préparation ne
 soit plus limité à une seule mission.
@@ -288,7 +276,7 @@ Chaque mission doit définir :
 Le moteur de simulation ne doit pas contenir de logique spécifique à une
 mission particulière.
 
-## 10. [feature] Séparer clairement les phases de jeu
+## 9. [feature] Séparer clairement les phases de jeu
 
 Refactorer la gestion du cycle de vie de l'application afin d'avoir une
 machine à états explicite.
@@ -313,7 +301,7 @@ complexes du jeu.
 Ajouter des tests couvrant les transitions valides et les transitions
 invalides.
 
-## 11. [feature] Ajouter un écran de sélection de fusée
+## 10. [feature] Ajouter un écran de sélection de fusée
 
 Faire évoluer `MissionSetup` afin de permettre au joueur de choisir une
 fusée parmi plusieurs modèles.
@@ -335,7 +323,7 @@ La V1 peut contenir seulement 2 ou 3 fusées prédéfinies.
 Les caractéristiques doivent être définies dans des données de
 configuration et non codées directement dans les composants UI.
 
-## 12. [feature] Ajouter un système de progression
+## 11. [feature] Ajouter un système de progression
 
 Conserver localement les missions réussies.
 
@@ -447,18 +435,17 @@ missions sans modifier la logique générale de progression.
 
 L'ordre recommandé pour les prochaines exécutions de `agent-orchestrator` est :
 
-1. Tests UI
-2. Menu principal + machine à états minimale
-3. Écran de préparation de mission
-4. Départ depuis la surface
-5. Compte à rebours
-6. Phase de lancement
-7. Écran de résultat
-8. Sauvegarde
-9. Plusieurs missions
-10. Machine à états complète
-11. Sélection de fusée
-12. Progression
+1. Menu principal + machine à états minimale
+2. Écran de préparation de mission
+3. Départ depuis la surface
+4. Compte à rebours
+5. Phase de lancement
+6. Écran de résultat
+7. Sauvegarde
+8. Plusieurs missions
+9. Machine à états complète
+10. Sélection de fusée
+11. Progression
 
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité.
