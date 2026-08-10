@@ -1,5 +1,47 @@
 # Changelog agent
 
+## 2026-08-11T00-00 — Écran de préparation de mission (item 1 du backlog)
+
+Tâche reçue : enrichir le placeholder `src/ui/MissionSetup.tsx` pour qu'il
+permette réellement de configurer une mission avant le lancement, comme
+décrit dans l'item "Ajouter l'écran de préparation de mission" du backlog.
+
+- Nouveau modèle de données dédié
+  `src/simulation/missions/mission-configuration.ts` :
+  `MissionConfiguration` (nom de mission, nom de fusée, destination,
+  objectif), listes `AVAILABLE_DESTINATIONS` / `AVAILABLE_OBJECTIVES`
+  (une seule entrée chacune pour cette V0), `createDefaultMissionConfiguration`,
+  `findDestination` / `findObjective`, et `isValidMissionConfiguration`
+  (rejette les noms vides et les identifiants de destination/objectif
+  inconnus). Testé indépendamment de React dans
+  `tests/missions/mission-configuration.test.ts` (10 tests).
+- `MissionSetup.tsx` remplacé par un flux à deux étapes : un formulaire
+  (nom de mission, nom de fusée, sélection de destination et d'objectif,
+  pré-rempli avec la configuration par défaut) puis, après
+  "Review mission", un écran de résumé (`MissionSummary`) affichant les
+  valeurs choisies avec les actions "Edit" (retour au formulaire) et
+  "Launch mission" (inchangé côté `onLaunch`, toujours sans argument —
+  le câblage de la configuration vers le moteur de simulation est laissé
+  à l'item suivant du backlog, "Démarrer la mission depuis la surface de
+  la Terre"). Le bouton "Review mission" est désactivé tant que la
+  configuration n'est pas valide.
+- Styles ajoutés dans `src/app/styles.css` pour le formulaire
+  (`.mission-setup__form`, `.mission-setup__field`) et le résumé
+  (`.mission-setup__summary`), plus l'état `:disabled` des boutons
+  d'action de l'écran.
+- Tests mis à jour : `tests/ui/MissionSetup.test.tsx` couvre le
+  pré-remplissage, la désactivation de "Review mission" avec un nom
+  vide, l'affichage du résumé avec les valeurs saisies, le retour en
+  édition via "Edit", et l'appel à `onLaunch` depuis le résumé.
+  `tests/ui/App.test.tsx` adapté au nouveau flux (l'ancien test cliquait
+  directement sur "Launch mission" depuis le formulaire ; il passe
+  maintenant par "Review mission" avant "Launch mission").
+- `npm test` (129/129), `npm run lint` et `npx tsc --noEmit` passent sans
+  erreur. Vérifié également que `npm run dev` démarre sans erreur de
+  build après ces changements.
+- Backlog mis à jour : item "Ajouter l'écran de préparation de mission"
+  coché comme fait.
+
 ## 2026-08-10T00-00 — Reformatage de .agent/backlog.md au format imposé
 
 Tâche reçue : reformater `.agent/backlog.md` exactement selon le format

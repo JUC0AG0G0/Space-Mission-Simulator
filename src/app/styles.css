@@ -271,10 +271,60 @@ body {
   margin: 0;
 }
 
-.mission-setup__placeholder {
-  max-width: 420px;
+.mission-setup__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 320px;
+  text-align: left;
+}
+
+.mission-setup__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
   color: var(--color-text-dim);
+}
+
+.mission-setup__field input,
+.mission-setup__field select {
+  background: #10192c;
+  border: 1px solid var(--color-panel-border);
+  color: var(--color-text);
+  font-family: var(--font-mono);
   font-size: 13px;
+  padding: 8px 10px;
+  border-radius: 3px;
+}
+
+.mission-setup__field input:focus,
+.mission-setup__field select:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.mission-setup__summary {
+  width: 320px;
+  text-align: left;
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto;
+  row-gap: 10px;
+}
+
+.mission-setup__summary dt {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+}
+
+.mission-setup__summary dd {
+  margin: 2px 0 0;
+  font-size: 15px;
+  color: var(--color-text);
 }
 
 .main-menu__actions,
@@ -309,7 +359,8 @@ body {
   color: var(--color-accent);
 }
 
-.main-menu__actions button:disabled {
+.main-menu__actions button:disabled,
+.mission-setup__actions button:disabled {
   color: var(--color-text-dim);
   cursor: not-allowed;
 }

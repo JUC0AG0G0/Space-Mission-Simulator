@@ -28,11 +28,12 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: 'Space Mission Simulator' })).toBeInTheDocument();
   });
 
-  it('starts the simulation when "Launch mission" is clicked', async () => {
+  it('starts the simulation when "Launch mission" is clicked from the summary', async () => {
     const user = userEvent.setup();
     const { container } = render(<App />);
 
     await user.click(screen.getByRole('button', { name: 'New mission' }));
+    await user.click(screen.getByRole('button', { name: 'Review mission' }));
     await user.click(screen.getByRole('button', { name: 'Launch mission' }));
 
     expect(container.querySelector('canvas.app__canvas')).toBeInTheDocument();

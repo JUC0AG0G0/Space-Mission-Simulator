@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MissionSetup } from '../../src/ui/MissionSetup';
 
 describe('MissionSetup', () => {
-  it('calls onBack when "Back" is clicked', async () => {
+  it('calls onBack when "Back" is clicked from the form', async () => {
     const onBack = vi.fn();
     const user = userEvent.setup();
     render(<MissionSetup onBack={onBack} onLaunch={() => {}} />);
@@ -14,11 +14,56 @@ describe('MissionSetup', () => {
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
-  it('calls onLaunch when "Launch mission" is clicked', async () => {
+  it('pre-fills the form with a default configuration', () => {
+    render(<MissionSetup onBack={() => {}} onLaunch={() => {}} />);
+
+    expect(screen.getByLabelText('Mission name')).toHaveValue('Mission 01');
+    expect(screen.getByLabelText('Spacecraft name')).toHaveValue('Explorer I');
+    expect(screen.getByLabelText('Destination')).toHaveValue('earth-orbit');
+    expect(screen.getByLabelText('Objective')).toHaveValue('reach-stable-orbit');
+  });
+
+  it('disables "Review mission" when the mission name is blank', async () => {
+    const user = userEvent.setup();
+    render(<MissionSetup onBack={() => {}} onLaunch={() => {}} />);
+
+    await user.clear(screen.getByLabelText('Mission name'));
+
+    expect(screen.getByRole('button', { name: 'Review mission' })).toBeDisabled();
+  });
+
+  it('shows a summary of the entered configuration after "Review mission"', async () => {
+    const user = userEvent.setup();
+    render(<MissionSetup onBack={() => {}} onLaunch={() => {}} />);
+
+    await user.clear(screen.getByLabelText('Mission name'));
+    await user.type(screen.getByLabelText('Mission name'), 'Ares 1');
+    await user.clear(screen.getByLabelText('Spacecraft name'));
+    await user.type(screen.getByLabelText('Spacecraft name'), 'Falcon');
+    await user.click(screen.getByRole('button', { name: 'Review mission' }));
+
+    expect(screen.getByText('Ares 1')).toBeInTheDocument();
+    expect(screen.getByText('Falcon')).toBeInTheDocument();
+    expect(screen.getByText('Earth orbit')).toBeInTheDocument();
+    expect(screen.getByText('Reach a stable Earth orbit')).toBeInTheDocument();
+  });
+
+  it('returns to the editable form when "Edit" is clicked from the summary', async () => {
+    const user = userEvent.setup();
+    render(<MissionSetup onBack={() => {}} onLaunch={() => {}} />);
+
+    await user.click(screen.getByRole('button', { name: 'Review mission' }));
+    await user.click(screen.getByRole('button', { name: 'Edit' }));
+
+    expect(screen.getByLabelText('Mission name')).toHaveValue('Mission 01');
+  });
+
+  it('calls onLaunch when "Launch mission" is clicked from the summary', async () => {
     const onLaunch = vi.fn();
     const user = userEvent.setup();
     render(<MissionSetup onBack={() => {}} onLaunch={onLaunch} />);
 
+    await user.click(screen.getByRole('button', { name: 'Review mission' }));
     await user.click(screen.getByRole('button', { name: 'Launch mission' }));
 
     expect(onLaunch).toHaveBeenCalledTimes(1);

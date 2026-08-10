@@ -27,7 +27,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Features à ajouter
 
-- [ ] Ajouter l'écran de préparation de mission
+- [x] Ajouter l'écran de préparation de mission
 
   Un écran `MissionSetup` (`src/ui/MissionSetup.tsx`) existe déjà comme
   placeholder minimal (titre + bouton `Lancer la mission`), affiché après
