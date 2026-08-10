@@ -4,13 +4,14 @@ import type {
   Spacecraft,
   SimulationCommand,
   TrajectoryPoint,
+  Vector2,
 } from '../types/simulation';
 import { createEarth } from './celestial/celestial-body';
-import { createOrbitMission, evaluateMission } from './missions/mission';
+import { altitudeAboveSurface, createOrbitMission, evaluateMission } from './missions/mission';
 import type { MissionConfiguration } from './missions/mission-configuration';
 import { computeGravitationalAcceleration } from './physics/gravity';
 import { integrate } from './physics/integration';
-import { add } from './physics/vectors';
+import { add, dot, normalize } from './physics/vectors';
 import {
   applyFuelConsumption,
   computeThrustAcceleration,
@@ -30,27 +31,41 @@ function createInitialSpacecraft(
   centralBody: CelestialBody,
   name: string,
 ): Spacecraft {
-  // Start on a low circular-ish orbit above the surface so the player has
-  // something interesting to work with immediately, rather than starting
-  // on the launch pad.
-  const startAltitude = 150_000;
-  const startRadius = centralBody.radius + startAltitude;
-  const orbitalSpeed = Math.sqrt(
-    centralBody.gravitationalParameter / startRadius,
-  );
-
+  // Start on the launch pad: resting on the surface, no initial velocity
+  // (the central body doesn't rotate in this simulation), facing straight
+  // up away from the surface. The launch itself is left to the player.
   return createSpacecraft({
     id: 'spacecraft-1',
     name,
-    position: { x: startRadius, y: 0 },
-    velocity: { x: 0, y: orbitalSpeed * 0.85 },
-    heading: Math.PI / 2,
+    position: { x: centralBody.radius, y: 0 },
+    velocity: { x: 0, y: 0 },
+    heading: 0,
     dryMass: 6_000,
     fuelMass: 2_400,
     maxFuel: 2_400,
-    engineThrust: 45_000,
+    // Thrust-to-weight ratio must exceed 1 at the surface for the ship to
+    // ever be able to lift off against gravity.
+    engineThrust: 120_000,
     engineFuelConsumption: 12,
   });
+}
+
+/**
+ * True while the spacecraft is resting on the surface and the combined
+ * gravity + thrust acceleration isn't enough to lift it off yet. While
+ * grounded, physics integration is skipped so the ship stays parked on the
+ * pad instead of sinking through the ground under gravity alone.
+ */
+function isGrounded(
+  spacecraft: Spacecraft,
+  centralBody: CelestialBody,
+  totalAcceleration: Vector2,
+): boolean {
+  if (altitudeAboveSurface(spacecraft, centralBody) > 0) {
+    return false;
+  }
+  const up = normalize(spacecraft.position);
+  return dot(totalAcceleration, up) <= 0;
 }
 
 /**
@@ -181,12 +196,9 @@ export class SimulationEngine {
     const thrustAcceleration = computeThrustAcceleration(spacecraft);
     const totalAcceleration = add(gravityAcceleration, thrustAcceleration);
 
-    const { position, velocity } = integrate(
-      spacecraft.position,
-      spacecraft.velocity,
-      totalAcceleration,
-      deltaTime,
-    );
+    const { position, velocity } = isGrounded(spacecraft, centralBody, totalAcceleration)
+      ? { position: spacecraft.position, velocity: spacecraft.velocity }
+      : integrate(spacecraft.position, spacecraft.velocity, totalAcceleration, deltaTime);
 
     spacecraft = applyFuelConsumption(
       { ...spacecraft, position, velocity },

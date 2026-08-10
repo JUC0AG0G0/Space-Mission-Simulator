@@ -9,8 +9,8 @@ import type { GameState } from '../src/types/simulation';
 import { createDefaultMissionConfiguration } from '../src/simulation/missions/mission-configuration';
 
 /**
- * A game state whose spacecraft sits on the surface (altitude 0), so the
- * very first `step()` causes the mission to fail (crash).
+ * A game state whose spacecraft sits below the surface (negative altitude),
+ * so the very first `step()` causes the mission to fail (crash).
  */
 function createCrashedStartState(): GameState {
   const state = createInitialGameState();
@@ -21,7 +21,7 @@ function createCrashedStartState(): GameState {
     spacecraft: createSpacecraft({
       id: 'spacecraft-1',
       name: 'Explorer I',
-      position: { x: centralBody.radius, y: 0 },
+      position: { x: centralBody.radius - 10, y: 0 },
       velocity: { x: 0, y: 0 },
       heading: 0,
       dryMass: 6_000,
@@ -55,6 +55,72 @@ function createStableOrbitState(): GameState {
     },
   };
 }
+
+describe('createInitialGameState starts the spacecraft on the surface', () => {
+  it('positions the spacecraft exactly at the surface of the central body', () => {
+    const state = createInitialGameState();
+    const { spacecraft, centralBody } = state;
+
+    expect(Math.hypot(spacecraft.position.x, spacecraft.position.y)).toBeCloseTo(
+      centralBody.radius,
+      8,
+    );
+  });
+
+  it('starts with zero velocity', () => {
+    const state = createInitialGameState();
+    expect(state.spacecraft.velocity).toEqual({ x: 0, y: 0 });
+  });
+
+  it('is oriented radially outward, away from the surface', () => {
+    const state = createInitialGameState();
+    const { spacecraft } = state;
+
+    expect(Math.cos(spacecraft.heading)).toBeCloseTo(
+      spacecraft.position.x / Math.hypot(spacecraft.position.x, spacecraft.position.y),
+      8,
+    );
+    expect(Math.sin(spacecraft.heading)).toBeCloseTo(
+      spacecraft.position.y / Math.hypot(spacecraft.position.x, spacecraft.position.y),
+      8,
+    );
+  });
+
+  it('starts with full fuel and the engine off', () => {
+    const state = createInitialGameState();
+    expect(state.spacecraft.fuelMass).toBe(state.spacecraft.maxFuel);
+    expect(state.spacecraft.engine.active).toBe(false);
+  });
+});
+
+describe('SimulationEngine keeps a grounded, engine-off spacecraft parked on the pad', () => {
+  it('does not move or crash the mission while resting with the engine off', () => {
+    const engine = new SimulationEngine(createInitialGameState());
+    const initialSpacecraft = engine.getState().spacecraft;
+
+    engine.step(1);
+    engine.step(1);
+    engine.step(1);
+
+    expect(engine.getState().spacecraft.position).toEqual(initialSpacecraft.position);
+    expect(engine.getState().spacecraft.velocity).toEqual(initialSpacecraft.velocity);
+    expect(engine.getState().activeMission?.status).toBe('active');
+  });
+
+  it('lifts off once the engine is activated', () => {
+    const engine = new SimulationEngine(createInitialGameState());
+    const { centralBody } = engine.getState();
+    engine.applyCommand({ toggleEngine: true }, 0);
+
+    for (let i = 0; i < 10; i += 1) {
+      engine.step(0.5);
+    }
+
+    const { spacecraft } = engine.getState();
+    const altitude = Math.hypot(spacecraft.position.x, spacecraft.position.y) - centralBody.radius;
+    expect(altitude).toBeGreaterThan(0);
+  });
+});
 
 describe('createInitialGameState with a mission configuration', () => {
   it('defaults to "Explorer I" and "Orbit-01" when no configuration is given', () => {

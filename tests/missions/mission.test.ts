@@ -109,9 +109,21 @@ describe('evaluateMission', () => {
     expect(second.secondsInOrbitRange).toBe(0);
   });
 
-  it('fails the mission if the spacecraft reaches or goes below the surface', () => {
+  it('does not fail the mission for a spacecraft resting exactly on the surface', () => {
     const mission = createOrbitMission();
-    const crashed = spacecraftAtAltitude(0);
+    const onThePad = spacecraftAtAltitude(0);
+
+    const { mission: updated } = evaluateMission(
+      { mission, spacecraft: onThePad, centralBody, secondsInOrbitRange: 0 },
+      1,
+    );
+
+    expect(updated.status).toBe('active');
+  });
+
+  it('fails the mission if the spacecraft goes below the surface', () => {
+    const mission = createOrbitMission();
+    const crashed = spacecraftAtAltitude(-10);
 
     const { mission: updated } = evaluateMission(
       { mission, spacecraft: crashed, centralBody, secondsInOrbitRange: 20 },

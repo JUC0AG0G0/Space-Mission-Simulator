@@ -76,7 +76,7 @@ export function evaluateMission(
 
   const altitude = altitudeAboveSurface(spacecraft, centralBody);
 
-  if (altitude <= CRASH_ALTITUDE) {
+  if (altitude < CRASH_ALTITUDE) {
     return {
       mission: { ...mission, status: 'failed' },
       secondsInOrbitRange: 0,

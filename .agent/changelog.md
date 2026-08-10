@@ -1,5 +1,45 @@
 # Changelog agent
 
+## 2026-08-11T00-00-00Z — Feature : démarrage de la mission depuis la surface
+
+Tâche reçue : feature — le vaisseau démarrait déjà en orbite basse ;
+il doit désormais démarrer posé sur la surface de la Terre, moteur
+éteint, et le décollage ne doit plus être implicite.
+
+- `simulation-engine.ts` : `createInitialSpacecraft` positionne
+  désormais le vaisseau exactement à la surface du corps céleste
+  (`position = { x: radius, y: 0 }`), avec une vitesse initiale nulle
+  (le corps céleste ne tourne pas dans cette simulation), un heading
+  orienté radialement vers l'extérieur (« vers le haut » par rapport à
+  la surface), le plein de carburant, et le moteur éteint (déjà le
+  comportement par défaut de `createSpacecraft`).
+- Poussée du moteur portée de 45 kN à 120 kN : avec l'ancienne valeur,
+  le rapport poussée/poids au sol était < 1 et le vaisseau ne pouvait
+  jamais décoller (poussée insuffisante face à la gravité de surface).
+- Ajout d'un support "au sol" dans `SimulationEngine.step()`
+  (`isGrounded`) : tant que le vaisseau est à la surface et que
+  l'accélération totale (gravité + poussée) ne pointe pas vers
+  l'extérieur, l'intégration physique est simplement suspendue pour ce
+  pas de temps — le vaisseau reste posé sur le pas de tir au lieu de
+  s'enfoncer sous la surface sous l'effet de la seule gravité.
+- `mission.ts` : le seuil de crash (`CRASH_ALTITUDE`) est désormais
+  strict (`altitude < CRASH_ALTITUDE` au lieu de `<=`) — un vaisseau
+  posé exactement à la surface (altitude 0) n'est plus considéré comme
+  crashé ; seul le fait de passer sous la surface l'est.
+- `vectors.ts` : ajout d'une fonction `dot` (produit scalaire), utilisée
+  par `isGrounded` pour déterminer si l'accélération totale pointe vers
+  l'extérieur ou vers le sol.
+- Tests ajoutés/adaptés : `tests/simulation-engine.test.ts` (position,
+  vitesse, orientation, carburant et moteur du vaisseau au démarrage ;
+  le vaisseau reste immobile et la mission active tant que le moteur
+  est éteint ; le vaisseau décolle une fois le moteur activé),
+  `tests/missions/mission.test.ts` (un vaisseau posé exactement à la
+  surface n'est plus un crash ; passer sous la surface en reste un),
+  `tests/physics/vectors.test.ts` (produit scalaire).
+- `npm run lint`, `npx tsc --noEmit` et `npm test` passent (142 tests).
+- Backlog mis à jour : la feature "Démarrer la mission depuis la
+  surface de la Terre" est cochée comme faite dans `.agent/backlog.md`.
+
 ## 2026-08-11T00-00-00Z — Fix : configuration de mission ignorée au lancement
 
 Tâche reçue : bugfix — la configuration saisie dans `MissionSetup`

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { add, subtract, scale, magnitude, normalize, fromAngle, ZERO_VECTOR } from '../../src/simulation/physics/vectors';
+import { add, subtract, scale, magnitude, normalize, fromAngle, dot, ZERO_VECTOR } from '../../src/simulation/physics/vectors';
 
 describe('add', () => {
   it('adds component-wise', () => {
@@ -42,6 +42,20 @@ describe('magnitude', () => {
 
   it('is zero for the zero vector', () => {
     expect(magnitude(ZERO_VECTOR)).toBe(0);
+  });
+});
+
+describe('dot', () => {
+  it('computes the dot product of two vectors', () => {
+    expect(dot({ x: 2, y: 3 }, { x: 4, y: -1 })).toBe(5);
+  });
+
+  it('is zero for perpendicular vectors', () => {
+    expect(dot({ x: 1, y: 0 }, { x: 0, y: 1 })).toBe(0);
+  });
+
+  it('is the squared magnitude when dotted with itself', () => {
+    expect(dot({ x: 3, y: 4 }, { x: 3, y: 4 })).toBe(25);
   });
 });
 

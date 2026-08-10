@@ -94,7 +94,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
   Ajouter des tests sur la création et la validation d'une configuration.
 
-- [ ] Démarrer la mission depuis la surface de la Terre
+- [x] Démarrer la mission depuis la surface de la Terre
 
   Modifier l'état initial du vaisseau.
 
