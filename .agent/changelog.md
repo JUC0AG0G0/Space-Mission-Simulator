@@ -1,5 +1,35 @@
 # Changelog agent
 
+## 2026-08-11T00-00-00Z — Revue périodique du backlog
+
+Tâche reçue : revue périodique planifiée — relire `.agent/backlog.md`,
+ajuster les priorités, ajouter toute tâche manquante identifiée en lisant
+le code (TODOs, zones sans tests, doc obsolète).
+
+- Vérifié : aucun `TODO`/`FIXME`/`XXX` dans `src/`.
+- Comparé chaque fichier de `src/` à sa couverture dans `tests/` : tous les
+  fichiers ont désormais un test correspondant, y compris
+  `src/app/SimulationScreen.tsx` (couvert depuis le run précédent). Aucune
+  nouvelle lacune de test identifiée.
+- Doc obsolète trouvée et corrigée : la section "Architecture" du
+  `README.md` attribuait encore la boucle de jeu
+  (`requestAnimationFrame`, avance de `SimulationEngine`, appel du
+  renderer) à `src/app/App.tsx`. Ce n'est plus le cas depuis l'extraction
+  de `src/app/SimulationScreen.tsx` (machine à états `app-state.ts`) :
+  `App.tsx` n'est plus qu'un routeur entre `MainMenu` / `MissionSetup` /
+  `SimulationScreen`. README corrigé pour refléter la répartition réelle
+  des responsabilités ; ajouté comme item coché dans "Documentation" du
+  backlog (corrigé dans le même run, le trou n'ayant pas justifié un run
+  séparé).
+- Ordre des items de "Features à ajouter" relu : le prochain item
+  ("Ajouter une vraie phase de lancement") reste valide — `types/
+  simulation.ts` n'a toujours qu'un `MissionStatus` `active/succeeded/
+  failed` sans distinction sol/vol/PRE-LAUNCH/LAUNCH, et `app-state.ts`
+  n'a toujours que 3 phases (`main-menu`/`mission-setup`/`simulation`).
+  Ordre restant inchangé et toujours cohérent avec la règle de
+  priorisation.
+- `npm test` (157/157) et `npm run lint` passent sans erreur.
+
 ## 2026-08-11T00-00-00Z — Test : couverture de `src/app/SimulationScreen.tsx`
 
 Tâche reçue : test — `src/app/SimulationScreen.tsx` (mapping clavier →

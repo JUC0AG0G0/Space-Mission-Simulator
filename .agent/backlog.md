@@ -366,6 +366,13 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Documentation
 
+- [x] La section "Architecture" du `README.md` attribuait encore la
+  boucle de jeu (`requestAnimationFrame`, avance de `SimulationEngine`,
+  appel du renderer) à `src/app/App.tsx`. Depuis l'introduction de la
+  machine à états (`src/app/app-state.ts`), `App.tsx` n'est plus qu'un
+  routeur entre écrans et cette responsabilité vit dans
+  `src/app/SimulationScreen.tsx`. Corrigé.
+
 ## Divers / à clarifier
 
 - [ ] Idées identifiées pour plus tard (non scopées, à détailler avant

@@ -62,8 +62,11 @@ src/ui/           React components (HUD, panels, controls) that read
                    for the simulation engine.
 ```
 
-`src/app/App.tsx` owns the game loop: it advances the `SimulationEngine`
-on every animation frame using a deterministic `deltaTime`, and calls the
-renderer to draw the current state.
+`src/app/App.tsx` routes between the main menu, mission setup, and the
+active simulation screen based on `src/app/app-state.ts`.
+`src/app/SimulationScreen.tsx` owns the game loop for the active
+simulation: it advances the `SimulationEngine` on every animation frame
+using a deterministic `deltaTime`, and calls the renderer to draw the
+current state.
 
 See `.agent/backlog.md` for known issues and planned work.
