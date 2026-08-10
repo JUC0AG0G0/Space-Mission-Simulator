@@ -1,5 +1,31 @@
 # Changelog agent
 
+## 2026-08-10T00-00 — Reformatage de .agent/backlog.md au format imposé
+
+Tâche reçue : reformater `.agent/backlog.md` exactement selon le format
+attendu par le parseur automatique de l'orchestrateur (sections
+`## Bugs connus` / `## Features à ajouter` / `## Tests manquants` /
+`## Documentation` / `## Divers / à clarifier`, items en `- [ ]`), sans
+changer le contenu ni le sens des items existants.
+
+- Les 10 items `[feature]` numérotés ont été déplacés tels quels (texte
+  intégral, exemples, listes, blocs de code) sous `## Features à ajouter`,
+  chacun sous la forme `- [ ] <titre court>` suivi du détail original en
+  corps de l'item. L'ordre de priorité (1 → 10) est préservé par l'ordre
+  de la liste ; l'ancienne section "Priorité actuelle" qui l'énonçait
+  explicitement a été conservée en tête de fichier, avant les sections,
+  car elle décrit le processus plutôt qu'un item actionnable.
+- La section "Idées identifiées pour plus tard" (non scopée) a été
+  déplacée telle quelle sous `## Divers / à clarifier`, comme seul item
+  de cette section (les sous-thèmes `###` ont été convertis en texte gras
+  pour ne pas entrer en collision avec les titres `##` reconnus par le
+  parseur).
+- `## Bugs connus`, `## Tests manquants` et `## Documentation` sont
+  présentes mais vides : aucun item de ces catégories n'existait dans le
+  backlog précédent.
+- Aucun changement de code applicatif — pas de test ni de lint à
+  exécuter pour cette tâche (fichier markdown uniquement).
+
 ## 2026-08-09T23-36 — Menu principal + machine à états minimale (item 1 du backlog)
 
 Tâche reçue : "le backlog ne contient plus de tâche actionnable, regénère-le
