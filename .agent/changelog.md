@@ -516,3 +516,8 @@ Aucun changement de code dans ce run — tâche de planification uniquement.
 - Description: La configuration de mission saisie dans `MissionSetup` est ignorée
 - Branche/push: main (direct)
 - Coût estimé: 1.6198033 USD
+
+## 2026-08-10T22-24-41-054Z — feature
+- Description: Démarrer la mission depuis la surface de la Terre
+- Branche/push: main (direct)
+- Coût estimé: 2.76973835 USD
