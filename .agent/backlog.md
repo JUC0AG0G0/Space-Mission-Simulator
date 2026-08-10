@@ -345,7 +345,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Tests manquants
 
-- [ ] `src/app/SimulationScreen.tsx` n'a aucun test dédié
+- [x] `src/app/SimulationScreen.tsx` n'a aucun test dédié
 
   Ce composant traduit les événements clavier (WASD/flèches, `SPACE`,
   `P`, `R`) en commandes de simulation et pilote la boucle de jeu

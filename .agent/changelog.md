@@ -1,5 +1,37 @@
 # Changelog agent
 
+## 2026-08-11T00-00-00Z — Test : couverture de `src/app/SimulationScreen.tsx`
+
+Tâche reçue : test — `src/app/SimulationScreen.tsx` (mapping clavier →
+commandes de simulation, boucle `requestAnimationFrame`) n'avait aucun test
+dédié, comme identifié dans l'item "Tests manquants" du backlog.
+
+- Nouveau `tests/ui/SimulationScreen.test.tsx` (6 tests), sans dépendre de
+  `vi.useFakeTimers()` : essayé initialement, mais dans cet environnement
+  (jsdom + vitest 2.1.9) le `requestAnimationFrame` faké avance bien selon
+  l'horloge virtuelle, tandis que le timestamp qu'il transmet à son callback
+  (`performance.now()` sous le capot) n'avance quasiment pas — ce qui aurait
+  rendu tout calcul de `deltaTime` basé sur ce timestamp non déterministe et
+  aurait empêché le compte à rebours de se décrémenter dans les tests.
+  Remplacé par un mock manuel de `requestAnimationFrame`/
+  `cancelAnimationFrame` (`vi.stubGlobal`) qui capture le callback en attente
+  et le déclenche à la demande avec un timestamp choisi, ce qui permet
+  d'avancer la boucle de jeu par incréments exacts et déterministes (utile
+  notamment pour dépasser les 3 secondes du compte à rebours sans attendre
+  réellement).
+- Tests couvrant : le HUD de vol reste masqué (compte à rebours affiché) au
+  montage ; `SPACE` n'a aucun effet tant que le compte à rebours n'est pas
+  terminé ; `SPACE` bascule le moteur une fois `LIFTOFF` passé ; `P` met en
+  pause/reprend (indépendant du compte à rebours) ; `R` réinitialise l'état
+  (retour au pas de tir, compte à rebours relancé) ; les touches continues
+  (testé avec `W`) ne déclenchent aucune commande au `keydown` lui-même —
+  seule l'itération suivante de la boucle de jeu (le prochain frame simulé)
+  appelle `SimulationEngine.applyCommand` (vérifié via `vi.spyOn` sur
+  `SimulationEngine.prototype.applyCommand`).
+- `npm test` (157/157) et `npm run lint` passent sans erreur.
+- Backlog mis à jour : item "`src/app/SimulationScreen.tsx` n'a aucun test
+  dédié" coché comme fait dans "Tests manquants".
+
 ## 2026-08-11T00-00-00Z — Feature : phase de compte à rebours avant décollage
 
 Tâche reçue : feature — ajouter une courte phase de compte à rebours entre
