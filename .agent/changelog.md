@@ -674,3 +674,8 @@ Aucun changement de code dans ce run — tâche de planification uniquement.
 - Description: `src/app/SimulationScreen.tsx` n'a aucun test dédié
 - Branche/push: main (direct)
 - Coût estimé: 1.9176895 USD
+
+## 2026-08-10T23-15-42-422Z — planning
+- Description: Revue périodique planifiée : relis .agent/backlog.md, ajuste les priorités, et ajoute toute tâche manquante identifiée en lisant le code (TODOs, zones sans tests, doc obsolète).
+- Branche/push: main (direct)
+- Coût estimé: 0.585109 USD
