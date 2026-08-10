@@ -471,3 +471,8 @@ Aucun changement de code dans ce run — tâche de planification uniquement.
 - Description: Revue périodique planifiée : relis .agent/backlog.md, ajuste les priorités, et ajoute toute tâche manquante identifiée en lisant le code (TODOs, zones sans tests, doc obsolète).
 - Branche/push: main (direct)
 - Coût estimé: 0.6966867 USD
+
+## 2026-08-10T22-19-36-801Z — bugfix
+- Description: La configuration de mission saisie dans `MissionSetup` est ignorée
+- Branche/push: main (direct)
+- Coût estimé: 1.6198033 USD
