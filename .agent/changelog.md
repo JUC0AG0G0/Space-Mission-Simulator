@@ -355,3 +355,8 @@ Aucun changement de code dans ce run — tâche de planification uniquement.
 - Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
 - Branche/push: main (direct)
 - Coût estimé: 1.4237285999999998 USD
+
+## 2026-08-10T21-55-26-057Z — planning
+- Description: Reformate .agent/backlog.md exactement selon le format imposé dans les instructions (sections ## Bugs connus / Features à ajouter / Tests manquants / Documentation / Divers, items en - [ ]), sans changer le contenu ni le sens des items existants
+- Branche/push: main (direct)
+- Coût estimé: 0.5331929 USD
