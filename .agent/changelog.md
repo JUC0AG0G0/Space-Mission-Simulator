@@ -1,5 +1,34 @@
 # Changelog agent
 
+## 2026-08-11T00-00-00Z — Revue périodique du backlog
+
+Tâche reçue : revue périodique planifiée — relire `.agent/backlog.md`,
+ajuster les priorités, ajouter toute tâche manquante identifiée en lisant
+le code (TODOs, zones sans tests, doc obsolète).
+
+- Vérifié : aucun `TODO`/`FIXME`/`XXX` dans `src/`.
+- Comparé chaque fichier de `src/` à sa couverture dans `tests/`
+  (les tests vivent dans `tests/`, en miroir de `src/`, pas à côté du
+  code). `src/simulation/spacecraft/engine.ts` est bien couvert via
+  `tests/spacecraft/spacecraft.test.ts` malgré le nom de fichier
+  différent — pas une lacune.
+- Lacune réelle identifiée : `src/app/SimulationScreen.tsx` (mapping
+  clavier → commandes, boucle `requestAnimationFrame`) n'a aucun test
+  dédié ; `tests/ui/App.test.tsx` ne couvre que les transitions d'écran,
+  pas les touches `SPACE`/`P`/`R`/WASD documentées dans
+  `ControlsPanel.tsx`. Ajouté comme nouvel item dans
+  "Tests manquants".
+- Ordre des items de "Features à ajouter" (liste 1 à 10 en tête de
+  fichier) relu à la lumière des deux items complétés depuis la
+  dernière revue (écran de préparation de mission, démarrage depuis la
+  surface) : l'ordre restant (compte à rebours, phase de lancement,
+  écran de résultat, sauvegarde, plusieurs missions, machine à états,
+  sélection de fusée, progression) est toujours cohérent avec la règle
+  de priorisation existante et n'a pas été changé.
+- `README.md` toujours cohérent avec le code (table des contrôles,
+  scripts npm, architecture des dossiers).
+- Pas de changement de code applicatif dans cette tâche (planning pur).
+
 ## 2026-08-11T00-00-00Z — Feature : démarrage de la mission depuis la surface
 
 Tâche reçue : feature — le vaisseau démarrait déjà en orbite basse ;

@@ -345,6 +345,25 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Tests manquants
 
+- [ ] `src/app/SimulationScreen.tsx` n'a aucun test dédié
+
+  Ce composant traduit les événements clavier (WASD/flèches, `SPACE`,
+  `P`, `R`) en commandes de simulation et pilote la boucle de jeu
+  (`requestAnimationFrame`). C'est le seul point d'entrée du contrôle
+  clavier documenté dans `ControlsPanel`, et il n'est actuellement
+  couvert que très indirectement par `tests/ui/App.test.tsx` (qui teste
+  seulement les transitions d'écran, pas les touches).
+
+  Ajouter des tests (Testing Library, en simulant des `keydown`/`keyup`
+  sur `window`) vérifiant au minimum :
+
+  * `SPACE` bascule le moteur ;
+  * `P` met en pause / reprend ;
+  * `R` réinitialise l'état vers `createInitialGameState` ;
+  * les touches continues (WASD/flèches) ne déclenchent pas d'action
+    tant qu'elles ne sont pas traitées par la boucle de jeu (pas
+    d'action au `keydown` seul).
+
 ## Documentation
 
 ## Divers / à clarifier
