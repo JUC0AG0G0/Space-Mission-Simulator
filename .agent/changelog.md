@@ -402,3 +402,8 @@ Aucun changement de code dans ce run — tâche de planification uniquement.
 - Description: Reformate .agent/backlog.md exactement selon le format imposé dans les instructions (sections ## Bugs connus / Features à ajouter / Tests manquants / Documentation / Divers, items en - [ ]), sans changer le contenu ni le sens des items existants
 - Branche/push: main (direct)
 - Coût estimé: 0.5331929 USD
+
+## 2026-08-10T22-02-46-713Z — feature
+- Description: Ajouter l'écran de préparation de mission
+- Branche/push: main (direct)
+- Coût estimé: 1.1683415000000001 USD
