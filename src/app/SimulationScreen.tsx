@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { GameState, SimulationCommand } from '../types/simulation';
 import { SimulationEngine, createInitialGameState } from '../simulation/simulation-engine';
+import type { MissionConfiguration } from '../simulation/missions/mission-configuration';
 import { renderScene } from '../rendering/canvas-renderer';
 import { Hud } from '../ui/Hud';
 import { ControlsPanel } from '../ui/ControlsPanel';
@@ -34,15 +35,23 @@ function buildCommandFromKeys(held: Set<string>): SimulationCommand {
   return { throttleDelta, turnDelta };
 }
 
+interface SimulationScreenProps {
+  missionConfiguration: MissionConfiguration;
+}
+
 /**
  * Owns the active simulation's game loop: it advances the
  * `SimulationEngine` on every animation frame using a deterministic
  * `deltaTime`, and calls the renderer to draw the current state.
  */
-export function SimulationScreen() {
+export function SimulationScreen({ missionConfiguration }: SimulationScreenProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const engineRef = useRef<SimulationEngine>(new SimulationEngine());
+  const engineRef = useRef<SimulationEngine>(
+    new SimulationEngine(createInitialGameState(missionConfiguration)),
+  );
   const heldKeysRef = useRef<Set<string>>(new Set());
+  const missionConfigurationRef = useRef(missionConfiguration);
+  missionConfigurationRef.current = missionConfiguration;
   const [state, setState] = useState<GameState>(() => engineRef.current.getState());
 
   // Keyboard input: continuous movement keys are tracked in a ref and
@@ -71,7 +80,7 @@ export function SimulationScreen() {
       }
 
       if (key === 'r') {
-        engineRef.current.reset(createInitialGameState());
+        engineRef.current.reset(createInitialGameState(missionConfigurationRef.current));
         event.preventDefault();
       }
     }
@@ -144,7 +153,7 @@ export function SimulationScreen() {
         <SimulationControls
           paused={state.paused}
           onTogglePause={() => engineRef.current.togglePause()}
-          onRestart={() => engineRef.current.reset(createInitialGameState())}
+          onRestart={() => engineRef.current.reset(createInitialGameState(missionConfiguration))}
         />
         <ControlsPanel />
       </div>

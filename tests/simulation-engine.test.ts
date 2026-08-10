@@ -6,6 +6,7 @@ import {
 } from '../src/simulation/simulation-engine';
 import { createSpacecraft } from '../src/simulation/spacecraft/spacecraft';
 import type { GameState } from '../src/types/simulation';
+import { createDefaultMissionConfiguration } from '../src/simulation/missions/mission-configuration';
 
 /**
  * A game state whose spacecraft sits on the surface (altitude 0), so the
@@ -54,6 +55,27 @@ function createStableOrbitState(): GameState {
     },
   };
 }
+
+describe('createInitialGameState with a mission configuration', () => {
+  it('defaults to "Explorer I" and "Orbit-01" when no configuration is given', () => {
+    const state = createInitialGameState();
+    expect(state.spacecraft.name).toBe('Explorer I');
+    expect(state.activeMission?.name).toBe('Orbit-01');
+  });
+
+  it('names the spacecraft and mission after the given configuration', () => {
+    const configuration = {
+      ...createDefaultMissionConfiguration(),
+      missionName: 'Ares 1',
+      spacecraftName: 'Falcon',
+    };
+
+    const state = createInitialGameState(configuration);
+
+    expect(state.spacecraft.name).toBe('Falcon');
+    expect(state.activeMission?.name).toBe('Ares 1');
+  });
+});
 
 describe('SimulationEngine time progression', () => {
   it('advances simulationTime by deltaTime on each step', () => {

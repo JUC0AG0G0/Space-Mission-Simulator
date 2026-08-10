@@ -11,7 +11,7 @@ import {
 
 interface MissionSetupProps {
   onBack: () => void;
-  onLaunch: () => void;
+  onLaunch: (configuration: MissionConfiguration) => void;
 }
 
 export function MissionSetup({ onBack, onLaunch }: MissionSetupProps) {
@@ -105,7 +105,7 @@ export function MissionSetup({ onBack, onLaunch }: MissionSetupProps) {
 interface MissionSummaryProps {
   configuration: MissionConfiguration;
   onEdit: () => void;
-  onLaunch: () => void;
+  onLaunch: (configuration: MissionConfiguration) => void;
 }
 
 function MissionSummary({ configuration, onEdit, onLaunch }: MissionSummaryProps) {
@@ -129,7 +129,7 @@ function MissionSummary({ configuration, onEdit, onLaunch }: MissionSummaryProps
         <button type="button" onClick={onEdit}>
           Edit
         </button>
-        <button type="button" onClick={onLaunch}>
+        <button type="button" onClick={() => onLaunch(configuration)}>
           Launch mission
         </button>
       </div>

@@ -7,6 +7,7 @@ import type {
 } from '../types/simulation';
 import { createEarth } from './celestial/celestial-body';
 import { createOrbitMission, evaluateMission } from './missions/mission';
+import type { MissionConfiguration } from './missions/mission-configuration';
 import { computeGravitationalAcceleration } from './physics/gravity';
 import { integrate } from './physics/integration';
 import { add } from './physics/vectors';
@@ -25,7 +26,10 @@ export const THROTTLE_RATE = 0.5;
 /** Maximum number of trajectory points retained, to bound memory usage. */
 export const MAX_TRAJECTORY_POINTS = 500;
 
-function createInitialSpacecraft(centralBody: CelestialBody): Spacecraft {
+function createInitialSpacecraft(
+  centralBody: CelestialBody,
+  name: string,
+): Spacecraft {
   // Start on a low circular-ish orbit above the surface so the player has
   // something interesting to work with immediately, rather than starting
   // on the launch pad.
@@ -37,7 +41,7 @@ function createInitialSpacecraft(centralBody: CelestialBody): Spacecraft {
 
   return createSpacecraft({
     id: 'spacecraft-1',
-    name: 'Explorer I',
+    name,
     position: { x: startRadius, y: 0 },
     velocity: { x: 0, y: orbitalSpeed * 0.85 },
     heading: Math.PI / 2,
@@ -49,15 +53,25 @@ function createInitialSpacecraft(centralBody: CelestialBody): Spacecraft {
   });
 }
 
-export function createInitialGameState(): GameState {
+/**
+ * Builds the initial game state. Given a `MissionConfiguration` (as
+ * produced by `MissionSetup`), the spacecraft and active mission are named
+ * after the player's choices instead of the hard-coded defaults.
+ */
+export function createInitialGameState(
+  configuration?: MissionConfiguration,
+): GameState {
   const centralBody = createEarth();
 
   return {
     simulationTime: 0,
     paused: false,
     centralBody,
-    spacecraft: createInitialSpacecraft(centralBody),
-    activeMission: createOrbitMission(),
+    spacecraft: createInitialSpacecraft(
+      centralBody,
+      configuration?.spacecraftName ?? 'Explorer I',
+    ),
+    activeMission: createOrbitMission(configuration?.missionName),
     trajectory: [],
   };
 }

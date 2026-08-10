@@ -1,5 +1,38 @@
 # Changelog agent
 
+## 2026-08-11T00-00-00Z — Fix : configuration de mission ignorée au lancement
+
+Tâche reçue : bugfix — la configuration saisie dans `MissionSetup`
+(nom de mission, nom de fusée, destination, objectif) n'était jamais
+transmise à la simulation lancée.
+
+- `MissionSetup.onLaunch` transmet désormais le `MissionConfiguration`
+  validé (au lieu d'un simple callback sans argument).
+- `app-state.ts` : `AppState` porte un champ `missionConfiguration`, et
+  `startSimulation(state, configuration)` le fait transiter de
+  `mission-setup` vers `simulation` (réinitialisé à `null` en cas de
+  retour au menu).
+- `App.tsx` transmet cette configuration à `SimulationScreen` en prop.
+- `SimulationScreen` construit son état initial (et ses réinitialisations
+  via `R`/`Restart`) avec `createInitialGameState(missionConfiguration)`
+  au lieu de `createInitialGameState()` sans argument.
+- `simulation-engine.ts` : `createInitialGameState` accepte désormais un
+  `MissionConfiguration` optionnel et nomme le vaisseau et la mission
+  d'après `spacecraftName`/`missionName` (comportement par défaut
+  inchangé si aucune configuration n'est fournie).
+- `mission.ts` : `createOrbitMission(name?)` accepte un nom personnalisé
+  pour la mission, avec `'Orbit-01'` comme valeur par défaut.
+- Tests ajoutés/adaptés : `tests/simulation-engine.test.ts` (nommage du
+  vaisseau/mission via `createInitialGameState`), `tests/app/app-state.test.ts`
+  (propagation de la configuration par `startSimulation`),
+  `tests/ui/MissionSetup.test.tsx` (argument reçu par `onLaunch`),
+  `tests/ui/App.test.tsx` (test bout-en-bout : un nom de mission
+  personnalisé saisi dans `MissionSetup` apparaît dans le `MissionPanel`
+  une fois la simulation lancée).
+- `npm run lint`, `npx tsc --noEmit` et `npm test` passent (132 tests).
+- Backlog mis à jour : le bug "configuration de mission ignorée" est
+  coché comme résolu dans `.agent/backlog.md`.
+
 ## 2026-08-10T22-18-53Z — Revue périodique du backlog
 
 Tâche reçue : revue périodique planifiée — relire `.agent/backlog.md`,

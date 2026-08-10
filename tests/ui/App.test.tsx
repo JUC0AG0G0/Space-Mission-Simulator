@@ -38,4 +38,17 @@ describe('App', () => {
 
     expect(container.querySelector('canvas.app__canvas')).toBeInTheDocument();
   });
+
+  it('carries the mission name entered in setup into the running simulation', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: 'New mission' }));
+    await user.clear(screen.getByLabelText('Mission name'));
+    await user.type(screen.getByLabelText('Mission name'), 'Ares 1');
+    await user.click(screen.getByRole('button', { name: 'Review mission' }));
+    await user.click(screen.getByRole('button', { name: 'Launch mission' }));
+
+    expect(screen.getByRole('heading', { name: /Ares 1/ })).toBeInTheDocument();
+  });
 });

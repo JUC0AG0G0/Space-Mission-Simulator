@@ -58,14 +58,19 @@ describe('MissionSetup', () => {
     expect(screen.getByLabelText('Mission name')).toHaveValue('Mission 01');
   });
 
-  it('calls onLaunch when "Launch mission" is clicked from the summary', async () => {
+  it('calls onLaunch with the reviewed configuration when "Launch mission" is clicked', async () => {
     const onLaunch = vi.fn();
     const user = userEvent.setup();
     render(<MissionSetup onBack={() => {}} onLaunch={onLaunch} />);
 
+    await user.clear(screen.getByLabelText('Mission name'));
+    await user.type(screen.getByLabelText('Mission name'), 'Ares 1');
     await user.click(screen.getByRole('button', { name: 'Review mission' }));
     await user.click(screen.getByRole('button', { name: 'Launch mission' }));
 
     expect(onLaunch).toHaveBeenCalledTimes(1);
+    expect(onLaunch).toHaveBeenCalledWith(
+      expect.objectContaining({ missionName: 'Ares 1' }),
+    );
   });
 });

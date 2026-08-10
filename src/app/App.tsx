@@ -30,11 +30,15 @@ export function App() {
       return (
         <MissionSetup
           onBack={() => setAppState(returnToMainMenu)}
-          onLaunch={() => setAppState(startSimulation)}
+          onLaunch={(configuration) =>
+            setAppState((state) => startSimulation(state, configuration))
+          }
         />
       );
     case 'simulation':
-      return <SimulationScreen />;
+      return appState.missionConfiguration ? (
+        <SimulationScreen missionConfiguration={appState.missionConfiguration} />
+      ) : null;
     default:
       return null;
   }

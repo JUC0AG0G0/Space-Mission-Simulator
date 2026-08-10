@@ -11,10 +11,10 @@ export const ORBIT_HOLD_DURATION = 30; // seconds the orbit must be maintained
 /** Below this altitude above the surface, the mission is considered a crash. */
 export const CRASH_ALTITUDE = 0;
 
-export function createOrbitMission(): Mission {
+export function createOrbitMission(name = 'Orbit-01'): Mission {
   return {
     id: 'ORBIT-01',
-    name: 'Orbit-01',
+    name,
     description:
       'Reach a stable orbit altitude and maintain it for a sustained period.',
     status: 'active',

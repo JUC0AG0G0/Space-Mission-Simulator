@@ -25,31 +25,8 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Bugs connus
 
-- [ ] La configuration de mission saisie dans `MissionSetup` est ignorée
+- [x] La configuration de mission saisie dans `MissionSetup` est ignorée
   au lancement
-
-  `MissionSetup` (`src/ui/MissionSetup.tsx`) collecte un
-  `MissionConfiguration` (nom de mission, nom de fusée, destination,
-  objectif) et appelle `onLaunch` une fois la mission validée. Mais
-  `App.tsx` ne transmet jamais cette configuration : `onLaunch` se
-  contente de `setAppState(startSimulation)` sans passer la valeur, et
-  `SimulationScreen` instancie `new SimulationEngine()` /
-  `createInitialGameState()` sans paramètre
-  (`src/simulation/simulation-engine.ts`), qui démarre toujours avec un
-  vaisseau nommé en dur `"Explorer I"` et la mission par défaut
-  `createOrbitMission()`.
-
-  Résultat : quel que soit le nom de mission ou de fusée saisi par le
-  joueur dans `MissionSetup`, il n'apparaît jamais dans la simulation
-  (HUD, `MissionPanel`, etc.). `tests/ui/App.test.tsx` ne vérifie
-  aujourd'hui que l'apparition du canvas après `Launch mission`, pas la
-  propagation de la configuration.
-
-  Corriger en faisant passer le `MissionConfiguration` de `App.tsx` à
-  `SimulationScreen`, puis jusqu'à la création de l'état initial du jeu
-  (nom de vaisseau au minimum). Ajouter un test qui vérifie qu'un nom de
-  mission/fusée personnalisé saisi dans `MissionSetup` se retrouve bien
-  dans le `GameState` une fois la simulation lancée.
 
 ## Features à ajouter
 

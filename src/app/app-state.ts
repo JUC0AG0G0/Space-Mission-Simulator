@@ -5,14 +5,18 @@
  * loop.
  */
 
+import type { MissionConfiguration } from '../simulation/missions/mission-configuration';
+
 export type AppPhase = 'main-menu' | 'mission-setup' | 'simulation';
 
 export interface AppState {
   phase: AppPhase;
+  /** The configuration validated in `MissionSetup`, carried into `simulation`. */
+  missionConfiguration: MissionConfiguration | null;
 }
 
 export function createInitialAppState(): AppState {
-  return { phase: 'main-menu' };
+  return { phase: 'main-menu', missionConfiguration: null };
 }
 
 /** From the main menu, starts configuring a new mission. */
@@ -23,12 +27,15 @@ export function startNewMission(state: AppState): AppState {
   return { ...state, phase: 'mission-setup' };
 }
 
-/** From mission setup, launches the simulation. */
-export function startSimulation(state: AppState): AppState {
+/** From mission setup, launches the simulation with the chosen configuration. */
+export function startSimulation(
+  state: AppState,
+  configuration: MissionConfiguration,
+): AppState {
   if (state.phase !== 'mission-setup') {
     return state;
   }
-  return { ...state, phase: 'simulation' };
+  return { ...state, phase: 'simulation', missionConfiguration: configuration };
 }
 
 /** Returns to the main menu from mission setup. */
@@ -36,5 +43,5 @@ export function returnToMainMenu(state: AppState): AppState {
   if (state.phase !== 'mission-setup') {
     return state;
   }
-  return { ...state, phase: 'main-menu' };
+  return { ...state, phase: 'main-menu', missionConfiguration: null };
 }
