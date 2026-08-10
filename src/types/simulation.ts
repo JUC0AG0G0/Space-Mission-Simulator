@@ -76,6 +76,14 @@ export interface Mission {
   status: MissionStatus;
 }
 
+export interface Countdown {
+  /**
+   * Seconds remaining until LIFTOFF. Reaches exactly 0 for one step (the
+   * LIFTOFF frame) before the countdown clears and flight begins.
+   */
+  remainingSeconds: number;
+}
+
 export interface GameState {
   simulationTime: number;
   paused: boolean;
@@ -86,6 +94,12 @@ export interface GameState {
   activeMission: Mission | null;
 
   trajectory: TrajectoryPoint[];
+
+  /**
+   * Non-null before LIFTOFF: physics is frozen and player commands are
+   * ignored. Null once flight has started.
+   */
+  countdown: Countdown | null;
 }
 
 /** Player-issued commands applied on every simulation step. */

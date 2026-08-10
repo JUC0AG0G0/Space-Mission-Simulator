@@ -31,6 +31,7 @@ function buildState(): GameState {
       { position: { x: 0, y: 0 }, time: 0 },
       { position: { x: 10, y: 0 }, time: 1 },
     ],
+    countdown: null,
   };
 }
 

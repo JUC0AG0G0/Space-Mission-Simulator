@@ -26,6 +26,8 @@ export const TURN_RATE = 1.5;
 export const THROTTLE_RATE = 0.5;
 /** Maximum number of trajectory points retained, to bound memory usage. */
 export const MAX_TRAJECTORY_POINTS = 500;
+/** Length of the pre-flight countdown, in simulated seconds (T-3, T-2, T-1). */
+export const COUNTDOWN_DURATION_SECONDS = 3;
 
 function createInitialSpacecraft(
   centralBody: CelestialBody,
@@ -88,6 +90,7 @@ export function createInitialGameState(
     ),
     activeMission: createOrbitMission(configuration?.missionName),
     trajectory: [],
+    countdown: { remainingSeconds: COUNTDOWN_DURATION_SECONDS },
   };
 }
 
@@ -143,9 +146,31 @@ export class SimulationEngine {
     return activeMission === null || activeMission.status === 'active';
   }
 
+  /**
+   * Advances the pre-flight countdown by `deltaTime`. Returns true while the
+   * countdown is still holding the simulation back (including the LIFTOFF
+   * frame, where `remainingSeconds` reaches exactly 0), false once it has
+   * cleared and flight physics should run for this same tick.
+   */
+  private advanceCountdown(deltaTime: number): boolean {
+    const countdown = this.state.countdown;
+    if (!countdown) {
+      return false;
+    }
+
+    if (countdown.remainingSeconds <= 0) {
+      this.state = { ...this.state, countdown: null };
+      return false;
+    }
+
+    const remainingSeconds = Math.max(0, countdown.remainingSeconds - deltaTime);
+    this.state = { ...this.state, countdown: { remainingSeconds } };
+    return true;
+  }
+
   /** Applies a single frame/tick's worth of player input to the ship. */
   applyCommand(command: SimulationCommand, deltaTime: number): void {
-    if (!this.isMissionActive()) {
+    if (!this.isMissionActive() || this.state.countdown) {
       return;
     }
 
@@ -183,6 +208,10 @@ export class SimulationEngine {
    */
   step(deltaTime: number): void {
     if (this.state.paused || deltaTime <= 0 || !this.isMissionActive()) {
+      return;
+    }
+
+    if (this.state.countdown && this.advanceCountdown(deltaTime)) {
       return;
     }
 

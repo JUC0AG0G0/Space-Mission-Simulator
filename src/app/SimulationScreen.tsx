@@ -4,6 +4,7 @@ import { SimulationEngine, createInitialGameState } from '../simulation/simulati
 import type { MissionConfiguration } from '../simulation/missions/mission-configuration';
 import { renderScene } from '../rendering/canvas-renderer';
 import { Hud } from '../ui/Hud';
+import { CountdownOverlay } from '../ui/CountdownOverlay';
 import { ControlsPanel } from '../ui/ControlsPanel';
 import { MissionPanel } from '../ui/MissionPanel';
 import { SimulationControls } from '../ui/SimulationControls';
@@ -147,7 +148,7 @@ export function SimulationScreen({ missionConfiguration }: SimulationScreenProps
   return (
     <div className="app">
       <canvas ref={canvasRef} className="app__canvas" />
-      <Hud state={state} />
+      {state.countdown ? <CountdownOverlay countdown={state.countdown} /> : <Hud state={state} />}
       <div className="app__sidebar">
         <MissionPanel mission={state.activeMission} />
         <SimulationControls

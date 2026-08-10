@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  COUNTDOWN_DURATION_SECONDS,
   MAX_TRAJECTORY_POINTS,
   SimulationEngine,
   createInitialGameState,
@@ -9,11 +10,21 @@ import type { GameState } from '../src/types/simulation';
 import { createDefaultMissionConfiguration } from '../src/simulation/missions/mission-configuration';
 
 /**
+ * A game state with the pre-flight countdown already cleared, so `step()`
+ * and `applyCommand()` exercise flight physics immediately instead of being
+ * held back by the countdown. Used by tests that are not about the
+ * countdown itself.
+ */
+function createFlightReadyState(): GameState {
+  return { ...createInitialGameState(), countdown: null };
+}
+
+/**
  * A game state whose spacecraft sits below the surface (negative altitude),
  * so the very first `step()` causes the mission to fail (crash).
  */
 function createCrashedStartState(): GameState {
-  const state = createInitialGameState();
+  const state = createFlightReadyState();
   const { centralBody } = state;
 
   return {
@@ -39,7 +50,7 @@ function createCrashedStartState(): GameState {
  * mission (which would also freeze the simulation) within a test run.
  */
 function createStableOrbitState(): GameState {
-  const state = createInitialGameState();
+  const state = createFlightReadyState();
   const { centralBody } = state;
   const radius = centralBody.radius + 50_000; // below ORBIT_MIN_ALTITUDE
   const orbitalSpeed = Math.sqrt(
@@ -91,11 +102,16 @@ describe('createInitialGameState starts the spacecraft on the surface', () => {
     expect(state.spacecraft.fuelMass).toBe(state.spacecraft.maxFuel);
     expect(state.spacecraft.engine.active).toBe(false);
   });
+
+  it('starts with a pre-flight countdown', () => {
+    const state = createInitialGameState();
+    expect(state.countdown).toEqual({ remainingSeconds: COUNTDOWN_DURATION_SECONDS });
+  });
 });
 
 describe('SimulationEngine keeps a grounded, engine-off spacecraft parked on the pad', () => {
   it('does not move or crash the mission while resting with the engine off', () => {
-    const engine = new SimulationEngine(createInitialGameState());
+    const engine = new SimulationEngine(createFlightReadyState());
     const initialSpacecraft = engine.getState().spacecraft;
 
     engine.step(1);
@@ -108,7 +124,7 @@ describe('SimulationEngine keeps a grounded, engine-off spacecraft parked on the
   });
 
   it('lifts off once the engine is activated', () => {
-    const engine = new SimulationEngine(createInitialGameState());
+    const engine = new SimulationEngine(createFlightReadyState());
     const { centralBody } = engine.getState();
     engine.applyCommand({ toggleEngine: true }, 0);
 
@@ -145,21 +161,21 @@ describe('createInitialGameState with a mission configuration', () => {
 
 describe('SimulationEngine time progression', () => {
   it('advances simulationTime by deltaTime on each step', () => {
-    const engine = new SimulationEngine(createInitialGameState());
+    const engine = new SimulationEngine(createFlightReadyState());
     engine.step(1);
     engine.step(0.5);
     expect(engine.getState().simulationTime).toBeCloseTo(1.5, 8);
   });
 
   it('does not advance simulationTime while paused', () => {
-    const engine = new SimulationEngine(createInitialGameState());
+    const engine = new SimulationEngine(createFlightReadyState());
     engine.setPaused(true);
     engine.step(1);
     expect(engine.getState().simulationTime).toBe(0);
   });
 
   it('resumes advancing time after unpausing', () => {
-    const engine = new SimulationEngine(createInitialGameState());
+    const engine = new SimulationEngine(createFlightReadyState());
     engine.setPaused(true);
     engine.step(1);
     engine.togglePause();
@@ -170,8 +186,8 @@ describe('SimulationEngine time progression', () => {
 
 describe('SimulationEngine determinism', () => {
   it('produces identical spacecraft state for two engines given identical commands', () => {
-    const engineA = new SimulationEngine(createInitialGameState());
-    const engineB = new SimulationEngine(createInitialGameState());
+    const engineA = new SimulationEngine(createFlightReadyState());
+    const engineB = new SimulationEngine(createFlightReadyState());
 
     const commands = [
       { throttleDelta: 1 },
@@ -195,14 +211,14 @@ describe('SimulationEngine determinism', () => {
 
 describe('SimulationEngine commands', () => {
   it('turns the spacecraft heading based on turnDelta over time', () => {
-    const engine = new SimulationEngine(createInitialGameState());
+    const engine = new SimulationEngine(createFlightReadyState());
     const initialHeading = engine.getState().spacecraft.heading;
     engine.applyCommand({ turnDelta: 1 }, 1);
     expect(engine.getState().spacecraft.heading).toBeGreaterThan(initialHeading);
   });
 
   it('toggles the engine on and off', () => {
-    const engine = new SimulationEngine(createInitialGameState());
+    const engine = new SimulationEngine(createFlightReadyState());
     expect(engine.getState().spacecraft.engine.active).toBe(false);
     engine.applyCommand({ toggleEngine: true }, 0);
     expect(engine.getState().spacecraft.engine.active).toBe(true);
@@ -213,7 +229,7 @@ describe('SimulationEngine commands', () => {
 
 describe('SimulationEngine trajectory recording', () => {
   it('adds a trajectory point per step, in chronological order', () => {
-    const engine = new SimulationEngine(createInitialGameState());
+    const engine = new SimulationEngine(createFlightReadyState());
     engine.step(1);
     engine.step(1);
     engine.step(1);
@@ -274,7 +290,7 @@ describe('SimulationEngine mission end freezes the simulation', () => {
     engine.step(1);
     expect(engine.getState().activeMission?.status).toBe('failed');
 
-    engine.reset();
+    engine.reset(createFlightReadyState());
 
     expect(engine.getState().activeMission?.status).toBe('active');
     engine.applyCommand({ toggleEngine: true }, 0);
@@ -294,5 +310,54 @@ describe('SimulationEngine reset', () => {
     expect(state.simulationTime).toBe(0);
     expect(state.trajectory).toHaveLength(0);
     expect(state.spacecraft.engine.active).toBe(false);
+  });
+});
+
+describe('SimulationEngine countdown', () => {
+  it('counts down toward LIFTOFF as the simulation steps, without waiting in real time', () => {
+    const engine = new SimulationEngine(createInitialGameState());
+
+    engine.step(1);
+    expect(engine.getState().countdown).toEqual({ remainingSeconds: 2 });
+
+    engine.step(1);
+    expect(engine.getState().countdown).toEqual({ remainingSeconds: 1 });
+  });
+
+  it('does not move the spacecraft or advance simulationTime while counting down', () => {
+    const engine = new SimulationEngine(createInitialGameState());
+    const initialSpacecraft = engine.getState().spacecraft;
+
+    engine.step(1);
+    engine.step(1);
+
+    expect(engine.getState().spacecraft).toEqual(initialSpacecraft);
+    expect(engine.getState().simulationTime).toBe(0);
+    expect(engine.getState().trajectory).toHaveLength(0);
+  });
+
+  it('ignores player commands while counting down', () => {
+    const engine = new SimulationEngine(createInitialGameState());
+
+    engine.applyCommand({ toggleEngine: true }, 0);
+    engine.applyCommand({ turnDelta: 1 }, 1);
+
+    expect(engine.getState().spacecraft.engine.active).toBe(false);
+    expect(engine.getState().spacecraft.heading).toBe(0);
+  });
+
+  it('clears the countdown and starts flight once T-0 (LIFTOFF) has passed', () => {
+    const engine = new SimulationEngine(createInitialGameState());
+
+    engine.step(COUNTDOWN_DURATION_SECONDS);
+    expect(engine.getState().countdown).toEqual({ remainingSeconds: 0 });
+    expect(engine.getState().simulationTime).toBe(0);
+
+    engine.step(1);
+    expect(engine.getState().countdown).toBeNull();
+    expect(engine.getState().simulationTime).toBeCloseTo(1, 8);
+
+    engine.applyCommand({ toggleEngine: true }, 0);
+    expect(engine.getState().spacecraft.engine.active).toBe(true);
   });
 });

@@ -1,5 +1,52 @@
 # Changelog agent
 
+## 2026-08-11T00-00-00Z — Feature : phase de compte à rebours avant décollage
+
+Tâche reçue : feature — ajouter une courte phase de compte à rebours entre
+le pas de tir et le début du vol contrôlable, comme décrit dans l'item
+"Ajouter une phase de compte à rebours" du backlog.
+
+- `types/simulation.ts` : nouveau type `Countdown` (`{ remainingSeconds:
+  number }`) et champ `GameState.countdown: Countdown | null` — non nul
+  avant LIFTOFF, nul une fois le vol commencé.
+- `simulation-engine.ts` : `createInitialGameState` initialise désormais
+  `countdown` à `{ remainingSeconds: COUNTDOWN_DURATION_SECONDS }`
+  (nouvelle constante exportée, 3 secondes simulées, soit T-3/T-2/T-1).
+  `SimulationEngine.step()` décrémente ce compte à rebours à partir du
+  `deltaTime` (donc basé sur le temps de simulation, testable sans
+  attendre réellement — aucun `setTimeout`/timer réel) au lieu de faire
+  progresser la physique : intégration, consommation de carburant,
+  enregistrement de trajectoire et évaluation de mission restent gelés
+  tant que `countdown` n'est pas nul, et `simulationTime` ne commence à
+  avancer qu'au décollage effectif (durée du compte à rebours exclue du
+  "temps de mission"). `remainingSeconds` s'arrête exactement à 0 pendant
+  un pas (le pas "LIFTOFF") avant que `countdown` ne passe à `null` au pas
+  suivant, pour laisser un état affichable distinct. `applyCommand()`
+  ignore toute commande joueur (moteur, poussée, rotation) tant que
+  `countdown` n'est pas nul — le joueur ne peut pas contrôler la fusée
+  avant LIFTOFF.
+- Nouveau composant `src/ui/CountdownOverlay.tsx`, affiché par
+  `SimulationScreen` à la place du `Hud` de vol tant que
+  `state.countdown` n'est pas nul (le HUD de vol n'est donc pas actif
+  pendant le compte à rebours) : en-tête "MISSION READY" et valeur
+  "T-3"/"T-2"/"T-1" puis "LIFTOFF" une fois `remainingSeconds` à 0.
+  Styles ajoutés dans `src/app/styles.css` (`.countdown-overlay*`).
+- Tests ajoutés/adaptés : nouveau describe "SimulationEngine countdown"
+  dans `tests/simulation-engine.test.ts` (décompte pas à pas sans attente
+  réelle, physique/`simulationTime`/trajectoire gelés pendant le compte à
+  rebours, commandes ignorées, passage à `null` et reprise de la physique
+  après le pas LIFTOFF) ; nouveau `tests/ui/CountdownOverlay.test.tsx`.
+  Les tests existants de `SimulationEngine` qui exerçaient la physique de
+  vol immédiatement après `createInitialGameState()` utilisent désormais
+  un état `createFlightReadyState()` dédié (countdown déjà nul), pour ne
+  pas mélanger le test du compte à rebours et celui du vol lui-même.
+  `tests/rendering/canvas-renderer.test.ts` mis à jour pour inclure le
+  nouveau champ `countdown` dans son `GameState` construit à la main.
+- `npm test` (151 tests), `npm run lint` et `npx tsc --noEmit` passent
+  sans erreur.
+- Backlog mis à jour : item "Ajouter une phase de compte à rebours" coché
+  comme fait.
+
 ## 2026-08-11T00-00-00Z — Revue périodique du backlog
 
 Tâche reçue : revue périodique planifiée — relire `.agent/backlog.md`,

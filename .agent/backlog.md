@@ -118,7 +118,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
   Ajouter des tests déterministes vérifiant l'état initial du vaisseau.
 
-- [ ] Ajouter une phase de compte à rebours
+- [x] Ajouter une phase de compte à rebours
 
   Avant le début du contrôle manuel de la fusée, ajouter une courte
   phase de compte à rebours.
