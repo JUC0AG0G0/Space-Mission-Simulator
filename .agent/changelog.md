@@ -1,5 +1,31 @@
 # Changelog agent
 
+## 2026-08-10T22-18-53Z — Revue périodique du backlog
+
+Tâche reçue : revue périodique planifiée — relire `.agent/backlog.md`,
+ajuster les priorités, ajouter toute tâche manquante identifiée en lisant
+le code (TODOs, zones sans tests, doc obsolète).
+
+- Vérifié : aucun `TODO`/`FIXME`/`XXX` dans `src/`. La table des contrôles
+  du `README.md` et `package.json` restent cohérents avec le code
+  (`src/ui/ControlsPanel.tsx`, scripts `npm run dev/test/lint`).
+- Découvert en lisant le code du dernier item traité (écran de
+  préparation de mission, commit `10ccbd0`) : le `MissionConfiguration`
+  produit par `MissionSetup` n'est jamais transmis à la simulation.
+  `App.tsx` ignore la valeur renvoyée par `onLaunch`, et
+  `SimulationScreen` démarre toujours `SimulationEngine` avec l'état par
+  défaut codé en dur dans `src/simulation/simulation-engine.ts` (vaisseau
+  `"Explorer I"`, mission `createOrbitMission()`), quel que soit ce que le
+  joueur a saisi. `tests/ui/App.test.tsx` ne couvre que l'apparition du
+  canvas après lancement, pas la propagation des données. Ajouté comme
+  nouveau bug connu en tête de backlog (priorité la plus haute selon la
+  règle de priorisation existante), avec pointeurs de fichiers précis
+  pour le prochain run.
+- Reste du backlog (features, tests, doc, divers) relu et jugé toujours
+  pertinent et correctement priorisé ; aucune autre lacune de test ou de
+  documentation identifiée qui justifierait un nouvel item séparé.
+- Pas de changement de code applicatif dans cette tâche (planning pur).
+
 ## 2026-08-11T00-00 — Écran de préparation de mission (item 1 du backlog)
 
 Tâche reçue : enrichir le placeholder `src/ui/MissionSetup.tsx` pour qu'il
