@@ -550,3 +550,8 @@ Aucun changement de code dans ce run — tâche de planification uniquement.
 - Description: Démarrer la mission depuis la surface de la Terre
 - Branche/push: main (direct)
 - Coût estimé: 2.76973835 USD
+
+## 2026-08-10T22-38-16-204Z — planning
+- Description: Revue périodique planifiée : relis .agent/backlog.md, ajuste les priorités, et ajoute toute tâche manquante identifiée en lisant le code (TODOs, zones sans tests, doc obsolète).
+- Branche/push: main (direct)
+- Coût estimé: 0.6517414000000001 USD
