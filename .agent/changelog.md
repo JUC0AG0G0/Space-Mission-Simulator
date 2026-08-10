@@ -433,3 +433,8 @@ Aucun changement de code dans ce run — tâche de planification uniquement.
 - Description: Ajouter l'écran de préparation de mission
 - Branche/push: main (direct)
 - Coût estimé: 1.1683415000000001 USD
+
+## 2026-08-10T22-17-06-928Z — planning
+- Description: Revue périodique planifiée : relis .agent/backlog.md, ajuste les priorités, et ajoute toute tâche manquante identifiée en lisant le code (TODOs, zones sans tests, doc obsolète).
+- Branche/push: main (direct)
+- Coût estimé: 0.6966867 USD
