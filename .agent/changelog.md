@@ -1621,3 +1621,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
   `src/ui/MainMenu.tsx` et `src/ui/MissionResult.tsx` — aucun fichier
   source modifié. `npm run lint` et `npx tsc --noEmit` restent propres.
 - Branche/push: main (direct)
+
+## 2026-08-11T21-19-46-858Z — doc
+- Description: `README.md` ne décrit pas le déroulé de jeu réellement implémenté
+- Branche/push: main (direct)
+- Coût estimé: 0.49147989999999997 USD
