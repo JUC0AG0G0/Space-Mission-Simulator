@@ -171,6 +171,38 @@ déjà ouverts (échecs silencieux de `localStorage`, objectif non
 complété dans `MissionResult`, `id` d'objectif inconnu dans
 `evaluateMission`) restent les prochains items à traiter en priorité.
 
+Revue du 2026-08-12 (10e passe, planification périodique) : `npm test`
+(257 tests), `npm run lint` et `npx tsc --noEmit` sont propres, aucun
+`TODO`/`FIXME`/`XXX` dans `src/` ou `tests/`. `npm run coverage` confirme
+97.67 % de lignes / 96.39 % de branches, en hausse depuis la 9e passe
+(les trois tests `localStorage` ajoutés depuis portent
+`mission-progress.ts` à 100 % et font progresser `mission-save.ts`).
+Toutes les lignes non couvertes recoupent des items déjà suivis
+(`mission-save.ts:17-18`, `MissionResult.tsx:56-58`, `mission.ts:151`,
+`simulation-engine.ts:176-177`) ou des branches déjà jugées trop
+marginales (`Hud.tsx:47`, `App.tsx:55,57`, la boucle
+`requestAnimationFrame`/le redimensionnement du canvas dans
+`SimulationScreen.tsx:143-150`). Un point nouveau a été identifié en
+lisant `SimulationScreen.tsx` en détail : le gestionnaire `onKeyUp`
+(lignes 101-106), qui retire une touche continue (WASD/flèches) de
+`heldKeysRef` quand elle est relâchée, n'est exercé par aucun test —
+contrairement à `onKeyDown`, qui a une suite de tests dédiée
+(`tests/ui/SimulationScreen.test.tsx`). Ce n'est pas une simple garde
+défensive DOM comme la boucle `requestAnimationFrame` : si ce
+gestionnaire régressait (ex. mauvaise normalisation de casse, mauvaise
+touche retirée), une touche relâchée resterait "collée" et continuerait
+à piloter le throttle/cap indéfiniment, ce qui est un vrai bug
+gameplay potentiel — voir le nouvel item sous "Tests manquants".
+Aucun autre bug, trou de couverture actionnable ou doc obsolète trouvé
+cette fois-ci (le `README.md` reste cohérent avec `src/app`/`src/ui`,
+sa section "Gameplay" décrit fidèlement l'enchaînement d'écrans actuel).
+Les deux items "Tests manquants" déjà ouverts (objectif non complété
+dans `MissionResult`, `id` d'objectif inconnu dans `evaluateMission`)
+restent les prochains items à traiter en priorité, conformément à la
+règle "bug connu > trous de couverture de tests sur du code pur >
+gameplay/feature > polish" ci-dessus (aucun bug ni feature n'est
+actuellement en attente).
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
@@ -1113,6 +1145,34 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   Ajouter un cas à un objectif `completed: false` dans `makeStats` (ou
   un nouveau test dédié) et vérifier la présence du marqueur `○` et
   l'absence de la classe `objective--done` sur cet élément.
+
+- [ ] `SimulationScreen.onKeyUp` (relâchement des touches continues
+  WASD/flèches) n'est exercé par aucun test
+
+  `onKeyUp` (`src/app/SimulationScreen.tsx:101-106`) retire une touche
+  du `Set` `heldKeysRef.current` quand elle est relâchée — c'est le
+  pendant de `onKeyDown`, qui l'y ajoute (ligne 72) et qui a, lui, une
+  suite de tests dédiée (`tests/ui/SimulationScreen.test.tsx`, cf.
+  l'item "Tests manquants" déjà coché sur `SimulationScreen`). `npm run
+  coverage` repère `onKeyUp` comme non couvert. Contrairement à la
+  boucle `requestAnimationFrame`/au redimensionnement du canvas (déjà
+  jugés trop marginaux dans les passes précédentes), ce n'est pas une
+  garde défensive DOM : `buildCommandFromKeys`
+  (`src/app/SimulationScreen.tsx:31-41`) lit `heldKeysRef.current` à
+  chaque frame pour dériver `throttleDelta`/`turnDelta`, donc si
+  `onKeyUp` régressait (mauvaise normalisation de casse via
+  `event.key.toLowerCase()`, mauvaise touche retirée du set), une
+  touche relâchée par le joueur resterait "collée" et continuerait à
+  piloter le throttle/cap indéfiniment — un vrai bug gameplay, pas
+  seulement un défaut d'affichage.
+
+  Ajouter un test dans `tests/ui/SimulationScreen.test.tsx` (même motif
+  que les tests `keydown` existants, via `fireEvent.keyDown`/
+  `fireEvent.keyUp` sur `window`) : appuyer sur `'w'` (ou une touche
+  fléchée), avancer d'au moins une frame pour vérifier un effet observé
+  côté throttle/état, puis relâcher la touche (`keyup`) et vérifier que
+  l'effet cesse (le throttle ne continue plus d'augmenter aux frames
+  suivantes).
 
 - [ ] La branche `id` d'objectif inconnu du `.map` d'`evaluateMission`
   n'est jamais exercée

@@ -1936,3 +1936,14 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Les branches d'échec silencieux de `localStorage` ne sont testées
 - Branche/push: main (direct)
 - Coût estimé: 0.9065409999999999 USD
+
+## 2026-08-12T00-45-00-000Z — planning
+- Description: Revue périodique planifiée : relis .agent/backlog.md, ajuste les priorités, et ajoute toute tâche manquante identifiée en lisant le code (TODOs, zones sans tests, doc obsolète).
+- Détail : `npm test` (257 tests), `npm run lint` et `npx tsc --noEmit`
+  propres ; `npm run coverage` à 97.67 % lignes / 96.39 % branches.
+  Nouveau point identifié en lisant `SimulationScreen.tsx` : le
+  gestionnaire `onKeyUp` (relâchement des touches continues
+  WASD/flèches, lignes 101-106) n'est exercé par aucun test, alors que
+  `buildCommandFromKeys` en dépend à chaque frame — ajouté comme item
+  "Tests manquants" dans le backlog. Aucun bug ni doc obsolète trouvé.
+- Branche/push: main (direct)
