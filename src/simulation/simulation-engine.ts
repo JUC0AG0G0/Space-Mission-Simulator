@@ -8,7 +8,10 @@ import type {
 } from '../types/simulation';
 import { createEarth } from './celestial/celestial-body';
 import { altitudeAboveSurface, createOrbitMission, evaluateMission } from './missions/mission';
-import type { MissionConfiguration } from './missions/mission-configuration';
+import {
+  findMissionProfile,
+  type MissionConfiguration,
+} from './missions/mission-configuration';
 import { computeGravitationalAcceleration } from './physics/gravity';
 import { integrate } from './physics/integration';
 import { add, dot, magnitude, normalize } from './physics/vectors';
@@ -79,6 +82,9 @@ export function createInitialGameState(
   configuration?: MissionConfiguration,
 ): GameState {
   const centralBody = createEarth();
+  const missionProfile = configuration
+    ? findMissionProfile(configuration.missionProfileId)
+    : undefined;
 
   return {
     simulationTime: 0,
@@ -88,7 +94,10 @@ export function createInitialGameState(
       centralBody,
       configuration?.spacecraftName ?? 'Explorer I',
     ),
-    activeMission: createOrbitMission(configuration?.missionName),
+    activeMission: createOrbitMission(
+      configuration?.missionName,
+      missionProfile?.successCriteria,
+    ),
     trajectory: [],
     countdown: { remainingSeconds: COUNTDOWN_DURATION_SECONDS },
     maxAltitude: 0,

@@ -1,34 +1,42 @@
 import type {
   CelestialBody,
   Mission,
+  OrbitSuccessCriteria,
   Spacecraft,
 } from '../../types/simulation';
 import { magnitude, subtract } from '../physics/vectors';
 
-export const ORBIT_MIN_ALTITUDE = 100_000; // meters
-export const ORBIT_MAX_ALTITUDE = 400_000; // meters
-export const ORBIT_HOLD_DURATION = 30; // seconds the orbit must be maintained
+/** Success criteria used when a mission is created without a `MissionProfile`. */
+export const DEFAULT_ORBIT_SUCCESS_CRITERIA: OrbitSuccessCriteria = {
+  minAltitude: 100_000, // meters
+  maxAltitude: 400_000, // meters
+  holdDurationSeconds: 30,
+};
 /** Below this altitude above the surface, the mission is considered a crash. */
 export const CRASH_ALTITUDE = 0;
 
-export function createOrbitMission(name = 'Orbit-01'): Mission {
+export function createOrbitMission(
+  name = 'Orbit-01',
+  successCriteria: OrbitSuccessCriteria = DEFAULT_ORBIT_SUCCESS_CRITERIA,
+): Mission {
   return {
     id: 'ORBIT-01',
     name,
     description:
       'Reach a stable orbit altitude and maintain it for a sustained period.',
     status: 'active',
+    successCriteria,
     objectives: [
       {
         id: 'reach-altitude',
-        description: `Reach an altitude between ${ORBIT_MIN_ALTITUDE / 1000} km and ${
-          ORBIT_MAX_ALTITUDE / 1000
+        description: `Reach an altitude between ${successCriteria.minAltitude / 1000} km and ${
+          successCriteria.maxAltitude / 1000
         } km`,
         completed: false,
       },
       {
         id: 'hold-orbit',
-        description: `Maintain that altitude range for ${ORBIT_HOLD_DURATION} seconds`,
+        description: `Maintain that altitude range for ${successCriteria.holdDurationSeconds} seconds`,
         completed: false,
       },
     ],
@@ -42,8 +50,11 @@ export function altitudeAboveSurface(
   return magnitude(subtract(spacecraft.position, { x: 0, y: 0 })) - body.radius;
 }
 
-export function isWithinOrbitRange(altitude: number): boolean {
-  return altitude >= ORBIT_MIN_ALTITUDE && altitude <= ORBIT_MAX_ALTITUDE;
+export function isWithinOrbitRange(
+  altitude: number,
+  criteria: OrbitSuccessCriteria,
+): boolean {
+  return altitude >= criteria.minAltitude && altitude <= criteria.maxAltitude;
 }
 
 export interface MissionEvaluationInput {
@@ -83,7 +94,7 @@ export function evaluateMission(
     };
   }
 
-  const inRange = isWithinOrbitRange(altitude);
+  const inRange = isWithinOrbitRange(altitude, mission.successCriteria);
   const secondsInOrbitRange = inRange
     ? input.secondsInOrbitRange + deltaTime
     : 0;
@@ -96,7 +107,8 @@ export function evaluateMission(
       return {
         ...objective,
         completed:
-          objective.completed || secondsInOrbitRange >= ORBIT_HOLD_DURATION,
+          objective.completed ||
+          secondsInOrbitRange >= mission.successCriteria.holdDurationSeconds,
       };
     }
     return objective;

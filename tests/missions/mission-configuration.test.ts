@@ -1,10 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
-  AVAILABLE_DESTINATIONS,
-  AVAILABLE_OBJECTIVES,
+  AVAILABLE_MISSION_PROFILES,
   createDefaultMissionConfiguration,
-  findDestination,
-  findObjective,
+  findMissionProfile,
   isValidMissionConfiguration,
 } from '../../src/simulation/missions/mission-configuration';
 
@@ -17,33 +15,47 @@ describe('createDefaultMissionConfiguration', () => {
     expect(isValidMissionConfiguration(configuration)).toBe(true);
   });
 
-  it('picks the first available destination and objective', () => {
+  it('picks the first available mission profile', () => {
     const configuration = createDefaultMissionConfiguration();
 
-    expect(configuration.destinationId).toBe(AVAILABLE_DESTINATIONS[0].id);
-    expect(configuration.objectiveId).toBe(AVAILABLE_OBJECTIVES[0].id);
+    expect(configuration.missionProfileId).toBe(AVAILABLE_MISSION_PROFILES[0].id);
   });
 });
 
-describe('findDestination / findObjective', () => {
-  it('finds a known destination by id', () => {
-    expect(findDestination(AVAILABLE_DESTINATIONS[0].id)).toEqual(
-      AVAILABLE_DESTINATIONS[0],
+describe('AVAILABLE_MISSION_PROFILES', () => {
+  it('exposes several predefined mission profiles', () => {
+    expect(AVAILABLE_MISSION_PROFILES.length).toBeGreaterThan(1);
+  });
+
+  it('gives each profile a unique id', () => {
+    const ids = AVAILABLE_MISSION_PROFILES.map((profile) => profile.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('defines a name, destination, difficulty, objective, and success criteria for each profile', () => {
+    for (const profile of AVAILABLE_MISSION_PROFILES) {
+      expect(profile.name.length).toBeGreaterThan(0);
+      expect(profile.destinationName.length).toBeGreaterThan(0);
+      expect(profile.description.length).toBeGreaterThan(0);
+      expect(['easy', 'medium', 'hard']).toContain(profile.difficulty);
+      expect(profile.objectiveDescription.length).toBeGreaterThan(0);
+      expect(profile.successCriteria.minAltitude).toBeLessThan(
+        profile.successCriteria.maxAltitude,
+      );
+      expect(profile.successCriteria.holdDurationSeconds).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('findMissionProfile', () => {
+  it('finds a known profile by id', () => {
+    expect(findMissionProfile(AVAILABLE_MISSION_PROFILES[0].id)).toEqual(
+      AVAILABLE_MISSION_PROFILES[0],
     );
   });
 
-  it('returns undefined for an unknown destination', () => {
-    expect(findDestination('mars-orbit')).toBeUndefined();
-  });
-
-  it('finds a known objective by id', () => {
-    expect(findObjective(AVAILABLE_OBJECTIVES[0].id)).toEqual(
-      AVAILABLE_OBJECTIVES[0],
-    );
-  });
-
-  it('returns undefined for an unknown objective', () => {
-    expect(findObjective('land-on-moon')).toBeUndefined();
+  it('returns undefined for an unknown profile', () => {
+    expect(findMissionProfile('mars-landing')).toBeUndefined();
   });
 });
 
@@ -61,18 +73,10 @@ describe('isValidMissionConfiguration', () => {
     expect(isValidMissionConfiguration(configuration)).toBe(false);
   });
 
-  it('rejects an unknown destination id', () => {
+  it('rejects an unknown mission profile id', () => {
     const configuration = {
       ...createDefaultMissionConfiguration(),
-      destinationId: 'mars-orbit',
-    };
-    expect(isValidMissionConfiguration(configuration)).toBe(false);
-  });
-
-  it('rejects an unknown objective id', () => {
-    const configuration = {
-      ...createDefaultMissionConfiguration(),
-      objectiveId: 'land-on-moon',
+      missionProfileId: 'mars-landing',
     };
     expect(isValidMissionConfiguration(configuration)).toBe(false);
   });

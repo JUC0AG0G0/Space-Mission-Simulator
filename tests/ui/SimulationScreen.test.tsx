@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { SimulationScreen } from '../../src/app/SimulationScreen';
 import { SimulationEngine, createInitialGameState } from '../../src/simulation/simulation-engine';
 import { createDefaultMissionConfiguration } from '../../src/simulation/missions/mission-configuration';
+import { DEFAULT_ORBIT_SUCCESS_CRITERIA } from '../../src/simulation/missions/mission';
 import type { GameState } from '../../src/types/simulation';
 
 /**
@@ -171,6 +172,7 @@ describe('SimulationScreen', () => {
         description: 'Reach a stable orbit.',
         status: 'failed',
         objectives: [],
+        successCriteria: DEFAULT_ORBIT_SUCCESS_CRITERIA,
       },
     };
     const getStateSpy = vi
@@ -200,6 +202,7 @@ describe('SimulationScreen', () => {
         description: 'Reach a stable orbit.',
         status: 'succeeded',
         objectives: [],
+        successCriteria: DEFAULT_ORBIT_SUCCESS_CRITERIA,
       },
     };
     const getStateSpy = vi

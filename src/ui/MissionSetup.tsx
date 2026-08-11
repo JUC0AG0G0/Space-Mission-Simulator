@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import {
-  AVAILABLE_DESTINATIONS,
-  AVAILABLE_OBJECTIVES,
+  AVAILABLE_MISSION_PROFILES,
   createDefaultMissionConfiguration,
-  findDestination,
-  findObjective,
+  findMissionProfile,
   isValidMissionConfiguration,
   type MissionConfiguration,
 } from '../simulation/missions/mission-configuration';
@@ -64,31 +62,22 @@ export function MissionSetup({ onBack, onLaunch }: MissionSetupProps) {
           />
         </label>
         <label className="mission-setup__field">
-          <span>Destination</span>
+          <span>Mission profile</span>
           <select
-            value={configuration.destinationId}
-            onChange={(event) => updateField('destinationId', event.target.value)}
+            value={configuration.missionProfileId}
+            onChange={(event) => updateField('missionProfileId', event.target.value)}
           >
-            {AVAILABLE_DESTINATIONS.map((destination) => (
-              <option key={destination.id} value={destination.id}>
-                {destination.name}
+            {AVAILABLE_MISSION_PROFILES.map((profile) => (
+              <option key={profile.id} value={profile.id}>
+                {profile.name} — {profile.destinationName} (
+                {profile.difficulty})
               </option>
             ))}
           </select>
         </label>
-        <label className="mission-setup__field">
-          <span>Objective</span>
-          <select
-            value={configuration.objectiveId}
-            onChange={(event) => updateField('objectiveId', event.target.value)}
-          >
-            {AVAILABLE_OBJECTIVES.map((objective) => (
-              <option key={objective.id} value={objective.id}>
-                {objective.description}
-              </option>
-            ))}
-          </select>
-        </label>
+        <p className="mission-setup__field-hint">
+          {findMissionProfile(configuration.missionProfileId)?.description}
+        </p>
         <div className="mission-setup__actions">
           <button type="button" onClick={onBack}>
             Back
@@ -109,8 +98,7 @@ interface MissionSummaryProps {
 }
 
 function MissionSummary({ configuration, onEdit, onLaunch }: MissionSummaryProps) {
-  const destination = findDestination(configuration.destinationId);
-  const objective = findObjective(configuration.objectiveId);
+  const profile = findMissionProfile(configuration.missionProfileId);
 
   return (
     <div className="mission-setup">
@@ -121,9 +109,9 @@ function MissionSummary({ configuration, onEdit, onLaunch }: MissionSummaryProps
         <dt>Spacecraft</dt>
         <dd>{configuration.spacecraftName}</dd>
         <dt>Destination</dt>
-        <dd>{destination?.name}</dd>
+        <dd>{profile?.destinationName}</dd>
         <dt>Objective</dt>
-        <dd>{objective?.description}</dd>
+        <dd>{profile?.objectiveDescription}</dd>
       </dl>
       <div className="mission-setup__actions">
         <button type="button" onClick={onEdit}>

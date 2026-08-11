@@ -53,7 +53,7 @@ describe('mission-save', () => {
   it('ignores a stored configuration that is no longer valid', () => {
     const configuration = {
       ...createDefaultMissionConfiguration(),
-      destinationId: 'no-longer-available',
+      missionProfileId: 'no-longer-available',
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(configuration));
 

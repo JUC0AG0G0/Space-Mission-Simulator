@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ORBIT_HOLD_DURATION,
-  ORBIT_MAX_ALTITUDE,
-  ORBIT_MIN_ALTITUDE,
+  DEFAULT_ORBIT_SUCCESS_CRITERIA,
   createOrbitMission,
   evaluateMission,
   isWithinOrbitRange,
@@ -11,6 +9,8 @@ import { createEarth } from '../../src/simulation/celestial/celestial-body';
 import { createSpacecraft } from '../../src/simulation/spacecraft/spacecraft';
 
 const centralBody = createEarth();
+const { minAltitude: ORBIT_MIN_ALTITUDE, maxAltitude: ORBIT_MAX_ALTITUDE, holdDurationSeconds: ORBIT_HOLD_DURATION } =
+  DEFAULT_ORBIT_SUCCESS_CRITERIA;
 
 function spacecraftAtAltitude(altitude: number) {
   return createSpacecraft({
@@ -29,15 +29,37 @@ function spacecraftAtAltitude(altitude: number) {
 
 describe('isWithinOrbitRange', () => {
   it('is false below the minimum altitude', () => {
-    expect(isWithinOrbitRange(ORBIT_MIN_ALTITUDE - 1)).toBe(false);
+    expect(isWithinOrbitRange(ORBIT_MIN_ALTITUDE - 1, DEFAULT_ORBIT_SUCCESS_CRITERIA)).toBe(
+      false,
+    );
   });
 
   it('is true within the target band', () => {
-    expect(isWithinOrbitRange((ORBIT_MIN_ALTITUDE + ORBIT_MAX_ALTITUDE) / 2)).toBe(true);
+    expect(
+      isWithinOrbitRange(
+        (ORBIT_MIN_ALTITUDE + ORBIT_MAX_ALTITUDE) / 2,
+        DEFAULT_ORBIT_SUCCESS_CRITERIA,
+      ),
+    ).toBe(true);
   });
 
   it('is false above the maximum altitude', () => {
-    expect(isWithinOrbitRange(ORBIT_MAX_ALTITUDE + 1)).toBe(false);
+    expect(isWithinOrbitRange(ORBIT_MAX_ALTITUDE + 1, DEFAULT_ORBIT_SUCCESS_CRITERIA)).toBe(
+      false,
+    );
+  });
+});
+
+describe('createOrbitMission', () => {
+  it('uses custom success criteria when given one', () => {
+    const criteria = { minAltitude: 10_000, maxAltitude: 20_000, holdDurationSeconds: 5 };
+
+    const mission = createOrbitMission('Custom mission', criteria);
+
+    expect(mission.successCriteria).toEqual(criteria);
+    expect(mission.objectives.find((o) => o.id === 'reach-altitude')?.description).toContain(
+      '10 km',
+    );
   });
 });
 
@@ -84,6 +106,19 @@ describe('evaluateMission', () => {
 
     expect(mission.status).toBe('succeeded');
     expect(mission.objectives.every((o) => o.completed)).toBe(true);
+  });
+
+  it('uses the mission-specific success criteria rather than a fixed default', () => {
+    const criteria = { minAltitude: 500, maxAltitude: 1_000, holdDurationSeconds: 2 };
+    const mission = createOrbitMission('Narrow mission', criteria);
+    const spacecraft = spacecraftAtAltitude(750);
+
+    const { mission: updated } = evaluateMission(
+      { mission, spacecraft, centralBody, secondsInOrbitRange: 0 },
+      1,
+    );
+
+    expect(updated.objectives.find((o) => o.id === 'reach-altitude')?.completed).toBe(true);
   });
 
   it('resets the hold timer if the ship leaves the target band', () => {

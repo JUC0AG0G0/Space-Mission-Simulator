@@ -19,8 +19,7 @@ describe('MissionSetup', () => {
 
     expect(screen.getByLabelText('Mission name')).toHaveValue('Mission 01');
     expect(screen.getByLabelText('Spacecraft name')).toHaveValue('Explorer I');
-    expect(screen.getByLabelText('Destination')).toHaveValue('earth-orbit');
-    expect(screen.getByLabelText('Objective')).toHaveValue('reach-stable-orbit');
+    expect(screen.getByLabelText('Mission profile')).toHaveValue('earth-orbit');
   });
 
   it('disables "Review mission" when the mission name is blank', async () => {
@@ -46,6 +45,17 @@ describe('MissionSetup', () => {
     expect(screen.getByText('Falcon')).toBeInTheDocument();
     expect(screen.getByText('Earth orbit')).toBeInTheDocument();
     expect(screen.getByText('Reach a stable Earth orbit')).toBeInTheDocument();
+  });
+
+  it('reflects the selected mission profile in the summary', async () => {
+    const user = userEvent.setup();
+    render(<MissionSetup onBack={() => {}} onLaunch={() => {}} />);
+
+    await user.selectOptions(screen.getByLabelText('Mission profile'), 'high-orbit');
+    await user.click(screen.getByRole('button', { name: 'Review mission' }));
+
+    expect(screen.getByText('High orbit')).toBeInTheDocument();
+    expect(screen.getByText('Reach a stable high orbit')).toBeInTheDocument();
   });
 
   it('returns to the editable form when "Edit" is clicked from the summary', async () => {

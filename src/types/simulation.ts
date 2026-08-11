@@ -68,12 +68,25 @@ export interface MissionObjective {
 
 export type MissionStatus = 'active' | 'succeeded' | 'failed';
 
+/**
+ * The measurable conditions a mission's orbit objectives are checked
+ * against. Carried on `Mission` itself (rather than hard-coded in the
+ * evaluation logic) so the simulation engine stays mission-agnostic and a
+ * different `MissionProfile` can supply stricter or looser numbers.
+ */
+export interface OrbitSuccessCriteria {
+  minAltitude: number;
+  maxAltitude: number;
+  holdDurationSeconds: number;
+}
+
 export interface Mission {
   id: string;
   name: string;
   description: string;
   objectives: MissionObjective[];
   status: MissionStatus;
+  successCriteria: OrbitSuccessCriteria;
 }
 
 export interface Countdown {

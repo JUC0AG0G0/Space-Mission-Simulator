@@ -3,53 +3,90 @@
  * created and validated without mounting the `MissionSetup` UI.
  */
 
+import type { OrbitSuccessCriteria } from '../../types/simulation';
+
 export interface MissionConfiguration {
   missionName: string;
   spacecraftName: string;
-  destinationId: string;
-  objectiveId: string;
+  missionProfileId: string;
 }
 
-export interface MissionDestination {
+export type MissionDifficulty = 'easy' | 'medium' | 'hard';
+
+/**
+ * A predefined mission the player can pick in `MissionSetup`. Bundles the
+ * destination, objective, and success parameters together so the
+ * simulation engine (`src/simulation/missions/mission.ts`) never has to
+ * know about any mission in particular — it only evaluates whatever
+ * `successCriteria` the chosen profile attaches to the active `Mission`.
+ */
+export interface MissionProfile {
   id: string;
   name: string;
-}
-
-export interface MissionSetupObjective {
-  id: string;
+  destinationName: string;
   description: string;
+  difficulty: MissionDifficulty;
+  objectiveDescription: string;
+  successCriteria: OrbitSuccessCriteria;
 }
 
-/** V0: a single destination is available. */
-export const AVAILABLE_DESTINATIONS: MissionDestination[] = [
-  { id: 'earth-orbit', name: 'Earth orbit' },
+export const AVAILABLE_MISSION_PROFILES: MissionProfile[] = [
+  {
+    id: 'earth-orbit',
+    name: 'Mission 01',
+    destinationName: 'Earth orbit',
+    description: 'A first flight to a forgiving low Earth orbit.',
+    difficulty: 'easy',
+    objectiveDescription: 'Reach a stable Earth orbit',
+    successCriteria: {
+      minAltitude: 100_000,
+      maxAltitude: 400_000,
+      holdDurationSeconds: 30,
+    },
+  },
+  {
+    id: 'high-orbit',
+    name: 'Mission 02',
+    destinationName: 'High orbit',
+    description: 'Climb further out to a higher orbit that takes more fuel to reach.',
+    difficulty: 'medium',
+    objectiveDescription: 'Reach a stable high orbit',
+    successCriteria: {
+      minAltitude: 600_000,
+      maxAltitude: 900_000,
+      holdDurationSeconds: 30,
+    },
+  },
+  {
+    id: 'fast-orbit',
+    name: 'Mission 03',
+    destinationName: 'Fast orbit',
+    description: 'Thread a narrow orbital band and hold it despite the tighter margin.',
+    difficulty: 'hard',
+    objectiveDescription: 'Reach a stable narrow-band orbit',
+    successCriteria: {
+      minAltitude: 250_000,
+      maxAltitude: 280_000,
+      holdDurationSeconds: 45,
+    },
+  },
 ];
 
-/** V0: a single objective is available. */
-export const AVAILABLE_OBJECTIVES: MissionSetupObjective[] = [
-  { id: 'reach-stable-orbit', description: 'Reach a stable Earth orbit' },
-];
-
-export function findDestination(id: string): MissionDestination | undefined {
-  return AVAILABLE_DESTINATIONS.find((destination) => destination.id === id);
-}
-
-export function findObjective(id: string): MissionSetupObjective | undefined {
-  return AVAILABLE_OBJECTIVES.find((objective) => objective.id === id);
+export function findMissionProfile(id: string): MissionProfile | undefined {
+  return AVAILABLE_MISSION_PROFILES.find((profile) => profile.id === id);
 }
 
 export function createDefaultMissionConfiguration(): MissionConfiguration {
   return {
     missionName: 'Mission 01',
     spacecraftName: 'Explorer I',
-    destinationId: AVAILABLE_DESTINATIONS[0].id,
-    objectiveId: AVAILABLE_OBJECTIVES[0].id,
+    missionProfileId: AVAILABLE_MISSION_PROFILES[0].id,
   };
 }
 
 /**
  * A configuration is valid when both names are non-blank and the selected
- * destination/objective are among the available ones.
+ * mission profile is among the available ones.
  */
 export function isValidMissionConfiguration(
   configuration: MissionConfiguration,
@@ -57,7 +94,6 @@ export function isValidMissionConfiguration(
   return (
     configuration.missionName.trim().length > 0 &&
     configuration.spacecraftName.trim().length > 0 &&
-    findDestination(configuration.destinationId) !== undefined &&
-    findObjective(configuration.objectiveId) !== undefined
+    findMissionProfile(configuration.missionProfileId) !== undefined
   );
 }

@@ -19,6 +19,9 @@ de priorité recommandé pour les prochaines exécutions de
 9. Sélection de fusée
 10. Progression
 
+(items 1 à 7 terminés — items restants dans l'ordre : machine à états
+complète, sélection de fusée, progression)
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
@@ -270,7 +273,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   nécessaire car le `localStorage` global de Node masque celui de jsdom
   dans cet environnement de test).
 
-- [ ] Ajouter plusieurs profils de mission
+- [x] Ajouter plusieurs profils de mission
 
   Ajouter plusieurs missions prédéfinies afin que le menu de préparation
   ne soit plus limité à une seule mission.
@@ -301,6 +304,26 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
   Le moteur de simulation ne doit pas contenir de logique spécifique à
   une mission particulière.
+
+  Fait le 2026-08-11 : `src/simulation/missions/mission-configuration.ts`
+  expose désormais `AVAILABLE_MISSION_PROFILES` (3 profils : `earth-orbit`
+  / Facile, `high-orbit` / Moyenne, `fast-orbit` / Difficile), chacun
+  portant son nom, sa destination, sa description, sa difficulté, son
+  objectif et ses `successCriteria` (altitude min/max, durée de maintien).
+  `MissionConfiguration.destinationId`/`objectiveId` sont remplacés par un
+  seul `missionProfileId`, résolu via `findMissionProfile`.
+  `MissionSetup.tsx` propose un unique sélecteur "Mission profile" (avec
+  description sous forme d'indice) au lieu des anciens sélecteurs
+  Destination/Objective séparés. Côté moteur, `Mission` porte maintenant
+  ses propres `successCriteria` (`src/types/simulation.ts`) : `mission.ts`
+  n'a plus de constantes d'orbite figées, `createOrbitMission` et
+  `evaluateMission` utilisent les critères portés par l'instance de
+  mission (repli sur `DEFAULT_ORBIT_SUCCESS_CRITERIA` si aucun profil
+  n'est fourni) — le moteur reste générique, agnostique de toute mission
+  précise. `createInitialGameState` résout le profil choisi et construit
+  la mission avec ses critères. Tests mis à jour/ajoutés dans
+  `tests/missions/mission-configuration.test.ts`,
+  `tests/missions/mission.test.ts` et `tests/ui/MissionSetup.test.tsx`.
 
 - [ ] Séparer clairement les phases de jeu
 

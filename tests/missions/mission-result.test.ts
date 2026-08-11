@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildMissionResultStats } from '../../src/simulation/missions/mission-result';
+import { DEFAULT_ORBIT_SUCCESS_CRITERIA } from '../../src/simulation/missions/mission';
 import { createInitialGameState } from '../../src/simulation/simulation-engine';
 import type { GameState } from '../../src/types/simulation';
 
@@ -19,6 +20,7 @@ describe('buildMissionResultStats', () => {
         description: 'Reach orbit.',
         status: 'succeeded',
         objectives: [{ id: 'reach-altitude', description: 'Reach altitude', completed: true }],
+        successCriteria: DEFAULT_ORBIT_SUCCESS_CRITERIA,
       },
     });
 
@@ -43,6 +45,7 @@ describe('buildMissionResultStats', () => {
         description: 'Reach orbit.',
         status: 'failed',
         objectives: [],
+        successCriteria: DEFAULT_ORBIT_SUCCESS_CRITERIA,
       },
     });
 
@@ -61,6 +64,7 @@ describe('buildMissionResultStats', () => {
         description: 'Reach orbit.',
         status: 'failed',
         objectives: [],
+        successCriteria: DEFAULT_ORBIT_SUCCESS_CRITERIA,
       },
     });
 

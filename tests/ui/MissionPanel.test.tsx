@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MissionPanel } from '../../src/ui/MissionPanel';
+import { DEFAULT_ORBIT_SUCCESS_CRITERIA } from '../../src/simulation/missions/mission';
 import type { Mission } from '../../src/types/simulation';
 
 function makeMission(overrides: Partial<Mission> = {}): Mission {
@@ -13,6 +14,7 @@ function makeMission(overrides: Partial<Mission> = {}): Mission {
       { id: 'speed', description: 'Reach orbital speed', completed: true },
     ],
     status: 'active',
+    successCriteria: DEFAULT_ORBIT_SUCCESS_CRITERIA,
     ...overrides,
   };
 }

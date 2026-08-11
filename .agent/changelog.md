@@ -1,5 +1,46 @@
 # Changelog agent
 
+## 2026-08-11T17-00-00Z — Ajouter plusieurs profils de mission
+
+Tâche reçue : feature — "Ajouter plusieurs profils de mission" (item 7 de
+`.agent/backlog.md`), pour que `MissionSetup` ne soit plus limité à une
+seule destination/objectif.
+
+- Ajouté `MissionProfile` (id, name, destinationName, description,
+  difficulty, objectiveDescription, successCriteria) et
+  `AVAILABLE_MISSION_PROFILES` (3 profils prédéfinis : `earth-orbit` /
+  Facile, `high-orbit` / Moyenne, `fast-orbit` / Difficile, chacun avec
+  une bande d'altitude et une durée de maintien différentes) dans
+  `src/simulation/missions/mission-configuration.ts`, avec
+  `findMissionProfile`.
+- `MissionConfiguration` remplace `destinationId`/`objectiveId` par un
+  seul `missionProfileId` ; `isValidMissionConfiguration` valide contre
+  `AVAILABLE_MISSION_PROFILES`.
+- Déplacé `OrbitSuccessCriteria` vers `src/types/simulation.ts` et ajouté
+  `Mission.successCriteria`, porté par chaque instance de mission plutôt
+  que par des constantes figées dans `mission.ts`. `createOrbitMission`
+  et `evaluateMission` (`src/simulation/missions/mission.ts`) utilisent
+  ces critères (repli sur `DEFAULT_ORBIT_SUCCESS_CRITERIA` en l'absence
+  de profil) : le moteur de simulation reste sans connaissance d'une
+  mission précise, conformément à la contrainte du backlog.
+- `simulation-engine.ts#createInitialGameState` résout le profil choisi
+  via `findMissionProfile` et construit la mission active avec ses
+  critères.
+- `MissionSetup.tsx` remplace les deux sélecteurs Destination/Objective
+  par un unique sélecteur "Mission profile" (nom, destination,
+  difficulté) avec un texte d'indice affichant la description du profil
+  sélectionné ; le résumé affiche la destination/objectif dérivés du
+  profil.
+- `mission-save.ts` valide désormais `missionProfileId` (au lieu de
+  `destinationId`/`objectiveId`) dans la forme des données persistées.
+- Tests mis à jour ou ajoutés :
+  `tests/missions/mission-configuration.test.ts`,
+  `tests/missions/mission.test.ts`, `tests/missions/mission-result.test.ts`,
+  `tests/ui/MissionSetup.test.tsx`, `tests/ui/SimulationScreen.test.tsx`,
+  `tests/ui/MissionPanel.test.tsx`, `tests/persistence/mission-save.test.ts`.
+- Vérifié : `npm test` (201 tests), `npm run lint` et `npx tsc --noEmit`
+  passent sans erreur ; `npm run dev` sert l'app sans erreur de build.
+
 ## 2026-08-11T16-00-00Z — Revue périodique du backlog
 
 Tâche reçue : revue périodique planifiée — relire `.agent/backlog.md`,
