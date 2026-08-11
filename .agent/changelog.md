@@ -1026,3 +1026,8 @@ Aucun changement de code dans ce run — tâche de planification uniquement.
 - Description: Revue périodique planifiée : relis .agent/backlog.md, ajuste les priorités, et ajoute toute tâche manquante identifiée en lisant le code (TODOs, zones sans tests, doc obsolète).
 - Branche/push: main (direct)
 - Coût estimé: 0.6560814999999999 USD
+
+## 2026-08-11T19-52-06-505Z — feature
+- Description: Séparer clairement les phases de jeu
+- Branche/push: main (direct)
+- Coût estimé: 1.3506648 USD
