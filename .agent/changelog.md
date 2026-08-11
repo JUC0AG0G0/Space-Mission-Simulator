@@ -1,5 +1,38 @@
 # Changelog agent
 
+## 2026-08-11T16-00-00Z — Revue périodique du backlog
+
+Tâche reçue : revue périodique planifiée — relire `.agent/backlog.md`,
+ajuster les priorités, ajouter toute tâche manquante identifiée en lisant
+le code (TODOs, zones sans tests, doc obsolète).
+
+- Vérifié : aucun `TODO`/`FIXME`/`XXX` dans `src/`.
+- Confirmé que "Ajouter un écran de résumé de mission" (item précédent)
+  est bien terminé et testé : `GameState.maxAltitude`/`maxSpeed`,
+  `buildMissionResultStats` et `MissionResult.tsx` sont en place, avec
+  tests dédiés (`tests/missions/mission-result.test.ts`,
+  `tests/ui/MissionResult.test.tsx`) et un test d'intégration dans
+  `tests/ui/SimulationScreen.test.tsx`.
+- Comparé chaque fichier de `src/` à sa couverture dans `tests/` : aucune
+  nouvelle lacune identifiée (`src/simulation/spacecraft/engine.ts`
+  toujours bien couvert via `tests/spacecraft/spacecraft.test.ts` et
+  `tests/simulation-engine.test.ts`).
+- Doc (`README.md`) relue : table des contrôles et section "Architecture"
+  toujours cohérentes avec le code. Rien à corriger.
+- Prochain item du backlog ("Ajouter la sauvegarde de la configuration de
+  mission") enrichi d'une note de scoping : `src/ui/MainMenu.tsx` accepte
+  déjà `hasSavedMission`/`onContinue` en props, mais `src/app/App.tsx`
+  les câble en dur (`hasSavedMission={false}`, `onContinue={() => {}}`)
+  et aucun module de persistance (`localStorage`) n'existe encore dans
+  `src`. Note pointant vers un futur module pur
+  (`src/simulation/persistence/mission-save.ts`) et vers les points
+  d'intégration exacts (`App.tsx`, `app-state.ts`, `MissionSetup.onLaunch`).
+- Ordre de priorité des "Features à ajouter" inchangé : reste cohérent
+  avec l'état du code (5 premiers items terminés, "Sauvegarde" est le
+  prochain).
+- `npm run lint` passe sans erreur. Pas de changement de code applicatif
+  dans cette tâche (planning pur) — pas de nouveau test à écrire.
+
 ## 2026-08-11T00-00-00Z — Feature : écran de résumé de mission
 
 Tâche reçue : "Ajouter un écran de résumé de mission" (backlog, section

@@ -255,6 +255,27 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
   Ajouter des tests unitaires de la couche de persistance.
 
+  Note de scoping (lecture du code au 2026-08-11) : les points d'ancrage
+  sont déjà en place mais non câblés. `src/ui/MainMenu.tsx` accepte déjà
+  `hasSavedMission: boolean` et `onContinue: () => void` en props (et
+  n'affiche le bouton `Continue` que si `hasSavedMission` est vrai), mais
+  `src/app/App.tsx` (lignes ~25-27) passe actuellement
+  `hasSavedMission={false}` et `onContinue={() => {}}` en dur. Il n'existe
+  pour l'instant aucun fichier de persistance (`localStorage`) dans
+  `src`. Cette tâche consiste donc à : (1) créer un module pur (proche de
+  `src/simulation/missions/mission-configuration.ts`, ex.
+  `src/simulation/persistence/mission-save.ts`) exposant des fonctions du
+  type `saveMission(configuration: MissionConfiguration): void`,
+  `loadSavedMission(): MissionConfiguration | null` (retourne `null` sur
+  donnée absente/invalide/corrompue, jamais d'exception), et
+  éventuellement `clearSavedMission()` ; (2) appeler `saveMission` au
+  lancement (`startSimulation` / `MissionSetup.onLaunch`) ; (3) dans
+  `App.tsx`, dériver `hasSavedMission`/la configuration à charger via
+  `loadSavedMission()` et câbler `onContinue` pour démarrer directement la
+  simulation avec cette configuration (probablement une nouvelle
+  transition dans `src/app/app-state.ts`, à côté de `startNewMission`/
+  `startSimulation`).
+
 - [ ] Ajouter plusieurs profils de mission
 
   Ajouter plusieurs missions prédéfinies afin que le menu de préparation
