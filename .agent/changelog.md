@@ -1463,3 +1463,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
   pas l'état, Ctrl/Cmd+P ne bascule pas la pause). `npm test` (240
   tests), `npm run lint` et `npx tsc --noEmit` propres.
 - Branche/push: main (direct)
+
+## 2026-08-11T20-54-19-991Z — bugfix
+- Description: `SimulationScreen.onKeyDown` détourne des raccourcis navigateur
+- Branche/push: main (direct)
+- Coût estimé: 0.7298858999999999 USD
