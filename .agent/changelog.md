@@ -1,5 +1,21 @@
 # Changelog agent
 
+## 2026-08-11T21-01-11-000Z — bugfix
+- Description: `SimulationScreen.onKeyDown` réagit au key-repeat du système, déclenchant plusieurs actions pour une seule pression de touche
+- Détail : `onKeyDown` (`src/app/SimulationScreen.tsx`) ignore désormais
+  l'événement (sans appeler `applyCommand`/`togglePause`/`reset` ni
+  `preventDefault()`) quand `event.repeat` est vrai, pour les trois
+  touches discrètes `' '`/`'p'`/`'r'` — même garde que celle déjà en
+  place pour `ctrlKey`/`metaKey`/`altKey`. Maintenir une touche plus
+  longtemps que le délai de répétition du système ne déclenche donc plus
+  qu'une seule action par pression physique. Test ajouté dans
+  `tests/ui/SimulationScreen.test.tsx` ("ignores OS key-repeat on SPACE,
+  toggling the engine only once per physical press") : un `keydown`
+  initial sur `' '` suivi de deux `keydown` avec `repeat: true` ne fait
+  basculer le moteur qu'une seule fois. `npm test` (241 tests),
+  `npm run lint` et `npx tsc --noEmit` propres.
+- Branche/push: main (direct)
+
 ## 2026-08-11T23-15-00Z — Fix: le carburant se consommait intégralement au sol
 
 Tâche reçue : bugfix — "Le carburant se consomme intégralement même

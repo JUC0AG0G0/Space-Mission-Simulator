@@ -81,6 +81,12 @@ export function SimulationScreen({ missionConfiguration, onExit }: SimulationScr
           return;
         }
 
+        // Ignore OS key-repeat: holding the key down should fire the
+        // action once, not once per repeat event.
+        if (event.repeat) {
+          return;
+        }
+
         if (key === ' ') {
           engineRef.current.applyCommand({ toggleEngine: true }, 0);
         } else if (key === 'p') {

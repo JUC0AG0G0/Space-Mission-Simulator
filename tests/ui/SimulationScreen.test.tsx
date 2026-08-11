@@ -160,6 +160,19 @@ describe('SimulationScreen', () => {
     expect(screen.getByRole('button', { name: 'Pause (P)' })).toBeInTheDocument();
   });
 
+  it('ignores OS key-repeat on SPACE, toggling the engine only once per physical press', () => {
+    const frame = renderScreen();
+    clearCountdown(frame);
+    expect(screen.getByText('ENGINE OFFLINE')).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: ' ' });
+    fireEvent.keyDown(window, { key: ' ', repeat: true });
+    fireEvent.keyDown(window, { key: ' ', repeat: true });
+    frame.advance(16);
+
+    expect(screen.getByText('ENGINE ONLINE')).toBeInTheDocument();
+  });
+
   it('transitions from PRE-LAUNCH to FLIGHT once the engine ignites and the ship clears the pad', () => {
     const frame = renderScreen();
     clearCountdown(frame);

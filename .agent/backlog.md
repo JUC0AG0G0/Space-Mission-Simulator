@@ -13,13 +13,14 @@ items cochés ci-dessous pour l'historique et les notes d'implémentation.
 Revue du 2026-08-11 (3e passe) : code, tests (`npm test`, 238 tests),
 lint (`npm run lint`) et typecheck (`npx tsc --noEmit`) sont tous
 propres, aucun `TODO`/`FIXME` dans le code, et chaque module de
-`src/simulation` et `src/rendering` a un fichier de test dédié. Trois
+`src/simulation` et `src/rendering` a un fichier de test dédié. Quatre
 bugs concrets ont été identifiés en lisant `SimulationEngine.step` et
 `SimulationScreen`'s `onKeyDown` (voir "Bugs connus" ci-dessous, tous
-corrigés depuis) ; aucun trou de couverture supplémentaire ni doc
-obsolète trouvé cette fois-ci (le `README.md` reste cohérent avec
-`src/app`). Il reste un bug connu ouvert (key-repeat sur `onKeyDown`,
-voir ci-dessous).
+corrigés depuis, y compris le key-repeat sur `onKeyDown`) ; aucun trou
+de couverture supplémentaire ni doc obsolète trouvé cette fois-ci (le
+`README.md` reste cohérent avec `src/app`). Aucun bug connu ouvert à ce
+jour — une nouvelle revue du repo est nécessaire pour repeupler le
+backlog.
 
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
@@ -91,25 +92,21 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   équivalent sur `'p'` avec `ctrlKey`/`metaKey` vérifie que la pause
   n'est pas basculée.
 
-- [ ] `SimulationScreen.onKeyDown` réagit au key-repeat du système,
+- [x] `SimulationScreen.onKeyDown` réagit au key-repeat du système,
   déclenchant plusieurs actions pour une seule pression de touche
 
-  Le même `onKeyDown` (`src/app/SimulationScreen.tsx:68-93`) ne
-  vérifie jamais `event.repeat`. Un `keydown` natif se répète
-  automatiquement tant qu'une touche reste enfoncée (après un court
-  délai, puis en continu). Maintenir `P` ou `R` légèrement plus
-  longtemps que le délai de répétition du système déclenche donc
-  `togglePause()` ou `reset()` plusieurs fois pour une seule pression
-  physique — l'état de pause finit dans un état imprévisible selon la
-  durée exacte de l'appui ; `SPACE` bascule le moteur plusieurs fois de
-  façon similaire.
-
-  Ignorer l'événement quand `event.repeat` est vrai pour ces trois
-  touches (`' '`, `'p'`, `'r'`), comme c'est déjà fait implicitement
-  pour les touches continues via `heldKeysRef`. Ajouter un test dans
-  `tests/ui/SimulationScreen.test.tsx` simulant deux `keydown`
-  consécutifs sur `' '` avec le second `repeat: true`, et vérifiant
-  qu'une seule bascule du moteur a eu lieu.
+  Fait le 2026-08-11 : `onKeyDown` (`src/app/SimulationScreen.tsx`)
+  ignore désormais l'événement (sans appeler `applyCommand`/
+  `togglePause`/`reset` ni `preventDefault()`) quand `event.repeat` est
+  vrai, pour les trois touches discrètes (`' '`, `'p'`, `'r'`) — la même
+  garde que celle déjà en place pour `ctrlKey`/`metaKey`/`altKey`.
+  Maintenir une touche plus longtemps que le délai de répétition du
+  système ne déclenche donc plus qu'une seule action par pression
+  physique. Test ajouté dans `tests/ui/SimulationScreen.test.tsx`
+  ("ignores OS key-repeat on SPACE, toggling the engine only once per
+  physical press") : un `keydown` initial sur `' '` suivi de deux
+  `keydown` avec `repeat: true` ne fait basculer le moteur qu'une seule
+  fois (`ENGINE ONLINE`).
 
 ## Features à ajouter
 
