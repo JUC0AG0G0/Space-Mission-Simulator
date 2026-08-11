@@ -1214,3 +1214,44 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Ajouter un système de progression
 - Branche/push: main (direct)
 - Coût estimé: 1.9445340500000003 USD
+
+## 2026-08-11T20-30-26Z — planning
+- Description : le backlog ne contenait plus aucune tâche actionnable
+  (toutes les sections Bugs/Features/Tests/Documentation étaient
+  entièrement cochées) — régénération à partir d'une analyse du dépôt.
+- Vérifié : `npm test` (233 tests, 30 fichiers), `npm run lint` et
+  `npx tsc --noEmit` passent tous sans erreur ; aucun
+  `TODO`/`FIXME`/`XXX`/`HACK` dans `src/` ou `tests/` ; chaque module de
+  `src/simulation` a un fichier de test dédié avec une couverture des
+  cas limites (ex. `vectors.ts` : chaque fonction exportée testée,
+  y compris les cas dégénérés comme la division par zéro dans
+  `normalize`).
+- Relu en détail `simulation-engine.ts`, `flight-phase.ts`,
+  `mission.ts`/`mission-result.ts`, `mission-configuration.ts`,
+  `rocket-models.ts`, `spacecraft.ts`/`engine.ts`, ainsi que les
+  composants `Hud.tsx`, `MissionPanel.tsx`, `MissionResult.tsx`,
+  `CountdownOverlay.tsx`, `MissionSetup.tsx`, `MainMenu.tsx`,
+  `SimulationScreen.tsx` et `App.tsx`.
+- Deux items concrets identifiés et ajoutés à `.agent/backlog.md` :
+  - Bug : `Hud.tsx` affiche `activeMission.id`, qui vaut toujours la
+    constante `'ORBIT-01'` pour toute mission (fixée dans
+    `createOrbitMission`), au lieu de `activeMission.name` (le nom
+    réellement différenciant/personnalisable par le joueur) — verrouillé
+    par `tests/ui/Hud.test.tsx:52`. Le joueur ne peut donc jamais
+    identifier sa mission en cours via le HUD de vol.
+  - Feature : `buildCamera` (`canvas-renderer.ts`) utilise un
+    `viewRadius` fixe (`radius * 2.6`, calibré à l'origine pour l'unique
+    mission 100–400 km). Avec l'ajout des profils de mission, "Mission
+    02 / Orbite haute" (600–900 km) place le vaisseau à ~96 % du rayon
+    visible sur le petit côté de l'écran — proche du bord, voire hors
+    champ sur une fenêtre non carrée. Proposition : faire dépendre le
+    zoom de l'altitude cible du profil de mission actif.
+  - Nettoyé le préambule de `.agent/backlog.md` : la feuille de route
+    numérotée 1 à 10 (toute terminée) a été remplacée par une note
+    d'historique, pour éviter la confusion avec les sections au format
+    strict `- [ ]`/`- [x]` réellement lues par le parseur automatique.
+  - Aucun trou de couverture de test ni doc obsolète trouvé cette fois
+    (README toujours à jour, cf. revue précédente).
+- Pas de changement de code applicatif dans ce run (tâche de planning
+  uniquement) ; seuls `.agent/backlog.md` et `.agent/changelog.md` sont
+  modifiés.

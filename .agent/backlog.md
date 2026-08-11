@@ -4,22 +4,18 @@ Priorisation : bug connu > trous de couverture de tests sur du code pur >
 gameplay/feature > polish. Chaque item est scopé pour un run indépendant
 avec un diff limité (< 400 lignes), tests inclus.
 
-L'ordre des items de la section "Features à ajouter" ci-dessous est l'ordre
-de priorité recommandé pour les prochaines exécutions de
-`agent-orchestrator` :
+La feuille de route initiale (écran de préparation de mission, départ
+depuis la surface, compte à rebours, phase de lancement, écran de
+résultat, sauvegarde, plusieurs missions, machine à états complète,
+sélection de fusée, progression) est entièrement terminée — voir les
+items cochés ci-dessous pour l'historique et les notes d'implémentation.
 
-1. Écran de préparation de mission
-2. Départ depuis la surface
-3. Compte à rebours
-4. Phase de lancement
-5. Écran de résultat
-6. Sauvegarde
-7. Plusieurs missions
-8. Machine à états complète
-9. Sélection de fusée
-10. Progression
-
-(tous les items 1 à 10 sont terminés)
+Revue du 2026-08-11 : code, tests (`npm test`), lint (`npm run lint`) et
+typecheck (`npx tsc --noEmit`) sont tous propres, aucun `TODO`/`FIXME`
+dans le code, et chaque module de `src/simulation` a un fichier de test
+dédié. Deux items concrets ont été identifiés en lisant le code (voir
+"Bugs connus" et "Features à ajouter" ci-dessous) ; aucun trou de
+couverture ni doc obsolète trouvé cette fois-ci.
 
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
@@ -30,7 +26,44 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 - [x] La configuration de mission saisie dans `MissionSetup` est ignorée
   au lancement
 
+- [ ] Le HUD de vol affiche un identifiant de mission constant au lieu
+  du nom réel de la mission
+
+  `src/ui/Hud.tsx:54` affiche `state.activeMission?.id`. Or
+  `createOrbitMission` (`src/simulation/missions/mission.ts:22`) fixe
+  `id: 'ORBIT-01'` en dur pour toute mission, quel que soit le profil
+  choisi (`earth-orbit` / `high-orbit` / `fast-orbit`) — seul le champ
+  `name` varie réellement (nom saisi par le joueur dans `MissionSetup`,
+  ex. "Mission 01"). Résultat : le HUD affiche toujours
+  `MISSION: ORBIT-01` en vol, quelle que soit la mission réellement en
+  cours (verrouillé par `tests/ui/Hud.test.tsx:52`), ce qui n'aide pas
+  le joueur à identifier sa mission.
+
+  Corriger `Hud.tsx` pour afficher `activeMission.name` (ou une valeur
+  dérivée du profil de mission actif) à la place de `activeMission.id`,
+  et mettre à jour `tests/ui/Hud.test.tsx` en conséquence.
+
 ## Features à ajouter
+
+- [ ] Adapter le zoom de la caméra au profil de mission actif
+
+  `buildCamera` (`src/rendering/canvas-renderer.ts:12`) calcule un
+  `viewRadius` fixe (`centralBody.radius * 2.6`, soit environ 960 km
+  au-dessus de la surface visibles sur le petit côté de l'écran),
+  indépendant de la mission choisie. Ce réglage a été calibré pour
+  l'unique mission d'origine (100–400 km). Depuis l'ajout de plusieurs
+  profils de mission, "Mission 02 / Orbite haute" cible 600–900 km :
+  à 900 km, le vaisseau est à ~96 % du rayon visible, donc proche du
+  bord du cadre (voire hors champ sur une fenêtre non carrée, où le
+  petit côté de l'écran est encore plus contraint).
+
+  Faire dépendre `viewRadius` de l'altitude cible du profil de mission
+  actif (`state.activeMission?.successCriteria.maxAltitude`, avec une
+  marge), ou à défaut faire suivre dynamiquement le vaisseau par la
+  caméra, pour que la trajectoire reste visible sur les trois profils
+  existants. Ajouter/adapter les tests de `buildCamera`
+  (`tests/rendering/canvas-renderer.test.ts`) pour couvrir un profil à
+  plus haute altitude.
 
 - [x] Ajouter l'écran de préparation de mission
 
