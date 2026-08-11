@@ -141,6 +141,36 @@ conformément à la règle "bug connu > trous de couverture de tests sur
 du code pur > gameplay/feature > polish" ci-dessus (aucun bug ni
 feature n'est actuellement en attente).
 
+Revue du 2026-08-12 (9e passe, planification périodique) : `npm test`
+(254 tests), `npm run lint` et `npx tsc --noEmit` sont propres, aucun
+`TODO`/`FIXME`/`XXX` dans `src/` ou `tests/`. `npm run coverage`
+confirme 97.47 % de lignes / 95.56 % de branches, en légère hausse
+depuis la 8e passe (le test de `computeFuelConsumed` moteur inactif,
+ajouté depuis, porte `engine.ts` à 100 %). Toutes les lignes non
+couvertes recoupent des items déjà suivis (`mission-save.ts:17-18,34,65`,
+`mission-progress.ts:49`, `MissionResult.tsx:56-58`, `mission.ts:151`)
+ou des branches déjà jugées trop marginales (`Hud.tsx:47`, la boucle
+`requestAnimationFrame`/le redimensionnement du canvas dans
+`SimulationScreen.tsx`, le repli `App.tsx` sur un `AppPhase` déjà
+exhaustif). Un point nouveau a été identifié en lisant
+`SimulationEngine.step`/`advanceCountdown` en détail
+(`src/simulation/simulation-engine.ts:173-187,232`) : l'unique appelant
+de la méthode privée `advanceCountdown` (ligne 232,
+`if (this.state.countdown && this.advanceCountdown(deltaTime))`) ne
+l'invoque déjà que lorsque `this.state.countdown` est non nul, ce qui
+rend la garde interne `if (!countdown) { return false; }`
+(lignes 175-177) inatteignable en pratique — ce n'est pas un trou de
+couverture à combler par un test (la méthode est privée et son seul
+appelant garantit déjà l'invariant), mais une petite garde
+défensive redondante à trancher (garder pour la robustesse contre un
+futur second appelant, ou simplifier) ; voir le nouvel item sous
+"Divers / à clarifier". Aucun bug, trou de couverture actionnable ou
+doc obsolète supplémentaire trouvé cette fois-ci — le `README.md` reste
+cohérent avec `src/app`/`src/ui`. Les trois items "Tests manquants"
+déjà ouverts (échecs silencieux de `localStorage`, objectif non
+complété dans `MissionResult`, `id` d'objectif inconnu dans
+`evaluateMission`) restent les prochains items à traiter en priorité.
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
@@ -1208,6 +1238,32 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   (aucun fichier source touché).
 
 ## Divers / à clarifier
+
+- [ ] La garde `if (!countdown) { return false; }` dans
+  `SimulationEngine.advanceCountdown` est inatteignable depuis son seul
+  appelant actuel
+
+  `advanceCountdown` (`src/simulation/simulation-engine.ts:173-187`) est
+  une méthode privée relisant `this.state.countdown` et retournant
+  `false` immédiatement s'il vaut `null` (lignes 175-177, repérées via
+  `npm run coverage` comme non couvertes). Son unique appelant, dans
+  `step` (`src/simulation/simulation-engine.ts:232`), est
+  `if (this.state.countdown && this.advanceCountdown(deltaTime)) { ... }`
+  — le court-circuit du `&&` garantit déjà que `advanceCountdown` n'est
+  jamais invoquée avec `this.state.countdown === null`. La garde interne
+  est donc redondante avec l'appelant, pas un trou de couverture au sens
+  habituel (une méthode privée à appelant unique n'a pas d'autre point
+  d'entrée testable que `step`).
+
+  À trancher avant d'agir, sans urgence (pure lisibilité, aucun impact
+  observable) : soit simplifier `advanceCountdown` en supprimant la
+  garde (et documenter dans un commentaire que l'invariant "appelée
+  seulement si `countdown` est non nul" est porté par l'appelant), soit
+  la garder telle quelle comme filet de sécurité si un second appelant
+  apparaît un jour et ajouter un commentaire expliquant pourquoi elle
+  n'est pas couverte par les tests. Ne pas toucher au comportement
+  observable (`step` continue de fonctionner à l'identique dans les deux
+  cas).
 
 - [x] Deux fonctions exportées (`screenToWorld`, `createEngine`) ont
   chacune un test dédié mais ne sont appelées nulle part dans `src/`

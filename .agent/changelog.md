@@ -1,5 +1,28 @@
 # Changelog agent
 
+## 2026-08-12T00-15-00-000Z — planning
+- Description: Revue périodique planifiée : relis .agent/backlog.md, ajuste les priorités, et ajoute toute tâche manquante identifiée en lisant le code.
+- Détail : `npm test` (254 tests), `npm run lint` et `npx tsc --noEmit`
+  restent propres ; aucun `TODO`/`FIXME`/`XXX` dans `src/` ou `tests/`.
+  `npm run coverage` confirme 97.47 % de lignes / 95.56 % de branches
+  (légère hausse depuis la 8e passe grâce au test ajouté sur
+  `computeFuelConsumed`). Toutes les lignes non couvertes recoupent des
+  items déjà suivis dans "Tests manquants" ou des branches déjà jugées
+  marginales. Un point nouveau identifié en lisant
+  `SimulationEngine.step`/`advanceCountdown` : la garde
+  `if (!countdown) { return false; }` de `advanceCountdown`
+  (`src/simulation/simulation-engine.ts:175-177`) est inatteignable
+  depuis son unique appelant (`step`, ligne 232, qui ne l'invoque déjà
+  que quand `state.countdown` est non nul) — ajouté comme nouvel item
+  sous "Divers / à clarifier" dans `.agent/backlog.md` (décision de
+  garder vs. simplifier laissée en suspens, sans urgence, aucun impact
+  observable). Aucun bug, aucune feature manquante, ni doc obsolète
+  trouvés cette fois-ci — le `README.md` reste cohérent avec
+  `src/app`/`src/ui`. Nouvelle note de revue (9e passe) ajoutée en tête
+  de `.agent/backlog.md`. Aucun changement de code source, aucun
+  fichier de test modifié.
+- Branche/push: main (non commité par l'agent)
+
 ## 2026-08-12T00-00-00-000Z — test
 - Description: La branche moteur inactif de `computeFuelConsumed` n'était pas testée
 - Détail : nouveau test "consumes no fuel while the engine is inactive,
