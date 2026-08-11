@@ -100,6 +100,29 @@ body {
   margin-bottom: 10px;
 }
 
+.hud__phase {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--color-text-dim);
+  margin-bottom: 10px;
+}
+
+.hud__phase--launch {
+  color: var(--color-warn);
+}
+
+.hud__phase--flight {
+  color: var(--color-success);
+}
+
+.hud__phase--mission-complete {
+  color: var(--color-success);
+}
+
+.hud__phase--mission-failed {
+  color: var(--color-danger);
+}
+
 .hud__grid {
   display: grid;
   grid-template-columns: auto auto;

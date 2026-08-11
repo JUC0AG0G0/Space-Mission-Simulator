@@ -11,6 +11,7 @@ function makeState(): GameState {
 
   return {
     ...state,
+    countdown: null,
     spacecraft: {
       ...createSpacecraft({
         id: 'spacecraft-1',
@@ -68,5 +69,46 @@ describe('Hud', () => {
     };
     rerender(<Hud state={offState} />);
     expect(screen.getByText('ENGINE OFFLINE')).toBeInTheDocument();
+  });
+
+  it('shows FLIGHT once airborne', () => {
+    render(<Hud state={makeState()} />);
+    expect(screen.getByText('FLIGHT')).toBeInTheDocument();
+  });
+
+  it('shows LAUNCH while grounded with the engine on', () => {
+    const state = makeState();
+    const { centralBody } = state;
+
+    const groundedState: GameState = {
+      ...state,
+      spacecraft: { ...state.spacecraft, position: { x: centralBody.radius, y: 0 } },
+    };
+    render(<Hud state={groundedState} />);
+    expect(screen.getByText('LAUNCH')).toBeInTheDocument();
+  });
+
+  it('shows MISSION COMPLETE once the active mission succeeds', () => {
+    const state = makeState();
+    const succeededState: GameState = {
+      ...state,
+      activeMission: state.activeMission
+        ? { ...state.activeMission, status: 'succeeded' }
+        : null,
+    };
+    render(<Hud state={succeededState} />);
+    expect(screen.getByText('MISSION COMPLETE')).toBeInTheDocument();
+  });
+
+  it('shows MISSION FAILED once the active mission fails', () => {
+    const state = makeState();
+    const failedState: GameState = {
+      ...state,
+      activeMission: state.activeMission
+        ? { ...state.activeMission, status: 'failed' }
+        : null,
+    };
+    render(<Hud state={failedState} />);
+    expect(screen.getByText('MISSION FAILED')).toBeInTheDocument();
   });
 });

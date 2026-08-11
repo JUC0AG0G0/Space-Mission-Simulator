@@ -146,7 +146,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   Le compte à rebours doit être basé sur le temps de simulation et être
   testable sans attendre réellement plusieurs secondes dans les tests.
 
-- [ ] Ajouter une vraie phase de lancement
+- [x] Ajouter une vraie phase de lancement
 
   Après le compte à rebours, le joueur doit pouvoir lancer la fusée.
 

@@ -115,6 +115,19 @@ describe('SimulationScreen', () => {
     expect(screen.getByText('MISSION READY')).toBeInTheDocument();
   });
 
+  it('transitions from PRE-LAUNCH to FLIGHT once the engine ignites and the ship clears the pad', () => {
+    const frame = renderScreen();
+    clearCountdown(frame);
+    expect(screen.getByText('PRE-LAUNCH')).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: ' ' });
+    for (let i = 0; i < 30; i += 1) {
+      frame.advance(200);
+    }
+
+    expect(screen.getByText('FLIGHT')).toBeInTheDocument();
+  });
+
   it('does not apply a continuous-movement command on keydown itself, only once the game loop processes it', () => {
     const frame = renderScreen();
     clearCountdown(frame);

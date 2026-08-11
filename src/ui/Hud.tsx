@@ -1,4 +1,5 @@
-import type { GameState } from '../types/simulation';
+import type { FlightPhase, GameState } from '../types/simulation';
+import { determineFlightPhase } from '../simulation/flight-phase';
 import { altitudeAboveSurface } from '../simulation/missions/mission';
 import { magnitude } from '../simulation/physics/vectors';
 import { totalMass } from '../simulation/spacecraft/spacecraft';
@@ -15,9 +16,30 @@ function formatKmPerSec(metersPerSecond: number): string {
   return `${(metersPerSecond / 1000).toFixed(2)} km/s`;
 }
 
+function phaseLabel(phase: FlightPhase): string {
+  switch (phase) {
+    case 'pre-launch':
+      return 'PRE-LAUNCH';
+    case 'launch':
+      return 'LAUNCH';
+    case 'flight':
+      return 'FLIGHT';
+    case 'mission-complete':
+      return 'MISSION COMPLETE';
+    case 'mission-failed':
+      return 'MISSION FAILED';
+  }
+}
+
 export function Hud({ state }: HudProps) {
   const { spacecraft, centralBody } = state;
   const altitude = altitudeAboveSurface(spacecraft, centralBody);
+  const phase = determineFlightPhase({
+    countdown: state.countdown,
+    spacecraft,
+    centralBody,
+    activeMission: state.activeMission,
+  });
   const speed = magnitude(spacecraft.velocity);
   const fuelPercent =
     spacecraft.maxFuel > 0
@@ -31,6 +53,7 @@ export function Hud({ state }: HudProps) {
       <div className="hud__mission">
         MISSION: {state.activeMission?.id ?? '—'}
       </div>
+      <div className={`hud__phase hud__phase--${phase}`}>{phaseLabel(phase)}</div>
       <dl className="hud__grid">
         <dt>ALTITUDE</dt>
         <dd>{formatKm(altitude)}</dd>

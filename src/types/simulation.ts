@@ -84,6 +84,18 @@ export interface Countdown {
   remainingSeconds: number;
 }
 
+/**
+ * High-level flight phase, derived from the rest of `GameState` rather than
+ * stored on it directly (see `determineFlightPhase` in
+ * `src/simulation/flight-phase.ts`).
+ */
+export type FlightPhase =
+  | 'pre-launch'
+  | 'launch'
+  | 'flight'
+  | 'mission-complete'
+  | 'mission-failed';
+
 export interface GameState {
   simulationTime: number;
   paused: boolean;

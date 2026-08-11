@@ -1,5 +1,49 @@
 # Changelog agent
 
+## 2026-08-11T00-00-00Z — Feature : vraie phase de lancement (PRE-LAUNCH/LAUNCH/FLIGHT/MISSION_COMPLETE/MISSION_FAILED)
+
+Tâche reçue : feature — "Ajouter une vraie phase de lancement" (item du
+backlog), pour que le moteur puisse distinguer si le vaisseau est encore au
+sol, en vol, ou dans une situation de mission terminée.
+
+- `types/simulation.ts` : nouveau type `FlightPhase` (`'pre-launch' |
+  'launch' | 'flight' | 'mission-complete' | 'mission-failed'`). Ce n'est
+  volontairement PAS un champ stocké sur `GameState` — comme `altitude` ou
+  `speed` dans le `Hud`, c'est une donnée dérivée, toujours recalculée à
+  partir du reste de l'état (`countdown`, position/altitude du vaisseau,
+  état du moteur, statut de la mission active), pour ne jamais pouvoir
+  diverger de la source de vérité.
+- Nouveau `src/simulation/flight-phase.ts` : fonction pure
+  `determineFlightPhase()` qui calcule la phase :
+  * `MISSION_COMPLETE` / `MISSION_FAILED` si la mission active a déjà
+    réussi/échoué (prioritaire sur tout le reste) ;
+  * `PRE-LAUNCH` tant que le compte à rebours est actif, ou une fois celui-ci
+    terminé si le vaisseau est encore au sol avec le moteur éteint ;
+  * `LAUNCH` si le vaisseau est encore au sol (altitude ≤ 0) mais que le
+    moteur est allumé ;
+  * `FLIGHT` dès que l'altitude au-dessus de la surface est positive.
+  Les règles de réussite/échec de mission restent entièrement celles du
+  système de mission existant (`missions/mission.ts`), inchangées.
+- `src/ui/Hud.tsx` : affiche désormais la phase courante
+  (`PRE-LAUNCH`/`LAUNCH`/`FLIGHT`/`MISSION COMPLETE`/`MISSION FAILED`) sous
+  l'en-tête de mission, avec une classe `hud__phase--<phase>` pour la
+  coloration (styles ajoutés dans `src/app/styles.css`).
+- Tests ajoutés : `tests/flight-phase.test.ts` (nouveau, couvre les
+  transitions principales de `determineFlightPhase` de façon isolée et
+  déterministe : countdown → PRE-LAUNCH, sol+moteur éteint → PRE-LAUNCH,
+  sol+moteur allumé → LAUNCH, altitude positive → FLIGHT, mission
+  réussie/échouée prioritaire même en vol, mission déjà terminée prioritaire
+  sur un countdown encore actif) ; `tests/ui/Hud.test.tsx` étendu (FLIGHT,
+  LAUNCH, MISSION COMPLETE, MISSION FAILED affichés, `countdown: null`
+  ajouté à l'état de test pour ne plus être bloqué en PRE-LAUNCH par
+  défaut) ; `tests/ui/SimulationScreen.test.tsx` étendu avec un test
+  d'intégration bout-en-bout (PRE-LAUNCH après le compte à rebours, puis
+  FLIGHT une fois le moteur allumé et le vaisseau décollé du pas de tir).
+- `npm test` (170 tests), `npm run lint` et `npx tsc --noEmit` passent sans
+  erreur.
+- Backlog mis à jour : item "Ajouter une vraie phase de lancement" coché
+  comme fait.
+
 ## 2026-08-11T00-00-00Z — Revue périodique du backlog
 
 Tâche reçue : revue périodique planifiée — relire `.agent/backlog.md`,
