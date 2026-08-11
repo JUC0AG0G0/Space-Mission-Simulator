@@ -10,18 +10,46 @@ résultat, sauvegarde, plusieurs missions, machine à états complète,
 sélection de fusée, progression) est entièrement terminée — voir les
 items cochés ci-dessous pour l'historique et les notes d'implémentation.
 
-Revue du 2026-08-11 : code, tests (`npm test`), lint (`npm run lint`) et
-typecheck (`npx tsc --noEmit`) sont tous propres, aucun `TODO`/`FIXME`
-dans le code, et chaque module de `src/simulation` a un fichier de test
-dédié. Deux items concrets ont été identifiés en lisant le code (voir
-"Bugs connus" et "Features à ajouter" ci-dessous) ; aucun trou de
-couverture ni doc obsolète trouvé cette fois-ci.
+Revue du 2026-08-11 (2e passe) : code, tests (`npm test`, 236 tests),
+lint (`npm run lint`) et typecheck (`npx tsc --noEmit`) sont tous
+propres, aucun `TODO`/`FIXME` dans le code, et chaque module de
+`src/simulation` et `src/rendering` a un fichier de test dédié. Un bug
+concret a été identifié en lisant `SimulationEngine.applyCommand` (voir
+"Bugs connus" ci-dessous) ; aucun trou de couverture supplémentaire ni
+doc obsolète trouvé cette fois-ci (le `README.md` reste cohérent avec
+`src/app`).
 
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Bugs connus
+
+- [ ] `SimulationEngine.applyCommand` ignore l'état `paused`
+
+  `SimulationEngine.step` (`src/simulation/simulation-engine.ts:227`)
+  refuse bien d'avancer la physique tant que `this.state.paused` est
+  vrai. Mais `applyCommand` (même fichier, ligne 190) ne vérifie que
+  `isMissionActive()` et `countdown` — pas `paused`. Le vaisseau reste
+  donc pilotable pendant la pause : `SimulationScreen.tsx` (ligne 127)
+  appelle `engine.applyCommand(command, deltaSeconds)` à chaque frame
+  quel que soit l'état de pause (seul `engine.step(deltaSeconds)` est
+  effectivement un no-op), donc basculer le moteur (`SPACE`), changer le
+  throttle (`W`/`S`) ou tourner (`A`/`D`) fonctionne toujours pendant que
+  le jeu est en pause, alors que la position/vitesse restent gelées.
+  `setState(nextState)` étant appelé sans condition à chaque frame, le
+  HUD reflète immédiatement ces changements (throttle, moteur allumé,
+  cap) malgré la pause — incohérent avec l'intention du bouton
+  `Pause`/la touche `P` (`SimulationControls.tsx`, `ControlsPanel.tsx`),
+  qui documentent une pause complète du jeu.
+
+  Corriger `applyCommand` pour qu'il ne fasse rien tant que
+  `this.state.paused` est vrai (même garde que `step`). Ajouter un test
+  dans `tests/simulation-engine.test.ts` couvrant `toggleEngine`,
+  `throttleDelta` et `turnDelta` pendant la pause (aucun des trois ne
+  doit modifier `spacecraft`), en plus des tests déjà présents sur la
+  pause côté `step` (`does not advance simulationTime while paused`,
+  `does not record a trajectory point while paused`).
 
 - [x] La configuration de mission saisie dans `MissionSetup` est ignorée
   au lancement

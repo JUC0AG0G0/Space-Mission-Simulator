@@ -1323,3 +1323,18 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Adapter le zoom de la caméra au profil de mission actif
 - Branche/push: main (direct)
 - Coût estimé: 0.6724409000000001 USD
+
+## 2026-08-11T20-39-28-000Z — planning
+- Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
+- Détails : `npm test` (236 tests), `npm run lint` et `npx tsc --noEmit`
+  sont tous propres, aucun `TODO`/`FIXME` dans le code, chaque module de
+  `src/simulation`/`src/rendering` a un test dédié, et le `README.md`
+  reste cohérent avec `src/app`. En lisant `SimulationEngine`
+  (`src/simulation/simulation-engine.ts`), un bug concret a été trouvé :
+  `applyCommand` ne vérifie pas `this.state.paused` (contrairement à
+  `step`), donc le vaisseau reste pilotable (moteur, throttle, cap)
+  pendant que le jeu est en pause, et le HUD reflète ces changements en
+  temps réel via `setState` dans `SimulationScreen.tsx`. Ajouté comme
+  nouvel item dans "Bugs connus" de `.agent/backlog.md`, avec le fix
+  attendu et les tests à ajouter dans `tests/simulation-engine.test.ts`.
+- Branche/push: main (direct)
