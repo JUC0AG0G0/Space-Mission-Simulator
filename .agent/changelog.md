@@ -1120,3 +1120,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - `.agent/backlog.md` mis à jour : item "Ajouter un écran de sélection de
   fusée" coché, note de priorité en tête ajustée (seul "progression"
   reste à faire dans la section "Features à ajouter").
+
+## 2026-08-11T20-08-21-411Z — feature
+- Description: Ajouter un écran de sélection de fusée
+- Branche/push: main (direct)
+- Coût estimé: 1.6488388499999997 USD
