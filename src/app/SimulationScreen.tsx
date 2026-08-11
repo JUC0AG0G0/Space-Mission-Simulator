@@ -3,6 +3,7 @@ import type { GameState, SimulationCommand } from '../types/simulation';
 import { SimulationEngine, createInitialGameState } from '../simulation/simulation-engine';
 import type { MissionConfiguration } from '../simulation/missions/mission-configuration';
 import { buildMissionResultStats } from '../simulation/missions/mission-result';
+import { determineGamePhase } from './game-phase';
 import { renderScene } from '../rendering/canvas-renderer';
 import { Hud } from '../ui/Hud';
 import { CountdownOverlay } from '../ui/CountdownOverlay';
@@ -149,8 +150,8 @@ export function SimulationScreen({ missionConfiguration, onExit }: SimulationScr
     return () => cancelAnimationFrame(animationFrame);
   }, []);
 
-  const isMissionOver =
-    state.activeMission?.status === 'succeeded' || state.activeMission?.status === 'failed';
+  const gamePhase = determineGamePhase('simulation', state);
+  const isMissionOver = gamePhase === 'mission-complete' || gamePhase === 'mission-failed';
 
   if (isMissionOver) {
     return (

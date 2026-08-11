@@ -19,8 +19,8 @@ de priorité recommandé pour les prochaines exécutions de
 9. Sélection de fusée
 10. Progression
 
-(items 1 à 7 terminés — items restants dans l'ordre : machine à états
-complète, sélection de fusée, progression)
+(items 1 à 8 terminés — items restants dans l'ordre : sélection de fusée,
+progression)
 
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
@@ -325,30 +325,32 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   `tests/missions/mission-configuration.test.ts`,
   `tests/missions/mission.test.ts` et `tests/ui/MissionSetup.test.tsx`.
 
-- [ ] Séparer clairement les phases de jeu
+- [x] Séparer clairement les phases de jeu
 
-  Refactorer la gestion du cycle de vie de l'application afin d'avoir
-  une machine à états explicite.
-
-  États visés :
-
-  ```text
-  MAIN_MENU
-  MISSION_SETUP
-  COUNTDOWN
-  LAUNCH
-  FLIGHT
-  MISSION_COMPLETE
-  MISSION_FAILED
-  ```
-
-  Les transitions doivent être centralisées et testables.
-
-  Les composants React ne doivent pas décider eux-mêmes des transitions
-  complexes du jeu.
-
-  Ajouter des tests couvrant les transitions valides et les transitions
-  invalides.
+  Fait le 2026-08-11 : `src/app/game-phase.ts` expose désormais
+  `GamePhase` (`main-menu` | `mission-setup` | `pre-launch` | `launch` |
+  `flight` | `mission-complete` | `mission-failed`) et
+  `determineGamePhase(appPhase, gameState)`, qui combine la machine
+  d'écrans existante (`AppPhase`, `src/app/app-state.ts`) avec la phase
+  de vol dérivée (`FlightPhase`, `src/simulation/flight-phase.ts`) en un
+  seul point d'entrée testable ("what phase is the game in right now").
+  Note de nommage : le compte à rebours (`COUNTDOWN`, T-3..T-1/LIFTOFF)
+  reste une information d'affichage portée par `GameState.countdown`
+  plutôt qu'un état de haut niveau séparé — il se produit à l'intérieur
+  de `pre-launch` (cf. `determineFlightPhase`, déjà en place avant ce
+  run) ; `SimulationScreen` continue de lire `state.countdown` pour
+  choisir entre `CountdownOverlay` et `Hud`. `SimulationScreen.tsx`
+  n'a plus de logique ad hoc dupliquée (`activeMission?.status ===
+  'succeeded' || ...`) pour décider d'afficher l'écran de résultat : il
+  délègue à `determineGamePhase`. `AppPhase` (main-menu/mission-setup/
+  simulation) reste inchangé côté routage React (`App.tsx`) — il reste
+  la bonne granularité pour décider quel écran monter, l'engin de
+  simulation restant possédé par `SimulationScreen` sur toute la durée
+  des sous-phases de vol. Tests ajoutés dans
+  `tests/app/game-phase.test.ts` (les 7 phases, y compris le repli
+  `pre-launch` quand `gameState` est `null`) ; les transitions valides/
+  invalides au niveau écran restent couvertes par
+  `tests/app/app-state.test.ts` (déjà en place).
 
 - [ ] Ajouter un écran de sélection de fusée
 

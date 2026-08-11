@@ -1,5 +1,48 @@
 # Changelog agent
 
+## 2026-08-11T18-00-00Z — Séparer clairement les phases de jeu
+
+Tâche reçue : feature — "Séparer clairement les phases de jeu" (item 8 de
+`.agent/backlog.md`), pour centraliser la machine à états du jeu plutôt
+que de laisser les composants React décider eux-mêmes des transitions.
+
+- Ajouté `src/app/game-phase.ts` : `GamePhase` (`main-menu` |
+  `mission-setup` | `pre-launch` | `launch` | `flight` |
+  `mission-complete` | `mission-failed`) et
+  `determineGamePhase(appPhase, gameState)`, qui combine la machine
+  d'écrans déjà existante (`AppPhase`, `src/app/app-state.ts`) avec la
+  phase de vol déjà dérivée (`FlightPhase`,
+  `src/simulation/flight-phase.ts#determineFlightPhase`, en place depuis
+  l'item "vraie phase de lancement") en un seul point d'entrée pur et
+  testable. C'est désormais la seule source de vérité pour "dans quelle
+  phase le jeu est actuellement".
+- `src/app/SimulationScreen.tsx` n'a plus de logique ad hoc dupliquée
+  (`state.activeMission?.status === 'succeeded' || ... === 'failed'`)
+  pour décider d'afficher l'écran de résultat de mission : il délègue à
+  `determineGamePhase('simulation', state)`.
+- Choix de conception (documenté dans `game-phase.ts` et
+  `.agent/backlog.md`) : le compte à rebours (T-3..T-1/LIFTOFF) reste une
+  donnée d'affichage portée par `GameState.countdown` plutôt qu'un état
+  `GamePhase` séparé — il se produit à l'intérieur de `pre-launch`.
+  `SimulationScreen` continue donc de lire `state.countdown` directement
+  pour choisir entre `CountdownOverlay` et `Hud` (détail d'affichage
+  orthogonal à la phase de haut niveau). `AppPhase` reste inchangé côté
+  routage React dans `App.tsx` : il reste la bonne granularité pour
+  décider quel écran monter, l'engin de simulation restant possédé par
+  `SimulationScreen` sur toute la durée des sous-phases de vol (le
+  fusionner dans un unique état racine aurait nécessité de déplacer la
+  possession du moteur de simulation vers `App.tsx`, hors périmètre de
+  ce run).
+- Tests ajoutés : `tests/app/game-phase.test.ts` (les 7 phases, y compris
+  le repli sur `pre-launch` quand `gameState` est `null`). Les
+  transitions valides/invalides au niveau écran (main-menu ↔
+  mission-setup ↔ simulation) restaient déjà couvertes par
+  `tests/app/app-state.test.ts`, inchangé par ce run.
+- Vérifié : `npm test` (210 tests, dont 9 nouveaux), `npm run lint` et
+  `npx tsc --noEmit` passent sans erreur. Diff limité à
+  `src/app/game-phase.ts` (nouveau), `src/app/SimulationScreen.tsx`
+  (+3/-2 lignes) et `tests/app/game-phase.test.ts` (nouveau).
+
 ## 2026-08-11T17-00-00Z — Ajouter plusieurs profils de mission
 
 Tâche reçue : feature — "Ajouter plusieurs profils de mission" (item 7 de
