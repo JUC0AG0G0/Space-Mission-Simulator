@@ -877,3 +877,8 @@ Aucun changement de code dans ce run — tâche de planification uniquement.
   jsdom dans l'environnement de test actuel.
 - Branche/push: main (direct)
 - Coût estimé: n/a
+
+## 2026-08-11T16-29-02-450Z — feature
+- Description: Ajouter la sauvegarde de la configuration de mission
+- Branche/push: main (direct)
+- Coût estimé: 2.1650935000000002 USD
