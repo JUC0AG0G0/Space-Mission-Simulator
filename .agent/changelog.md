@@ -1992,3 +1992,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
   inconnu dans `evaluateMission`, puis le nouvel item ci-dessus. Aucun
   changement de code — item de planification pure.
 - Branche/push: main (non commité par l'agent)
+
+## 2026-08-11T22-41-40-887Z — planning
+- Description: Revue périodique planifiée : relis .agent/backlog.md, ajuste les priorités, et ajoute toute tâche manquante identifiée en lisant le code (TODOs, zones sans tests, doc obsolète).
+- Branche/push: main (direct)
+- Coût estimé: 0.8572356000000002 USD
