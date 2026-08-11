@@ -1255,3 +1255,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Pas de changement de code applicatif dans ce run (tâche de planning
   uniquement) ; seuls `.agent/backlog.md` et `.agent/changelog.md` sont
   modifiés.
+
+## 2026-08-11T20-26-17-050Z — planning
+- Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
+- Branche/push: main (direct)
+- Coût estimé: 1.22185425 USD
