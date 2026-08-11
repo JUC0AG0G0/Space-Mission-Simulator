@@ -882,3 +882,24 @@ Aucun changement de code dans ce run — tâche de planification uniquement.
 - Description: Ajouter la sauvegarde de la configuration de mission
 - Branche/push: main (direct)
 - Coût estimé: 2.1650935000000002 USD
+
+## 2026-08-11T16-40-00-000Z — planning
+- Description: Revue périodique planifiée : relis .agent/backlog.md,
+  ajuste les priorités, et ajoute toute tâche manquante identifiée en
+  lisant le code (TODOs, zones sans tests, doc obsolète). Vérifié :
+  aucun `TODO`/`FIXME`/`XXX` dans `src/` ; `npm test` (198 tests) et
+  `npm run lint` passent sans erreur. Relu `app-state.ts`,
+  `flight-phase.ts`, `mission.ts`, `mission-result.ts`,
+  `mission-configuration.ts`, `mission-save.ts`, `simulation-engine.ts`,
+  `SimulationScreen.tsx`, `ControlsPanel.tsx`, `MainMenu.tsx`,
+  `App.tsx` : cohérents entre eux, correctement testés (chaque module
+  `src/` a son fichier de test dédié sous `tests/`), README à jour
+  (table des contrôles alignée sur `ControlsPanel.tsx`, section
+  Architecture correcte). Aucune nouvelle tâche identifiée. L'ordre de
+  priorité en tête de `.agent/backlog.md` (items 7 à 10 restants :
+  plusieurs profils de mission, machine à états complète, sélection de
+  fusée, progression) correspond déjà à l'ordre des items non cochés
+  de la section "Features à ajouter" ; aucun réordonnancement
+  nécessaire. `.agent/backlog.md` inchangé.
+- Branche/push: main (direct)
+- Coût estimé: n/a
