@@ -1130,7 +1130,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   `npm test` (257 tests), `npm run lint` et `npx tsc --noEmit` restent
   propres.
 
-- [ ] `MissionResult` ne teste jamais le rendu d'un objectif non
+- [x] `MissionResult` ne teste jamais le rendu d'un objectif non
   complété
 
   Le fixture `makeStats` de `tests/ui/MissionResult.test.tsx:7-21` ne
@@ -1145,6 +1145,18 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   Ajouter un cas à un objectif `completed: false` dans `makeStats` (ou
   un nouveau test dédié) et vérifier la présence du marqueur `○` et
   l'absence de la classe `objective--done` sur cet élément.
+
+  Fait le 2026-08-12 : nouveau test "marks a not-yet-completed
+  objective distinctly from a completed one" dans
+  `tests/ui/MissionResult.test.tsx`, sur le même motif que le test
+  homonyme existant de `tests/ui/MissionPanel.test.tsx` — rend
+  `MissionResult` avec deux objectifs (`completed: false` et
+  `completed: true`) et vérifie via `getAllByRole('listitem')` que le
+  premier porte le marqueur `○` sans la classe `objective--done`, et le
+  second `✓` avec `objective--done`. `npm run coverage` confirme que
+  `src/ui/MissionResult.tsx` est désormais à 100 % de couverture
+  (lignes/branches/fonctions). `npm test` (258 tests), `npm run lint`
+  et `npx tsc --noEmit` restent propres.
 
 - [ ] `SimulationScreen.onKeyUp` (relâchement des touches continues
   WASD/flèches) n'est exercé par aucun test

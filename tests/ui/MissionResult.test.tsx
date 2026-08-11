@@ -71,4 +71,26 @@ describe('MissionResult', () => {
 
     expect(onReplay).toHaveBeenCalledTimes(1);
   });
+
+  it('marks a not-yet-completed objective distinctly from a completed one', () => {
+    render(
+      <MissionResult
+        stats={makeStats({
+          succeeded: false,
+          objectives: [
+            { id: 'reach-altitude', description: 'Reach target altitude', completed: false },
+            { id: 'hold-orbit', description: 'Hold orbital speed', completed: true },
+          ],
+        })}
+        onMenu={() => {}}
+        onReplay={() => {}}
+      />,
+    );
+    const items = screen.getAllByRole('listitem');
+
+    expect(items[0]).toHaveTextContent('○Reach target altitude');
+    expect(items[0]).not.toHaveClass('objective--done');
+    expect(items[1]).toHaveTextContent('✓Hold orbital speed');
+    expect(items[1]).toHaveClass('objective--done');
+  });
 });

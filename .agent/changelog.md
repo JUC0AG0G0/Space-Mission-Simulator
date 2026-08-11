@@ -1952,3 +1952,18 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Revue périodique planifiée : relis .agent/backlog.md, ajuste les priorités, et ajoute toute tâche manquante identifiée en lisant le code (TODOs, zones sans tests, doc obsolète).
 - Branche/push: main (direct)
 - Coût estimé: 0.8564209999999998 USD
+
+## 2026-08-12T01-00-00-000Z — test
+- Description: `MissionResult` ne teste jamais le rendu d'un objectif non complété
+- Détail : nouveau test "marks a not-yet-completed objective distinctly
+  from a completed one" dans `tests/ui/MissionResult.test.tsx`, sur le
+  même motif que le test homonyme de `tests/ui/MissionPanel.test.tsx` —
+  rend `MissionResult` avec un objectif `completed: false` et un
+  `completed: true`, vérifie via `getAllByRole('listitem')` le marqueur
+  `○` sans la classe `objective--done` pour le premier, et `✓` avec
+  `objective--done` pour le second. `npm run coverage` confirme que
+  `src/ui/MissionResult.tsx` passe à 100 % de couverture
+  (lignes/branches/fonctions). `npm test` (258 tests), `npm run lint`
+  et `npx tsc --noEmit` restent propres. Backlog mis à jour (item coché
+  sous "Tests manquants").
+- Branche/push: main (direct)
