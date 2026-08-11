@@ -1031,3 +1031,41 @@ Aucun changement de code dans ce run — tâche de planification uniquement.
 - Description: Séparer clairement les phases de jeu
 - Branche/push: main (direct)
 - Coût estimé: 1.3506648 USD
+
+## 2026-08-11T20-05-00Z — planning
+
+Revue périodique : relu `.agent/backlog.md` et l'état actuel du code après
+le run précédent ("Séparer clairement les phases de jeu").
+
+Vérifications effectuées :
+- `grep -rn "TODO\|FIXME\|XXX" src/` : aucun résultat.
+- `grep -rn "console\.\|eslint-disable\|@ts-ignore\|@ts-expect-error" src/` :
+  aucun résultat.
+- Comparaison exhaustive des 31 fichiers `src/**/*.{ts,tsx}` avec les 28
+  fichiers `tests/**/*.test.{ts,tsx}` : chaque module applicatif a un
+  fichier de test dédié (`src/app/main.tsx`, simple bootstrap Vite, est le
+  seul sans test, ce qui est normal). `src/simulation/spacecraft/engine.ts`
+  n'a pas de fichier dédié mais chacune de ses fonctions exportées
+  (`createEngine`, `toggleEngine`, `setThrottle`, `adjustThrottle`,
+  `currentThrustForce`, `computeFuelConsumed`) est directement exercée dans
+  `tests/spacecraft/spacecraft.test.ts` — pas un trou de couverture.
+- `npm test` (210 tests, 28 fichiers) et `npm run lint` passent sans
+  erreur.
+- Relu `src/app/SimulationScreen.tsx` : utilise bien
+  `determineGamePhase('simulation', state)` (`game-phase.ts`), aucune
+  logique de phase dupliquée n'a été laissée par le run précédent.
+- Relu `README.md` : section Architecture et table des contrôles toujours
+  à jour par rapport au code.
+- Relu `src/simulation/simulation-engine.ts` /
+  `src/simulation/missions/mission-configuration.ts` /
+  `src/ui/MissionSetup.tsx` : confirmé que la masse, le carburant et la
+  poussée du vaisseau restent des constantes codées en dur dans
+  `createInitialSpacecraft` (`simulation-engine.ts`), et que
+  `MissionConfiguration.spacecraftName` n'est qu'un champ texte libre —
+  ce qui confirme que l'item "Ajouter un écran de sélection de fusée" est
+  toujours le prochain item pertinent et correctement scopé (données de
+  fusée à extraire vers une configuration dédiée, pas encodées dans l'UI).
+
+Aucun TODO, trou de couverture ou doc obsolète identifié. `.agent/backlog.md`
+inchangé : l'ordre de priorité en tête du fichier (sélection de fusée,
+puis progression) reste correct et correspond à l'état réel du code.
