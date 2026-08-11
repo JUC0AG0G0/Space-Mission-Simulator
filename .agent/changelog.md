@@ -1366,3 +1366,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
 - Branche/push: main (direct)
 - Coût estimé: 0.6644841999999999 USD
+
+## 2026-08-11T20-39-53-782Z — bugfix
+- Description: `SimulationEngine.applyCommand` ignore l'état `paused`
+- Branche/push: main (direct)
+- Coût estimé: 0.5681726500000001 USD
