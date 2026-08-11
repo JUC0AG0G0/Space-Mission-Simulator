@@ -250,6 +250,18 @@ describe('SimulationEngine commands', () => {
     engine.applyCommand({ toggleEngine: true }, 0);
     expect(engine.getState().spacecraft.engine.active).toBe(false);
   });
+
+  it('ignores toggleEngine, throttleDelta, and turnDelta while paused', () => {
+    const engine = new SimulationEngine(createFlightReadyState());
+    engine.setPaused(true);
+    const spacecraftBefore = engine.getState().spacecraft;
+
+    engine.applyCommand({ toggleEngine: true }, 1);
+    engine.applyCommand({ throttleDelta: 1 }, 1);
+    engine.applyCommand({ turnDelta: 1 }, 1);
+
+    expect(engine.getState().spacecraft).toEqual(spacecraftBefore);
+  });
 });
 
 describe('SimulationEngine trajectory recording', () => {

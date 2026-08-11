@@ -188,7 +188,7 @@ export class SimulationEngine {
 
   /** Applies a single frame/tick's worth of player input to the ship. */
   applyCommand(command: SimulationCommand, deltaTime: number): void {
-    if (!this.isMissionActive() || this.state.countdown) {
+    if (this.state.paused || !this.isMissionActive() || this.state.countdown) {
       return;
     }
 

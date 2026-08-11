@@ -1,5 +1,28 @@
 # Changelog agent
 
+## 2026-08-11T22-45-00Z — Fix: `SimulationEngine.applyCommand` ignorait l'état `paused`
+
+Tâche reçue : bugfix — "`SimulationEngine.applyCommand` ignore l'état
+`paused`" (section "Bugs connus" de `.agent/backlog.md`).
+
+- `applyCommand` (`src/simulation/simulation-engine.ts:190`) ne
+  vérifiait que `isMissionActive()` et `countdown`, pas `this.state.paused`
+  — contrairement à `step` (même fichier, ligne 227). Le vaisseau restait
+  donc pilotable (moteur, throttle, cap) pendant la pause, et
+  `SimulationScreen.tsx` appelant `engine.applyCommand(...)` sans
+  condition à chaque frame, le HUD reflétait ces changements en temps
+  réel malgré la pause.
+- Ajouté la même garde `this.state.paused` en tête de `applyCommand`
+  qu'en tête de `step`, donc `toggleEngine`, `throttleDelta` et
+  `turnDelta` sont désormais des no-op tant que le jeu est en pause.
+- `tests/simulation-engine.test.ts` : nouveau test "ignores toggleEngine,
+  throttleDelta, and turnDelta while paused" dans le describe
+  `SimulationEngine commands`, qui applique les trois commandes pendant
+  la pause et vérifie que `spacecraft` reste inchangé.
+- `npm test` (237 tests), `npm run lint` et `npx tsc --noEmit` sont tous
+  propres après le changement.
+- Backlog mis à jour : l'item est coché dans `.agent/backlog.md`.
+
 ## 2026-08-11T22-40-00Z — Feature: zoom de la caméra adapté au profil de mission actif
 
 Tâche reçue : feature — "Adapter le zoom de la caméra au profil de mission

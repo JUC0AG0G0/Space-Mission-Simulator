@@ -25,31 +25,18 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Bugs connus
 
-- [ ] `SimulationEngine.applyCommand` ignore l'état `paused`
+- [x] `SimulationEngine.applyCommand` ignore l'état `paused`
 
-  `SimulationEngine.step` (`src/simulation/simulation-engine.ts:227`)
-  refuse bien d'avancer la physique tant que `this.state.paused` est
-  vrai. Mais `applyCommand` (même fichier, ligne 190) ne vérifie que
-  `isMissionActive()` et `countdown` — pas `paused`. Le vaisseau reste
-  donc pilotable pendant la pause : `SimulationScreen.tsx` (ligne 127)
-  appelle `engine.applyCommand(command, deltaSeconds)` à chaque frame
-  quel que soit l'état de pause (seul `engine.step(deltaSeconds)` est
-  effectivement un no-op), donc basculer le moteur (`SPACE`), changer le
-  throttle (`W`/`S`) ou tourner (`A`/`D`) fonctionne toujours pendant que
-  le jeu est en pause, alors que la position/vitesse restent gelées.
-  `setState(nextState)` étant appelé sans condition à chaque frame, le
-  HUD reflète immédiatement ces changements (throttle, moteur allumé,
-  cap) malgré la pause — incohérent avec l'intention du bouton
-  `Pause`/la touche `P` (`SimulationControls.tsx`, `ControlsPanel.tsx`),
-  qui documentent une pause complète du jeu.
-
-  Corriger `applyCommand` pour qu'il ne fasse rien tant que
-  `this.state.paused` est vrai (même garde que `step`). Ajouter un test
-  dans `tests/simulation-engine.test.ts` couvrant `toggleEngine`,
-  `throttleDelta` et `turnDelta` pendant la pause (aucun des trois ne
-  doit modifier `spacecraft`), en plus des tests déjà présents sur la
-  pause côté `step` (`does not advance simulationTime while paused`,
-  `does not record a trajectory point while paused`).
+  Fait le 2026-08-11 : `applyCommand` (`src/simulation/simulation-engine.ts:190`)
+  vérifie désormais `this.state.paused` en plus de `isMissionActive()`
+  et `countdown` (même garde que `step`), donc `toggleEngine`,
+  `throttleDelta` et `turnDelta` sont ignorés tant que le jeu est en
+  pause — le vaisseau ne bouge plus et le HUD ne change plus (throttle,
+  moteur, cap) pendant la pause. Test ajouté dans
+  `tests/simulation-engine.test.ts` ("ignores toggleEngine,
+  throttleDelta, and turnDelta while paused") : les trois commandes sont
+  appliquées pendant que `engine.setPaused(true)`, et l'état
+  `spacecraft` est vérifié inchangé.
 
 - [x] La configuration de mission saisie dans `MissionSetup` est ignorée
   au lancement
