@@ -1833,3 +1833,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: `createSpacecraft` construit son `Engine` inline au lieu d'appeler
 - Branche/push: main (direct)
 - Coût estimé: 0.6827004 USD
+
+## 2026-08-11T21-52-58-349Z — test
+- Description: La branche "trajectoire non liée" d'`isStrandedOutsideTargetBand`
+- Branche/push: main (direct)
+- Coût estimé: 0.7163230000000002 USD
