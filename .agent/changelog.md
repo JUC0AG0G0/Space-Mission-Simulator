@@ -1,5 +1,36 @@
 # Changelog agent
 
+## 2026-08-11T22-40-00Z — Feature: zoom de la caméra adapté au profil de mission actif
+
+Tâche reçue : feature — "Adapter le zoom de la caméra au profil de mission
+actif" (section "Features à ajouter" de `.agent/backlog.md`).
+
+- `buildCamera` (`src/rendering/canvas-renderer.ts`) calculait un
+  `viewRadius` fixe (`centralBody.radius * 2.6`), calibré pour l'unique
+  mission d'origine (100–400 km d'altitude). Avec "Mission 02 / Orbite
+  haute" (600–900 km), le vaisseau se retrouvait à ~96 % du rayon
+  visible, donc proche du bord du cadre.
+- `viewRadius` dépend désormais de l'altitude cible de la mission active :
+  `centralBody.radius + targetAltitude * ALTITUDE_VIEW_MARGIN`, où
+  `targetAltitude` vient de `state.activeMission?.successCriteria
+  .maxAltitude` (repli sur une constante `DEFAULT_TARGET_ALTITUDE =
+  400_000` si aucune mission n'est active, par ex. sur l'écran de
+  résultat). `ALTITUDE_VIEW_MARGIN = 2.4` a été choisi pour reproduire à
+  l'identique l'ancien calibrage sur la mission par défaut
+  (`600_000 + 400_000 * 2.4 === 600_000 * 2.6`) : aucun changement visuel
+  pour "Mission 01 / Orbite terrestre". Pour "Mission 02 / Orbite haute",
+  le vaisseau passe de ~96 % à ~54 % du rayon visible à l'altitude cible.
+  La caméra reste centrée sur le corps céleste (pas de suivi dynamique du
+  vaisseau — hors périmètre de cette tâche).
+- `tests/rendering/canvas-renderer.test.ts` : ajouté un test du repli
+  sans mission active, et un test comparant le zoom sur le profil
+  `high-orbit` à celui de la mission par défaut (zoom plus faible, donc
+  vue plus large) et vérifiant que le vaisseau reste sous 90 % du rayon
+  visible à l'altitude cible de ce profil.
+- `npm test` (236 tests), `npm run lint` et `npx tsc --noEmit` sont tous
+  propres après le changement.
+- Backlog mis à jour : l'item est coché dans `.agent/backlog.md`.
+
 ## 2026-08-11T22-34-00Z — Fix: HUD affichait l'id de mission au lieu du nom
 
 Tâche reçue : bugfix — "Le HUD de vol affiche un identifiant de mission

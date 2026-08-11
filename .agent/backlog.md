@@ -42,7 +42,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Features à ajouter
 
-- [ ] Adapter le zoom de la caméra au profil de mission actif
+- [x] Adapter le zoom de la caméra au profil de mission actif
 
   `buildCamera` (`src/rendering/canvas-renderer.ts:12`) calcule un
   `viewRadius` fixe (`centralBody.radius * 2.6`, soit environ 960 km
@@ -61,6 +61,25 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   existants. Ajouter/adapter les tests de `buildCamera`
   (`tests/rendering/canvas-renderer.test.ts`) pour couvrir un profil à
   plus haute altitude.
+
+  Fait le 2026-08-11 : `buildCamera` (`src/rendering/canvas-renderer.ts`)
+  calcule maintenant `viewRadius = centralBody.radius +
+  targetAltitude * ALTITUDE_VIEW_MARGIN`, où `targetAltitude` vient de
+  `state.activeMission?.successCriteria.maxAltitude` (repli sur une
+  constante `DEFAULT_TARGET_ALTITUDE = 400_000` quand il n'y a pas de
+  mission active, par ex. sur l'écran de résultat). `ALTITUDE_VIEW_MARGIN
+  = 2.4` a été choisi pour reproduire exactement l'ancien calibrage sur
+  la mission par défaut (`earth-orbit`, `maxAltitude = 400_000`) :
+  `600_000 + 400_000 * 2.4 === 600_000 * 2.6`, donc aucun changement
+  visuel pour la mission d'origine. Pour "Mission 02 / Orbite haute"
+  (`maxAltitude = 900_000`), le vaisseau passe de ~96 % à ~54 % du rayon
+  visible à l'altitude cible — largement dans le cadre. La caméra reste
+  centrée sur le corps céleste (pas de suivi dynamique du vaisseau,
+  hors périmètre de cette tâche). Tests dans
+  `tests/rendering/canvas-renderer.test.ts` : un test vérifie le repli
+  sans mission active, un autre compare le zoom sur `high-orbit` à celui
+  de la mission par défaut et vérifie que le vaisseau reste sous 90 % du
+  rayon visible à l'altitude cible du profil.
 
 - [x] Ajouter l'écran de préparation de mission
 
