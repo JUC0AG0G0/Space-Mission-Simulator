@@ -1318,3 +1318,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Le HUD de vol affiche un identifiant de mission constant au lieu
 - Branche/push: main (direct)
 - Coût estimé: 0.42465205 USD
+
+## 2026-08-11T20-35-05-218Z — feature
+- Description: Adapter le zoom de la caméra au profil de mission actif
+- Branche/push: main (direct)
+- Coût estimé: 0.6724409000000001 USD
