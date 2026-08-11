@@ -1,5 +1,20 @@
 # Changelog agent
 
+## 2026-08-12T00-05-00-000Z — feature
+- Description: `createSpacecraft` construit son `Engine` inline au lieu d'appeler `createEngine`
+- Détail : `createSpacecraft` (`src/simulation/spacecraft/spacecraft.ts`)
+  appelle désormais `createEngine({ thrust: params.engineThrust,
+  fuelConsumption: params.engineFuelConsumption })` au lieu de
+  construire l'objet `engine` à la main — même forme exacte (`active:
+  false, throttle: 1`), donc comportement observable inchangé.
+  `createEngine` (`src/simulation/spacecraft/engine.ts`) a maintenant un
+  appelant réel dans `src/`, ce qui clôt la question laissée en suspens
+  depuis la 6e/7e passe de revue du backlog. Aucun nouveau test
+  nécessaire (couverture déjà existante de `createEngine` et de
+  `createSpacecraft`) ; `npm test` (252 tests), `npm run lint` et `npx
+  tsc --noEmit` restent propres.
+- Branche/push: main (direct, non poussé par l'agent)
+
 ## 2026-08-11T23-45-00-000Z — planning
 - Description: Le backlog ne contenait plus de tâche actionnable ; analyse du repo et regénération d'un backlog priorisé
 - Détail : aucun changement de code. Repris `npm run coverage` (outillé

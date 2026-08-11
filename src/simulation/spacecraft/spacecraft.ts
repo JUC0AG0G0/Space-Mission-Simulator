@@ -1,5 +1,5 @@
 import type { Spacecraft, Vector2 } from '../../types/simulation';
-import { computeFuelConsumed, currentThrustForce } from './engine';
+import { computeFuelConsumed, createEngine, currentThrustForce } from './engine';
 import { fromAngle, scale } from '../physics/vectors';
 
 export function createSpacecraft(params: {
@@ -23,12 +23,10 @@ export function createSpacecraft(params: {
     dryMass: params.dryMass,
     fuelMass: params.fuelMass,
     maxFuel: params.maxFuel,
-    engine: {
+    engine: createEngine({
       thrust: params.engineThrust,
       fuelConsumption: params.engineFuelConsumption,
-      active: false,
-      throttle: 1,
-    },
+    }),
   };
 }
 

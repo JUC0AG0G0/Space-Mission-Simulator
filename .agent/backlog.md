@@ -369,7 +369,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Features à ajouter
 
-- [ ] `createSpacecraft` construit son `Engine` inline au lieu d'appeler
+- [x] `createSpacecraft` construit son `Engine` inline au lieu d'appeler
   `createEngine`
 
   Décidé le 2026-08-11 (voir "Divers / à clarifier" pour l'historique) :
@@ -398,6 +398,17 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   appelant dans `src/` pour l'instant — aucune action requise dessus, sa
   justification reste documentée ici et dans son propre commentaire de
   code.
+
+  Fait le 2026-08-11 : `createSpacecraft`
+  (`src/simulation/spacecraft/spacecraft.ts`) appelle désormais
+  `createEngine({ thrust: params.engineThrust, fuelConsumption:
+  params.engineFuelConsumption })` au lieu de construire l'objet
+  `engine` à la main — même forme exacte (`active: false, throttle:
+  1`), donc comportement observable inchangé. `createEngine` a
+  maintenant un appelant réel dans `src/`, ce qui clôt la question
+  laissée en suspens dans "Divers / à clarifier". Aucun nouveau test
+  nécessaire (couverture déjà existante) ; `npm test` (252 tests), `npm
+  run lint` et `npx tsc --noEmit` restent propres.
 
 - [x] La difficulté du profil de mission choisi n'apparaît pas sur
   l'écran de résumé de `MissionSetup`
