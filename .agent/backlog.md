@@ -203,6 +203,33 @@ règle "bug connu > trous de couverture de tests sur du code pur >
 gameplay/feature > polish" ci-dessus (aucun bug ni feature n'est
 actuellement en attente).
 
+Revue du 2026-08-12 (11e passe, planification périodique) : `npm test`
+(258 tests), `npm run lint` et `npx tsc --noEmit` sont propres, aucun
+`TODO`/`FIXME`/`XXX` dans `src/` ou `tests/`. L'item "Tests manquants"
+sur `MissionResult` (objectif non complété) noté comme prochaine
+priorité lors de la 10e passe a depuis été traité (voir l'entrée
+correspondante, cochée ci-dessous, et `.agent/changelog.md`) ; les deux
+priorités suivantes restent `SimulationScreen.onKeyUp` et l'`id`
+d'objectif inconnu dans `evaluateMission`. `npm run coverage` confirme
+97.67 % de lignes / 96.96 % de branches. Toutes les lignes non couvertes
+recoupent des items déjà suivis (`SimulationScreen.tsx:102-106,143-150`,
+`App.tsx:55,57`, `simulation-engine.ts:176-177`, `mission.ts:151`,
+`Hud.tsx:47`) — sauf une : `mission-save.ts:17-18`
+(`isMissionConfigurationShape`, garde `if (typeof value !== 'object' ||
+value === null)`) n'était pas encore documentée comme trou de
+couverture actionnable (une précédente tâche sur les échecs silencieux
+de `localStorage`, cf. l'item coché "Les branches d'échec silencieux de
+`localStorage`..." ci-dessous, l'avait explicitement laissée hors
+périmètre). `tests/persistence/mission-save.test.ts` couvre déjà une
+sauvegarde corrompue *syntaxiquement* (JSON invalide) et un objet JSON
+valide mais incomplet (`{ foo: 'bar' }`), mais aucun test ne couvre une
+valeur JSON *valide* qui n'est structurellement pas un objet (ex.
+`localStorage` contenant `"42"`, `"null"` ou `"[]"`, ce qui peut arriver
+si une version antérieure du jeu ou un script externe écrit une forme
+différente sous la même clé) — voir le nouvel item sous "Tests
+manquants". Aucun bug, doc obsolète ou incohérence README supplémentaire
+trouvé cette fois-ci.
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
@@ -1269,6 +1296,31 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   — attendu, ce sont respectivement des types purs et le point d'entrée
   Vite non exécuté par les tests). `npm test`, `npm run lint` et `npx
   tsc --noEmit` restent propres.
+
+- [ ] `isMissionConfigurationShape` n'est jamais testée avec une valeur
+  JSON valide mais structurellement non-objet
+
+  `isMissionConfigurationShape` (`src/simulation/persistence/
+  mission-save.ts:15-26`) a une garde `if (typeof value !== 'object' ||
+  value === null) { return false; }` (lignes 17-18, repérée par `npm run
+  coverage` comme non couverte) pour rejeter toute valeur qui n'est pas
+  un objet — par exemple si `localStorage` contient un JSON syntaxiquement
+  valide mais qui se désérialise en `42`, `"une chaîne"`, `null` ou
+  `[]` sous la clé `space-mission-simulator:saved-mission` (une version
+  antérieure du jeu ou un script externe qui aurait écrit une forme
+  différente sous la même clé, par exemple). `tests/persistence/
+  mission-save.test.ts` couvre déjà un JSON syntaxiquement invalide
+  (`'not valid json{'`, qui fait lever `JSON.parse` et est attrapé par
+  le `catch` de `loadSavedMission`) et un objet JSON valide mais
+  incomplet (`{ foo: 'bar' }`, qui échoue plus loin sur les `typeof
+  candidate.xxx === 'string'`) — mais aucun test n'exerce spécifiquement
+  cette garde amont pour une valeur JSON valide qui n'est pas un objet.
+
+  Ajouter un test dans `tests/persistence/mission-save.test.ts` :
+  `localStorage.setItem(STORAGE_KEY, JSON.stringify(42))` (ou `'null'`,
+  ou `'[]'`), puis vérifier que `loadSavedMission()` renvoie `null` sans
+  lever d'exception — même schéma que le test existant "returns null for
+  corrupted JSON in storage".
 
 ## Documentation
 

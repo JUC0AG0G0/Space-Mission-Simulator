@@ -1972,3 +1972,23 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: `MissionResult` ne teste jamais le rendu d'un objectif non
 - Branche/push: main (direct)
 - Coût estimé: 0.9207818 USD
+
+## 2026-08-12T02-00-00-000Z — planning
+- Description: Revue périodique planifiée : relis .agent/backlog.md, ajuste les priorités, et ajoute toute tâche manquante identifiée en lisant le code (TODOs, zones sans tests, doc obsolète).
+- Détail : `npm test` (258 tests), `npm run lint`, `npx tsc --noEmit` et
+  `npm run coverage` (97.67 % lignes / 96.96 % branches) confirmés
+  propres, aucun `TODO`/`FIXME`/`XXX` dans `src/`/`tests/`. Nouveau
+  trou de couverture identifié en lisant `isMissionConfigurationShape`
+  (`src/simulation/persistence/mission-save.ts:15-26`) : la garde
+  `typeof value !== 'object' || value === null` (lignes 17-18) n'est
+  exercée par aucun test — `tests/persistence/mission-save.test.ts`
+  couvre le JSON syntaxiquement invalide et l'objet JSON incomplet, mais
+  pas une valeur JSON valide non-objet (`42`, `null`, `[]`). Ajouté
+  comme nouvel item sous "Tests manquants" dans `.agent/backlog.md`,
+  avec une nouvelle synthèse de revue (11e passe). Aucun autre bug, trou
+  de couverture actionnable ou doc obsolète trouvé ; le `README.md`
+  reste cohérent avec `src/app`/`src/ui`. Les priorités restent, dans
+  l'ordre : `SimulationScreen.onKeyUp` non testé, puis l'`id` d'objectif
+  inconnu dans `evaluateMission`, puis le nouvel item ci-dessus. Aucun
+  changement de code — item de planification pure.
+- Branche/push: main (non commité par l'agent)
