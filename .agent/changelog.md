@@ -1809,3 +1809,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: `describeFailureCause` affiche une cause d'échec trompeuse quand
 - Branche/push: main (direct)
 - Coût estimé: 1.5923129999999999 USD
+
+## 2026-08-11T21-44-56-022Z — feature
+- Description: `createSpacecraft` construit son `Engine` inline au lieu d'appeler
+- Branche/push: main (direct)
+- Coût estimé: 0.6827004 USD
