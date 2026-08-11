@@ -205,6 +205,46 @@ describe('SimulationScreen', () => {
     applyCommandSpy.mockRestore();
   });
 
+  it('stops applying a continuous-movement command once the key is released', () => {
+    const frame = renderScreen();
+    clearCountdown(frame);
+
+    const applyCommandSpy = vi.spyOn(SimulationEngine.prototype, 'applyCommand');
+    applyCommandSpy.mockClear();
+
+    fireEvent.keyDown(window, { key: 'w' });
+    frame.advance(16);
+
+    expect(applyCommandSpy).toHaveBeenCalledTimes(1);
+    expect(applyCommandSpy.mock.calls[0][0].throttleDelta).toBe(1);
+
+    fireEvent.keyUp(window, { key: 'w' });
+    frame.advance(16);
+
+    expect(applyCommandSpy).toHaveBeenCalledTimes(2);
+    expect(applyCommandSpy.mock.calls[1][0].throttleDelta).toBe(0);
+
+    applyCommandSpy.mockRestore();
+  });
+
+  it('normalizes key case when releasing a continuous-movement key held with a different case', () => {
+    const frame = renderScreen();
+    clearCountdown(frame);
+
+    const applyCommandSpy = vi.spyOn(SimulationEngine.prototype, 'applyCommand');
+    applyCommandSpy.mockClear();
+
+    fireEvent.keyDown(window, { key: 'W' });
+    frame.advance(16);
+    expect(applyCommandSpy.mock.calls[0][0].throttleDelta).toBe(1);
+
+    fireEvent.keyUp(window, { key: 'W' });
+    frame.advance(16);
+    expect(applyCommandSpy.mock.calls[1][0].throttleDelta).toBe(0);
+
+    applyCommandSpy.mockRestore();
+  });
+
   it('shows the mission result screen once the mission fails, and returns to the menu from it', async () => {
     const user = userEvent.setup();
     const onExit = vi.fn();

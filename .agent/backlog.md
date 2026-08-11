@@ -1185,7 +1185,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   (lignes/branches/fonctions). `npm test` (258 tests), `npm run lint`
   et `npx tsc --noEmit` restent propres.
 
-- [ ] `SimulationScreen.onKeyUp` (relâchement des touches continues
+- [x] `SimulationScreen.onKeyUp` (relâchement des touches continues
   WASD/flèches) n'est exercé par aucun test
 
   `onKeyUp` (`src/app/SimulationScreen.tsx:101-106`) retire une touche
@@ -1212,6 +1212,25 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   côté throttle/état, puis relâcher la touche (`keyup`) et vérifier que
   l'effet cesse (le throttle ne continue plus d'augmenter aux frames
   suivantes).
+
+  Fait le 2026-08-12 : deux nouveaux tests dans
+  `tests/ui/SimulationScreen.test.tsx`, sur le même motif que le test
+  voisin "does not apply a continuous-movement command on keydown
+  itself" (espionnage de `SimulationEngine.prototype.applyCommand`) :
+  "stops applying a continuous-movement command once the key is
+  released" (`keydown 'w'` → `throttleDelta: 1` à la frame suivante,
+  puis `keyup 'w'` → `throttleDelta: 0` à la frame d'après) et
+  "normalizes key case when releasing a continuous-movement key held
+  with a different case" (`keydown`/`keyup` sur `'W'` majuscule,
+  vérifiant que `event.key.toLowerCase()` est bien appliqué côté
+  `onKeyUp` comme côté `onKeyDown`, sans quoi la touche resterait
+  "collée"). `npm run coverage` confirme que `onKeyUp`
+  (`src/app/SimulationScreen.tsx:101-106`) est désormais couvert — le
+  fichier passe de la ligne non couverte à 94.07 % de lignes (seules
+  les lignes 143-150, la boucle `requestAnimationFrame`/le
+  redimensionnement du canvas déjà jugées marginales, restent non
+  couvertes). `npm test` (260 tests), `npm run lint` et `npx tsc
+  --noEmit` restent propres.
 
 - [ ] La branche `id` d'objectif inconnu du `.map` d'`evaluateMission`
   n'est jamais exercée

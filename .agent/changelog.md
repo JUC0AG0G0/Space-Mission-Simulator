@@ -1,5 +1,21 @@
 # Changelog agent
 
+## 2026-08-12T02-30-00-000Z — test
+- Description: `SimulationScreen.onKeyUp` (relâchement des touches continues WASD/flèches) n'était exercé par aucun test
+- Détail : deux nouveaux tests dans `tests/ui/SimulationScreen.test.tsx`,
+  sur le motif déjà utilisé pour `onKeyDown` (espionnage de
+  `SimulationEngine.prototype.applyCommand`) : "stops applying a
+  continuous-movement command once the key is released" et "normalizes
+  key case when releasing a continuous-movement key held with a
+  different case" (vérifie que `event.key.toLowerCase()` est bien
+  appliqué côté `onKeyUp`, sans quoi une touche relâchée en majuscule
+  resterait "collée"). `npm test` (260 tests), `npm run lint`, `npx tsc
+  --noEmit` et `npm run coverage` (98.01 % lignes / 96.97 % branches,
+  en hausse depuis 97.67 %/96.96 %) confirmés propres. Item
+  correspondant coché dans `.agent/backlog.md`, avec note "Fait le
+  2026-08-12".
+- Branche/push: main (non commité par l'agent)
+
 ## 2026-08-12T00-40-00-000Z — test
 - Description: Les branches d'échec silencieux de `localStorage` n'étaient testées dans aucune des deux couches de persistance
 - Détail : trois nouveaux tests avec `vi.spyOn` sur l'objet `Storage`
