@@ -1,5 +1,30 @@
 # Changelog agent
 
+## 2026-08-12T00-35-00-000Z — planning
+- Description: Revue périodique du backlog (8e passe) — vérification de l'état du projet et recherche de nouveaux trous de couverture
+- Détail : aucun changement de code de production. `npm test` (253
+  tests), `npm run lint` et `npx tsc --noEmit` confirmés propres, et
+  recherche de `TODO`/`FIXME`/`XXX` dans `src/`/`tests/` (aucun
+  résultat). `npm run coverage` relancé (97.33 % lignes / 95.27 %
+  branches) : toutes les lignes non couvertes recoupent des items déjà
+  suivis dans le backlog ou des branches DOM/React déjà explicitement
+  jugées trop marginales lors de la 7e passe, sauf une — la clause
+  `return objective;` du `.map` d'`evaluateMission`
+  (`src/simulation/missions/mission.ts`) pour un `id` d'objectif inconnu
+  n'est exercée par aucun test, alors que `MissionObjective.id` est typé
+  `string` généraliste (pas une union limitée aux deux ids actuels). Il
+  s'agit de logique métier pure (pas de code défensif DOM), donc jugée
+  utile à couvrir : nouvel item ajouté sous "Tests manquants" dans
+  `.agent/backlog.md`. Aucun bug, doc obsolète ni feature manquante
+  trouvé cette fois-ci ; les trois items "Tests manquants" déjà ouverts
+  (moteur inactif de `computeFuelConsumed`, échecs silencieux de
+  `localStorage`, objectif non complété dans `MissionResult`) restent
+  prioritaires pour le prochain run, conformément à la règle de
+  priorisation du backlog (aucun bug ni feature en attente
+  actuellement). Note ajoutée en tête de `.agent/backlog.md`
+  ("Revue du 2026-08-11 (8e passe...)").
+- Branche/push: main (non commité par l'agent)
+
 ## 2026-08-12T00-20-00-000Z — test
 - Description: La branche "trajectoire non liée" d'`isStrandedOutsideTargetBand` n'était pas exercée par les tests
 - Détail : nouveau test "does not fail a fuel-depleted spacecraft on an

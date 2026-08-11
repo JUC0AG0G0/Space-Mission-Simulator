@@ -112,6 +112,35 @@ deux sont conservées, et `createEngine` doit être câblée dans
 `createSpacecraft` pour cesser d'être un export sans appelant (voir le
 nouvel item "Features à ajouter" ci-dessous).
 
+Revue du 2026-08-11 (8e passe, planification périodique) : `npm test`
+(253 tests), `npm run lint` et `npx tsc --noEmit` sont propres, aucun
+`TODO`/`FIXME`/`XXX` dans `src/` ou `tests/`. `npm run coverage`
+confirme une couverture globale de 97.33 % de lignes / 95.27 % de
+branches ; toutes les lignes non couvertes recoupent soit des items déjà
+suivis (`engine.ts:44-45`, `mission-save.ts:34,65`,
+`mission-progress.ts:49`, `MissionResult.tsx:56-58`), soit des branches
+déjà explicitement jugées trop marginales lors de la 7e passe
+(`Hud.tsx:47`, la boucle `requestAnimationFrame`/le redimensionnement du
+canvas et la branche clavier `'r'` dans `SimulationScreen.tsx`, le
+`default`/repli défensif de `App.tsx` sur un `AppPhase`/
+`missionConfiguration` déjà garantis exhaustifs par `app-state.ts`).
+Une branche non suivie jusqu'ici a été identifiée en lisant
+`evaluateMission` en détail (`src/simulation/missions/mission.ts`) :
+la clause `return objective;` du `.map` qui recalcule les objectifs
+(pour un `id` autre que `'reach-altitude'`/`'hold-orbit'`) n'est
+exercée par aucun test — contrairement aux branches DOM/React
+ci-dessus, il s'agit de logique métier pure dans un module déjà
+fortement testé, donc jugée utile à couvrir plutôt que marginale (voir
+le nouvel item sous "Tests manquants"). Aucun autre bug, trou de
+couverture ou doc obsolète trouvé cette fois-ci — le `README.md` reste
+cohérent avec `src/app`/`src/ui`, et les trois items "Tests manquants"
+déjà ouverts (moteur inactif de `computeFuelConsumed`, échecs
+silencieux de `localStorage`, objectif non complété dans
+`MissionResult`) restent les prochains items à traiter en priorité,
+conformément à la règle "bug connu > trous de couverture de tests sur
+du code pur > gameplay/feature > polish" ci-dessus (aucun bug ni
+feature n'est actuellement en attente).
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
@@ -1023,6 +1052,31 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   Ajouter un cas à un objectif `completed: false` dans `makeStats` (ou
   un nouveau test dédié) et vérifier la présence du marqueur `○` et
   l'absence de la classe `objective--done` sur cet élément.
+
+- [ ] La branche `id` d'objectif inconnu du `.map` d'`evaluateMission`
+  n'est jamais exercée
+
+  Dans `evaluateMission` (`src/simulation/missions/mission.ts`), le
+  `mission.objectives.map(...)` qui recalcule la complétion de chaque
+  objectif ne connaît que deux `id` : `'reach-altitude'` et
+  `'hold-orbit'` ; toute autre valeur tombe dans la clause finale
+  `return objective;` (repérée par `npm run coverage` comme non
+  couverte). `MissionObjective.id` (`src/types/simulation.ts`) est typé
+  `string` généraliste plutôt qu'une union littérale des deux ids
+  connus, et `createOrbitMission` est le seul point de construction de
+  `Mission` dans `src/` — donc cette branche est actuellement morte en
+  pratique, mais reste atteignable pour tout futur troisième type
+  d'objectif (voir les idées de missions futures en fin de fichier) sans
+  qu'aucun test ne vérifie qu'un objectif de type inconnu traverse
+  `evaluateMission` inchangé plutôt que de faire planter le calcul de
+  `allCompleted`.
+
+  Ajouter un test dans `tests/missions/mission.test.ts` : construire une
+  `Mission` (via `createOrbitMission` puis en ajoutant un objectif
+  `{ id: 'unknown-objective', description: '...', completed: false }`
+  au tableau `objectives`) et vérifier que `evaluateMission` renvoie cet
+  objectif tel quel (même `completed: false`) dans le résultat, sans
+  lever ni affecter le statut des deux objectifs connus.
 
 - [x] `src/app/SimulationScreen.tsx` n'a aucun test dédié
 
