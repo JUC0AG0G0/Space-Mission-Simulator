@@ -978,3 +978,8 @@ Aucun changement de code dans ce run — tâche de planification uniquement.
   `.agent/backlog.md` inchangé.
 - Branche/push: main (direct)
 - Coût estimé: n/a
+
+## 2026-08-11T16-51-50-556Z — planning
+- Description: Revue périodique planifiée : relis .agent/backlog.md, ajuste les priorités, et ajoute toute tâche manquante identifiée en lisant le code (TODOs, zones sans tests, doc obsolète).
+- Branche/push: main (direct)
+- Coût estimé: 0.6560814999999999 USD
