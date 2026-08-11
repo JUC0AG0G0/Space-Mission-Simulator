@@ -1728,3 +1728,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: La difficulté du profil de mission choisi n'apparaît pas sur
 - Branche/push: main (direct)
 - Coût estimé: 0.565966 USD
+
+## 2026-08-11T21-32-57-493Z — test
+- Description: Aucun outillage de couverture de tests n'est configuré
+- Branche/push: main (direct)
+- Coût estimé: 0.8684414999999999 USD
