@@ -54,6 +54,14 @@ describe('mission-progress', () => {
     expect(loadCompletedMissionIds()).toEqual([]);
   });
 
+  it('does not throw when localStorage.setItem fails (quota, private mode, ...)', () => {
+    vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError');
+    });
+
+    expect(() => markMissionCompleted('earth-orbit')).not.toThrow();
+  });
+
   describe('buildMissionProgress', () => {
     it('lists every available mission profile as not completed by default', () => {
       const progress = buildMissionProgress();

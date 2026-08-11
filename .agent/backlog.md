@@ -1053,7 +1053,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   test` (254 tests), `npm run lint` et `npx tsc --noEmit` restent
   propres.
 
-- [ ] Les branches d'échec silencieux de `localStorage` ne sont testées
+- [x] Les branches d'échec silencieux de `localStorage` ne sont testées
   dans aucune des deux couches de persistance
 
   `saveMission`/`clearSavedMission` (`src/simulation/persistence/
@@ -1077,6 +1077,26 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   `createMemoryStorage`, ou un stub dédié), et vérifier que l'appel ne
   lève pas d'exception (`expect(() => saveMission(...)).not.toThrow()`,
   etc.).
+
+  Fait le 2026-08-12 : trois nouveaux tests utilisant `vi.spyOn` sur
+  l'objet `Storage` renvoyé par `createMemoryStorage` (stubbé en
+  `localStorage` global via `vi.stubGlobal` dans le `beforeEach`
+  existant) pour faire lever `setItem`/`removeItem`. Dans
+  `tests/persistence/mission-save.test.ts` : "does not throw when
+  localStorage.setItem fails (quota, private mode, ...)" pour
+  `saveMission`, et "does not throw when localStorage.removeItem fails"
+  pour `clearSavedMission`. Dans `tests/progression/
+  mission-progress.test.ts` : "does not throw when localStorage.setItem
+  fails (quota, private mode, ...)" pour `markMissionCompleted`. `npm
+  run coverage` confirme que les trois blocs `catch` visés
+  (`mission-save.ts:34,65`, `mission-progress.ts:49`) sont désormais
+  couverts — `mission-progress.ts` est à 100 % de couverture ;
+  `mission-save.ts` reste à 95 % de lignes (lignes 17-18, une garde de
+  forme dans `isMissionConfigurationShape` déjà exercée indirectement
+  mais pas isolée par un test dédié — hors périmètre de cette tâche,
+  qui ciblait spécifiquement les échecs silencieux de `localStorage`).
+  `npm test` (257 tests), `npm run lint` et `npx tsc --noEmit` restent
+  propres.
 
 - [ ] `MissionResult` ne teste jamais le rendu d'un objectif non
   complété

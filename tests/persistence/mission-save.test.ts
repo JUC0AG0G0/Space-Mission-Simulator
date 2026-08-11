@@ -66,4 +66,21 @@ describe('mission-save', () => {
 
     expect(loadSavedMission()).toBeNull();
   });
+
+  it('does not throw when localStorage.setItem fails (quota, private mode, ...)', () => {
+    vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError');
+    });
+
+    expect(() => saveMission(createDefaultMissionConfiguration())).not.toThrow();
+  });
+
+  it('does not throw when localStorage.removeItem fails', () => {
+    saveMission(createDefaultMissionConfiguration());
+    vi.spyOn(localStorage, 'removeItem').mockImplementation(() => {
+      throw new Error('storage unavailable');
+    });
+
+    expect(() => clearSavedMission()).not.toThrow();
+  });
 });

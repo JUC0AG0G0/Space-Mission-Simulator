@@ -1,5 +1,21 @@
 # Changelog agent
 
+## 2026-08-12T00-40-00-000Z — test
+- Description: Les branches d'échec silencieux de `localStorage` n'étaient testées dans aucune des deux couches de persistance
+- Détail : trois nouveaux tests avec `vi.spyOn` sur l'objet `Storage`
+  (stub `createMemoryStorage`) pour faire lever `setItem`/`removeItem` :
+  "does not throw when localStorage.setItem fails" pour `saveMission`
+  et "does not throw when localStorage.removeItem fails" pour
+  `clearSavedMission` (`tests/persistence/mission-save.test.ts`), et
+  "does not throw when localStorage.setItem fails" pour
+  `markMissionCompleted` (`tests/progression/mission-progress.test.ts`).
+  `npm run coverage` confirme que les blocs `catch` visés
+  (`mission-save.ts:34,65`, `mission-progress.ts:49`) sont désormais
+  couverts (`mission-progress.ts` à 100 %). `npm test` (257 tests),
+  `npm run lint` et `npx tsc --noEmit` restent propres. Item coché sous
+  "Tests manquants" dans `.agent/backlog.md`.
+- Branche/push: main (non commité par l'agent)
+
 ## 2026-08-12T00-15-00-000Z — planning
 - Description: Revue périodique planifiée : relis .agent/backlog.md, ajuste les priorités, et ajoute toute tâche manquante identifiée en lisant le code.
 - Détail : `npm test` (254 tests), `npm run lint` et `npx tsc --noEmit`
