@@ -1338,3 +1338,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
   nouvel item dans "Bugs connus" de `.agent/backlog.md`, avec le fix
   attendu et les tests à ajouter dans `tests/simulation-engine.test.ts`.
 - Branche/push: main (direct)
+
+## 2026-08-11T20-37-56-193Z — planning
+- Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
+- Branche/push: main (direct)
+- Coût estimé: 0.6644841999999999 USD
