@@ -1,5 +1,24 @@
 # Changelog agent
 
+## 2026-08-11T21-45-00-000Z — feature
+- Description: Le sélecteur "Mission profile" de `MissionSetup` affichait la difficulté brute (`easy`/`medium`/`hard`) au lieu d'un libellé lisible
+- Détail : Nouvelle map `MISSION_DIFFICULTY_LABELS: Record<
+  MissionDifficulty, string>` exportée par
+  `src/simulation/missions/mission-configuration.ts` (`easy` → `'Easy'`,
+  `medium` → `'Medium'`, `hard` → `'Hard'`). `src/ui/MissionSetup.tsx`
+  utilise désormais `MISSION_DIFFICULTY_LABELS[profile.difficulty]` au
+  lieu de `profile.difficulty` brut dans le texte de chaque `<option>`
+  du sélecteur "Mission profile" — le sélecteur affiche donc "Mission
+  02 — High orbit (Medium)" au lieu de "(medium)". Aucun autre
+  changement de comportement (aucun impact sur `isValidMissionConfiguration`,
+  la persistance ou le moteur de mission, qui continuent d'utiliser la
+  valeur brute de l'union en interne). Test ajouté dans
+  `tests/ui/MissionSetup.test.tsx` ("shows capitalized difficulty
+  labels instead of the raw union value") : vérifie le texte complet
+  des trois `<option>`. `npm test` (248 tests), `npm run lint` et
+  `npx tsc --noEmit` propres.
+- Branche/push: main (direct)
+
 ## 2026-08-11T21-30-00-000Z — planning
 - Description: Le backlog ne contenait plus de tâche actionnable (bug/feature/test/doc) — regénération après analyse du repo
 - Détail : `npm test` (247 tests), `npm run lint` et `npx tsc --noEmit`

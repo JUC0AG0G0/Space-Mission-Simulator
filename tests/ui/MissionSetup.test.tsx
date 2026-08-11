@@ -85,6 +85,21 @@ describe('MissionSetup', () => {
     expect(screen.getByText('Reach a stable Earth orbit')).toBeInTheDocument();
   });
 
+  it('shows capitalized difficulty labels instead of the raw union value', () => {
+    render(<MissionSetup onBack={() => {}} onLaunch={() => {}} />);
+
+    const select = screen.getByLabelText('Mission profile');
+    const optionLabels = Array.from(select.querySelectorAll('option')).map(
+      (option) => option.textContent,
+    );
+
+    expect(optionLabels).toEqual([
+      'Mission 01 — Earth orbit (Easy)',
+      'Mission 02 — High orbit (Medium)',
+      'Mission 03 — Fast orbit (Hard)',
+    ]);
+  });
+
   it('reflects the selected mission profile in the summary', async () => {
     const user = userEvent.setup();
     render(<MissionSetup onBack={() => {}} onLaunch={() => {}} />);

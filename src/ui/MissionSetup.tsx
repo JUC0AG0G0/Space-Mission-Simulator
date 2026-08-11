@@ -4,6 +4,7 @@ import {
   createDefaultMissionConfiguration,
   findMissionProfile,
   isValidMissionConfiguration,
+  MISSION_DIFFICULTY_LABELS,
   type MissionConfiguration,
 } from '../simulation/missions/mission-configuration';
 import {
@@ -82,7 +83,7 @@ export function MissionSetup({ onBack, onLaunch }: MissionSetupProps) {
             {AVAILABLE_MISSION_PROFILES.map((profile) => (
               <option key={profile.id} value={profile.id}>
                 {profile.name} — {profile.destinationName} (
-                {profile.difficulty})
+                {MISSION_DIFFICULTY_LABELS[profile.difficulty]})
               </option>
             ))}
           </select>

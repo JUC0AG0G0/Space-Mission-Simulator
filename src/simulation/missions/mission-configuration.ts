@@ -16,6 +16,17 @@ export interface MissionConfiguration {
 export type MissionDifficulty = 'easy' | 'medium' | 'hard';
 
 /**
+ * Human-readable labels for `MissionDifficulty`, used anywhere the value is
+ * shown to the player (the raw union value is lowercase and not meant for
+ * display).
+ */
+export const MISSION_DIFFICULTY_LABELS: Record<MissionDifficulty, string> = {
+  easy: 'Easy',
+  medium: 'Medium',
+  hard: 'Hard',
+};
+
+/**
  * A predefined mission the player can pick in `MissionSetup`. Bundles the
  * destination, objective, and success parameters together so the
  * simulation engine (`src/simulation/missions/mission.ts`) never has to

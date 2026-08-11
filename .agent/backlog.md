@@ -660,7 +660,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   ✓/🔒) et `tests/ui/SimulationScreen.test.tsx` (enregistrement au
   succès de la mission).
 
-- [ ] Le sélecteur "Mission profile" de `MissionSetup` affiche la
+- [x] Le sélecteur "Mission profile" de `MissionSetup` affiche la
   difficulté brute (`easy`/`medium`/`hard`) au lieu d'un libellé lisible
 
   `src/ui/MissionSetup.tsx:82-87` construit le texte de chaque `<option>`
@@ -683,6 +683,19 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   `profile.difficulty` brut. Adapter `tests/ui/MissionSetup.test.tsx`
   pour vérifier que le texte des options contient le libellé capitalisé
   et non la valeur brute de l'union.
+
+  Fait le 2026-08-11 : nouvelle map `MISSION_DIFFICULTY_LABELS: Record<
+  MissionDifficulty, string>` exportée par
+  `src/simulation/missions/mission-configuration.ts`, juste après le
+  type `MissionDifficulty` (`easy` → `'Easy'`, `medium` → `'Medium'`,
+  `hard` → `'Hard'`). `MissionSetup.tsx` utilise désormais
+  `MISSION_DIFFICULTY_LABELS[profile.difficulty]` au lieu de
+  `profile.difficulty` brut dans le texte de chaque `<option>` du
+  sélecteur "Mission profile" — aucun autre changement d'affichage.
+  Test ajouté dans `tests/ui/MissionSetup.test.tsx` ("shows capitalized
+  difficulty labels instead of the raw union value") : vérifie le texte
+  complet des trois `<option>` ("Mission 01 — Earth orbit (Easy)",
+  etc.), donc casserait si `profile.difficulty` brut était réintroduit.
 
 ## Tests manquants
 
