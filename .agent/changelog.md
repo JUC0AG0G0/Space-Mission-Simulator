@@ -1125,3 +1125,32 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Ajouter un écran de sélection de fusée
 - Branche/push: main (direct)
 - Coût estimé: 1.6488388499999997 USD
+
+## 2026-08-11T20-15-58Z — planning review
+- Description: Revue périodique planifiée : relis .agent/backlog.md, ajuste
+  les priorités, et ajoute toute tâche manquante identifiée en lisant le
+  code (TODOs, zones sans tests, doc obsolète).
+- Vérifié : aucun `TODO`/`FIXME`/`XXX`/`HACK` dans `src/` ; chaque fichier
+  de `src/` (y compris `rocket-models.ts` et `game-phase.ts`, ajoutés
+  récemment) a un fichier de test correspondant sous `tests/` — 29
+  fichiers de test, 221 tests. `npm test` et `npm run lint` passent sans
+  erreur.
+- Relu en détail (au-delà d'un simple grep) : `app-state.ts`/`App.tsx`
+  (routage écran + persistance), `game-phase.ts`/`flight-phase.ts`
+  (dérivation de phase, y compris le repli `pre-launch` sans
+  `gameState`), `mission.ts`/`mission-result.ts` (seule cause d'échec
+  actuelle du moteur : crash sous `CRASH_ALTITUDE` ; `describeFailureCause`
+  déduit ensuite "Fuel depleted" vs "Spacecraft crashed" du niveau de
+  carburant au moment du crash — cohérent avec la physique à 2 corps
+  actuelle, aucune fusée ne peut rester indéfiniment active hors de la
+  plage cible sans finir par retomber), `mission-configuration.ts` et
+  `mission-save.ts` (validation/persistance toujours en phase avec les
+  champs `missionProfileId`/`rocketModelId` actuels), `ControlsPanel.tsx`
+  vs les touches réellement gérées dans `SimulationScreen.tsx` (identiques).
+  Aucune incohérence trouvée.
+- README (section Architecture, table des contrôles) toujours à jour par
+  rapport au code.
+- Conclusion : rien à corriger. `.agent/backlog.md` inchangé — l'ordre de
+  priorité (seul "Ajouter un système de progression" reste dans
+  "Features à ajouter", items 1 à 9 déjà terminés) reste correct, aucun
+  nouveau bug, trou de couverture ou doc obsolète identifié cette fois-ci.
