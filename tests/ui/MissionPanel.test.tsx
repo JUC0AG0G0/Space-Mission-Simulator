@@ -15,6 +15,7 @@ function makeMission(overrides: Partial<Mission> = {}): Mission {
     ],
     status: 'active',
     successCriteria: DEFAULT_ORBIT_SUCCESS_CRITERIA,
+    failureReason: null,
     ...overrides,
   };
 }

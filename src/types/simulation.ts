@@ -80,6 +80,15 @@ export interface OrbitSuccessCriteria {
   holdDurationSeconds: number;
 }
 
+/**
+ * Why a mission's `status` became `'failed'`. `null` while the mission is
+ * active or succeeded. Carried on the `Mission` itself, set at the moment
+ * `evaluateMission` fails it, so the result screen doesn't have to
+ * re-derive *which* failure branch fired from unrelated state (see
+ * `describeFailureCause` in `src/simulation/missions/mission-result.ts`).
+ */
+export type MissionFailureReason = 'crashed' | 'fuel-depleted';
+
 export interface Mission {
   id: string;
   name: string;
@@ -87,6 +96,7 @@ export interface Mission {
   objectives: MissionObjective[];
   status: MissionStatus;
   successCriteria: OrbitSuccessCriteria;
+  failureReason: MissionFailureReason | null;
 }
 
 export interface Countdown {

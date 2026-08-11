@@ -223,6 +223,7 @@ describe('SimulationScreen', () => {
         status: 'failed',
         objectives: [],
         successCriteria: DEFAULT_ORBIT_SUCCESS_CRITERIA,
+        failureReason: 'crashed',
       },
     };
     const getStateSpy = vi
@@ -253,6 +254,7 @@ describe('SimulationScreen', () => {
         status: 'succeeded',
         objectives: [],
         successCriteria: DEFAULT_ORBIT_SUCCESS_CRITERIA,
+        failureReason: null,
       },
     };
     const getStateSpy = vi
@@ -285,6 +287,7 @@ describe('SimulationScreen', () => {
         status: 'succeeded',
         objectives: [],
         successCriteria: DEFAULT_ORBIT_SUCCESS_CRITERIA,
+        failureReason: null,
       },
     };
     const getStateSpy = vi

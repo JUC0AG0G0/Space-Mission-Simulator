@@ -13,7 +13,13 @@ export interface MissionResultStats {
 }
 
 function describeFailureCause(state: GameState): string {
-  return state.spacecraft.fuelMass <= 0 ? 'Fuel depleted' : 'Spacecraft crashed';
+  switch (state.activeMission?.failureReason) {
+    case 'fuel-depleted':
+      return 'Fuel depleted';
+    case 'crashed':
+    default:
+      return 'Spacecraft crashed';
+  }
 }
 
 /**

@@ -21,6 +21,7 @@ describe('buildMissionResultStats', () => {
         status: 'succeeded',
         objectives: [{ id: 'reach-altitude', description: 'Reach altitude', completed: true }],
         successCriteria: DEFAULT_ORBIT_SUCCESS_CRITERIA,
+        failureReason: null,
       },
     });
 
@@ -36,7 +37,7 @@ describe('buildMissionResultStats', () => {
     expect(stats.objectives).toEqual(state.activeMission?.objectives);
   });
 
-  it('reports "Fuel depleted" when the mission failed with no fuel left', () => {
+  it('reports "Fuel depleted" when the mission failed stranded on an out-of-band orbit with no fuel', () => {
     const state = baseState({
       spacecraft: { ...createInitialGameState().spacecraft, fuelMass: 0 },
       activeMission: {
@@ -46,6 +47,7 @@ describe('buildMissionResultStats', () => {
         status: 'failed',
         objectives: [],
         successCriteria: DEFAULT_ORBIT_SUCCESS_CRITERIA,
+        failureReason: 'fuel-depleted',
       },
     });
 
@@ -55,7 +57,7 @@ describe('buildMissionResultStats', () => {
     expect(stats.failureCause).toBe('Fuel depleted');
   });
 
-  it('reports "Spacecraft crashed" when the mission failed with fuel remaining', () => {
+  it('reports "Spacecraft crashed" when the mission failed on ground impact with fuel remaining', () => {
     const state = baseState({
       spacecraft: { ...createInitialGameState().spacecraft, fuelMass: 500 },
       activeMission: {
@@ -65,6 +67,30 @@ describe('buildMissionResultStats', () => {
         status: 'failed',
         objectives: [],
         successCriteria: DEFAULT_ORBIT_SUCCESS_CRITERIA,
+        failureReason: 'crashed',
+      },
+    });
+
+    const stats = buildMissionResultStats(state);
+
+    expect(stats.failureCause).toBe('Spacecraft crashed');
+  });
+
+  it('reports "Spacecraft crashed", not "Fuel depleted", when a fuel-less spacecraft crashes on the ground', () => {
+    // Regression test: a spacecraft that ran out of fuel mid-flight and then
+    // fell back to the ground has fuelMass 0 *and* failureReason 'crashed'
+    // — the ground impact, not the fuel exhaustion, is what ended the
+    // mission, so the displayed cause must reflect that.
+    const state = baseState({
+      spacecraft: { ...createInitialGameState().spacecraft, fuelMass: 0 },
+      activeMission: {
+        id: 'ORBIT-01',
+        name: 'Mission 01',
+        description: 'Reach orbit.',
+        status: 'failed',
+        objectives: [],
+        successCriteria: DEFAULT_ORBIT_SUCCESS_CRITERIA,
+        failureReason: 'crashed',
       },
     });
 

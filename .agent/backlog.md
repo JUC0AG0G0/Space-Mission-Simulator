@@ -118,7 +118,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Bugs connus
 
-- [ ] `describeFailureCause` affiche une cause d'échec trompeuse quand
+- [x] `describeFailureCause` affiche une cause d'échec trompeuse quand
   un vaisseau à court de carburant s'écrase au sol
 
   `describeFailureCause` (`src/simulation/missions/mission-result.ts:15-17`)
@@ -151,6 +151,29 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   `tests/missions/mission-result.test.ts` vérifiant que
   `buildMissionResultStats` reporte bien "Spacecraft crashed" (et non
   "Fuel depleted") pour ce cas.
+
+  Fait le 2026-08-11 : nouveau champ `failureReason: 'crashed' |
+  'fuel-depleted' | null` sur `Mission`
+  (`src/types/simulation.ts`), renseigné directement par
+  `evaluateMission` (`src/simulation/missions/mission.ts`) au moment où
+  elle bascule `status` à `'failed'` — `'crashed'` sur la branche
+  `altitude < CRASH_ALTITUDE`, `'fuel-depleted'` sur la branche
+  "stranded outside target band", `null` sinon (préservé tel quel une
+  fois la mission déjà non-active). `describeFailureCause`
+  (`src/simulation/missions/mission-result.ts`) lit désormais ce champ
+  au lieu de re-dériver la cause depuis `spacecraft.fuelMass`, donc un
+  vaisseau à court de carburant qui retombe et s'écrase affiche
+  correctement "Spacecraft crashed". Tests ajoutés dans
+  `tests/missions/mission.test.ts` ("tags a ground impact as a crash
+  even with the fuel tank already empty", crash avec `fuelMass: 0`) et
+  dans `tests/missions/mission-result.test.ts` ("reports 'Spacecraft
+  crashed', not 'Fuel depleted', when a fuel-less spacecraft crashes on
+  the ground"), plus des assertions sur `failureReason` ajoutées aux
+  tests existants de crash/stranding. Les littéraux `Mission` construits
+  à la main dans les tests (`MissionPanel.test.tsx`,
+  `SimulationScreen.test.tsx`, `mission-result.test.ts`) ont été mis à
+  jour avec le nouveau champ obligatoire. `npm test` (252 tests), `npm
+  run lint` et `npx tsc --noEmit` restent propres.
 
 - [x] Les noms saisis dans `MissionSetup` ne sont pas recadrés
   (`trim()`), contrairement à ce que la validation laisse croire

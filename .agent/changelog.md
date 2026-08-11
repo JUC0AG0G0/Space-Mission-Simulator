@@ -1772,3 +1772,20 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
 - Branche/push: main (direct)
 - Coût estimé: 1.8251874999999997 USD
+
+## 2026-08-11T23-50-00-000Z — bugfix
+- Description: `describeFailureCause` affiche une cause d'échec trompeuse quand un vaisseau à court de carburant s'écrase au sol
+- Détail : nouveau champ `failureReason: 'crashed' | 'fuel-depleted' |
+  null` porté par `Mission` (`src/types/simulation.ts`), renseigné
+  directement par `evaluateMission` (`src/simulation/missions/
+  mission.ts`) au moment où elle bascule le statut à `'failed'` plutôt
+  que re-dérivé après coup depuis `spacecraft.fuelMass`.
+  `describeFailureCause` (`src/simulation/missions/mission-result.ts`)
+  lit désormais ce champ, donc un vaisseau à court de carburant qui
+  retombe et s'écrase affiche correctement "Spacecraft crashed" au lieu
+  de "Fuel depleted". Tests ajoutés/étendus dans
+  `tests/missions/mission.test.ts` et `tests/missions/
+  mission-result.test.ts` ; littéraux `Mission` de test mis à jour avec
+  le nouveau champ. `npm test` (252 tests), `npm run lint` et `npx tsc
+  --noEmit` restent propres.
+- Branche/push: main (direct, non poussé par l'agent)

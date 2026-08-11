@@ -27,6 +27,7 @@ export function createOrbitMission(
       'Reach a stable orbit altitude and maintain it for a sustained period.',
     status: 'active',
     successCriteria,
+    failureReason: null,
     objectives: [
       {
         id: 'reach-altitude',
@@ -125,7 +126,7 @@ export function evaluateMission(
 
   if (altitude < CRASH_ALTITUDE) {
     return {
-      mission: { ...mission, status: 'failed' },
+      mission: { ...mission, status: 'failed', failureReason: 'crashed' },
       secondsInOrbitRange: 0,
     };
   }
@@ -160,6 +161,7 @@ export function evaluateMission(
       ...mission,
       objectives,
       status: allCompleted ? 'succeeded' : stranded ? 'failed' : 'active',
+      failureReason: stranded ? 'fuel-depleted' : mission.failureReason,
     },
     secondsInOrbitRange,
   };

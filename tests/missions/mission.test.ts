@@ -177,7 +177,7 @@ describe('evaluateMission', () => {
     expect(updated.status).toBe('active');
   });
 
-  it('fails the mission if the spacecraft goes below the surface', () => {
+  it('fails the mission if the spacecraft goes below the surface, tagged as a crash', () => {
     const mission = createOrbitMission();
     const crashed = spacecraftAtAltitude(-10);
 
@@ -187,9 +187,27 @@ describe('evaluateMission', () => {
     );
 
     expect(updated.status).toBe('failed');
+    expect(updated.failureReason).toBe('crashed');
   });
 
-  it('fails the mission once a fuel-depleted circular orbit never reaches the target band', () => {
+  it('tags a ground impact as a crash even with the fuel tank already empty', () => {
+    // Regression test: running out of fuel and then falling back to the
+    // ground must still be reported as a crash, not fuel depletion — see
+    // describeFailureCause in mission-result.ts, which reads this field
+    // instead of re-deriving the cause from fuelMass.
+    const mission = createOrbitMission();
+    const crashed = { ...spacecraftAtAltitude(-10), fuelMass: 0 };
+
+    const { mission: updated } = evaluateMission(
+      { mission, spacecraft: crashed, centralBody, secondsInOrbitRange: 20 },
+      1,
+    );
+
+    expect(updated.status).toBe('failed');
+    expect(updated.failureReason).toBe('crashed');
+  });
+
+  it('fails the mission once a fuel-depleted circular orbit never reaches the target band, tagged as fuel depletion', () => {
     const radius = centralBody.radius + ORBIT_MIN_ALTITUDE - 50_000;
     const spacecraft = spacecraftOnOrbit(
       { x: radius, y: 0 },
@@ -203,6 +221,7 @@ describe('evaluateMission', () => {
     );
 
     expect(updated.status).toBe('failed');
+    expect(updated.failureReason).toBe('fuel-depleted');
   });
 
   it('does not fail a stranded-looking orbit while fuel remains', () => {
