@@ -1,5 +1,25 @@
 # Changelog agent
 
+## 2026-08-11T23-40-00-000Z — test
+- Description: Aucun outillage de couverture de tests n'était configuré
+- Détail : `@vitest/coverage-v8@^2.1.9` ajouté en `devDependency`
+  (aligné sur la version de `vitest@2.1.9` réellement installée plutôt
+  que sur le `^2.0.5` déclaré dans `package.json`), et nouveau script
+  `"coverage": "vitest run --coverage"`. Aucune config supplémentaire
+  requise dans `vite.config.ts` (provider `v8` par défaut). Ajouté
+  `coverage` aux `ignores` d'`eslint.config.js` (comme `dist`/
+  `node_modules`) et à `.gitignore`, sinon `npm run lint` remonte des
+  avertissements sur les fichiers HTML/JS générés par le rapport.
+  Vérifié que `npm run coverage` produit un rapport exploitable
+  localement : 250 tests passent, 97.18 % de couverture de lignes
+  globale, avec le détail par fichier (les deux seuls fichiers à 0 %
+  sont `types/simulation.ts`, des types purs, et `app/main.tsx`, le
+  point d'entrée Vite non exécuté par les tests — attendu, pas une
+  lacune). `npm test`, `npm run lint` et `npx tsc --noEmit` restent
+  propres. `.agent/backlog.md` mis à jour (item coché avec note
+  d'implémentation).
+- Branche/push: main (direct)
+
 ## 2026-08-11T23-35-00-000Z — feature
 - Description: La difficulté du profil de mission choisi n'apparaissait pas sur l'écran de résumé de `MissionSetup`
 - Détail : `MissionSummary` (`src/ui/MissionSetup.tsx`) affiche

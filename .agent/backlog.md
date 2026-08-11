@@ -822,7 +822,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
     tant qu'elles ne sont pas traitées par la boucle de jeu (pas
     d'action au `keydown` seul).
 
-- [ ] Aucun outillage de couverture de tests n'est configuré
+- [x] Aucun outillage de couverture de tests n'est configuré
 
   `package.json` ne définit qu'un script `"test": "vitest run"`, sans
   variante couverture, et `@vitest/coverage-v8` (ou `@vitest/coverage-
@@ -844,6 +844,23 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   que `npm run coverage` produit un rapport exploitable localement ;
   l'intégration à la CI ou un seuil de couverture minimum ne sont pas
   demandés par ce ticket.
+
+  Fait le 2026-08-11 : `@vitest/coverage-v8@^2.1.9` ajouté en
+  `devDependency` (aligné sur la version de `vitest@2.1.9` réellement
+  installée, cf. `npm ls vitest`, plutôt que sur le `^2.0.5` déclaré
+  dans `package.json`) et nouveau script `"coverage": "vitest run
+  --coverage"`. Aucune config supplémentaire dans `vite.config.ts` :
+  le provider `v8` par défaut suffit. `eslint.config.js` ignore
+  désormais aussi `coverage` (comme `dist`/`node_modules`), sinon
+  `npm run lint` remonte des avertissements sur les fichiers HTML/JS
+  générés par le rapport (`coverage/block-navigation.js`, etc.) ; le
+  dossier `coverage/` est ajouté à `.gitignore` pour la même raison.
+  `npm run coverage` produit un rapport exploitable en local : 250
+  tests passent, 97.18 % de couverture de lignes globale, avec le
+  détail par fichier (ex. `types/simulation.ts` et `app/main.tsx` à 0 %
+  — attendu, ce sont respectivement des types purs et le point d'entrée
+  Vite non exécuté par les tests). `npm test`, `npm run lint` et `npx
+  tsc --noEmit` restent propres.
 
 ## Documentation
 
