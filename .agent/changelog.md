@@ -1451,3 +1451,15 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Le carburant se consomme intégralement même quand le vaisseau est
 - Branche/push: main (direct)
 - Coût estimé: 0.7620448999999999 USD
+
+## 2026-08-11T20-55-27-000Z — bugfix
+- Description: `SimulationScreen.onKeyDown` détourne des raccourcis navigateur (Ctrl/Cmd+R, Ctrl/Cmd+P)
+- Détail : `onKeyDown` (`src/app/SimulationScreen.tsx`) traite désormais
+  `' '`/`'p'`/`'r'` sous une garde commune qui ignore l'événement (sans
+  appeler `preventDefault()`) quand `event.ctrlKey`, `event.metaKey` ou
+  `event.altKey` est vrai, laissant le navigateur gérer nativement
+  Ctrl/Cmd+R (rafraîchir) et Ctrl/Cmd+P (imprimer). Deux tests ajoutés
+  dans `tests/ui/SimulationScreen.test.tsx` (Ctrl/Cmd+R ne réinitialise
+  pas l'état, Ctrl/Cmd+P ne bascule pas la pause). `npm test` (240
+  tests), `npm run lint` et `npx tsc --noEmit` propres.
+- Branche/push: main (direct)

@@ -15,10 +15,11 @@ lint (`npm run lint`) et typecheck (`npx tsc --noEmit`) sont tous
 propres, aucun `TODO`/`FIXME` dans le code, et chaque module de
 `src/simulation` et `src/rendering` a un fichier de test dédié. Trois
 bugs concrets ont été identifiés en lisant `SimulationEngine.step` et
-`SimulationScreen`'s `onKeyDown` (voir "Bugs connus" ci-dessous, dont
-un déjà corrigé le même jour) ; aucun trou de couverture supplémentaire
-ni doc obsolète trouvé cette fois-ci (le `README.md` reste cohérent
-avec `src/app`).
+`SimulationScreen`'s `onKeyDown` (voir "Bugs connus" ci-dessous, tous
+corrigés depuis) ; aucun trou de couverture supplémentaire ni doc
+obsolète trouvé cette fois-ci (le `README.md` reste cohérent avec
+`src/app`). Il reste un bug connu ouvert (key-repeat sur `onKeyDown`,
+voir ci-dessous).
 
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
@@ -73,24 +74,22 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   le départ, soumis à 20 `step(1)` — l'altitude reste à `0` et
   `fuelMass` reste strictement égal à sa valeur initiale.
 
-- [ ] `SimulationScreen.onKeyDown` détourne des raccourcis navigateur
+- [x] `SimulationScreen.onKeyDown` détourne des raccourcis navigateur
   (Ctrl/Cmd+R, Ctrl/Cmd+P) au lieu de les laisser au navigateur
 
-  `onKeyDown` (`src/app/SimulationScreen.tsx:68-93`) compare uniquement
-  `event.key.toLowerCase()` (`' '`, `'p'`, `'r'`) sans jamais vérifier
-  `event.ctrlKey`, `event.metaKey` ou `event.altKey`, puis appelle
-  `event.preventDefault()`. Résultat : `Ctrl+R`/`Cmd+R` (rafraîchir la
-  page) déclenche `engineRef.current.reset(...)` au lieu de recharger
-  la page, et `Ctrl+P`/`Cmd+P` (imprimer) déclenche `togglePause()` —
-  ces raccourcis navigateur ne sont pas protégés par défaut et
-  `preventDefault()` bloque leur comportement natif.
-
-  Ignorer l'événement (ne pas traiter `' '`/`'p'`/`'r'`, ne pas appeler
-  `preventDefault()`) si `event.ctrlKey`, `event.metaKey` ou
-  `event.altKey` est vrai. Ajouter un test dans
-  `tests/ui/SimulationScreen.test.tsx` simulant un `keydown` sur `'r'`
-  avec `ctrlKey: true` (ou `metaKey: true`) et vérifiant que l'état de
-  jeu n'est pas réinitialisé.
+  Fait le 2026-08-11 : `onKeyDown` (`src/app/SimulationScreen.tsx`)
+  regroupe désormais les trois touches discrètes (`' '`, `'p'`, `'r'`)
+  sous une seule garde : si `event.ctrlKey`, `event.metaKey` ou
+  `event.altKey` est vrai, la fonction retourne immédiatement sans
+  appeler `applyCommand`/`togglePause`/`reset` ni `preventDefault()`,
+  laissant le navigateur gérer nativement `Ctrl/Cmd+R` (rafraîchir) et
+  `Ctrl/Cmd+P` (imprimer). Les touches continues (WASD/flèches) ne sont
+  pas concernées par ce ticket. Tests ajoutés dans
+  `tests/ui/SimulationScreen.test.tsx` : un `keydown` sur `'r'` avec
+  `ctrlKey: true` puis `metaKey: true` vérifie que l'état de jeu n'est
+  pas réinitialisé (le moteur reste `ENGINE ONLINE`), et un test
+  équivalent sur `'p'` avec `ctrlKey`/`metaKey` vérifie que la pause
+  n'est pas basculée.
 
 - [ ] `SimulationScreen.onKeyDown` réagit au key-repeat du système,
   déclenchant plusieurs actions pour une seule pression de touche

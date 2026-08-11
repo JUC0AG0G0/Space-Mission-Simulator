@@ -74,20 +74,20 @@ export function SimulationScreen({ missionConfiguration, onExit }: SimulationScr
         return;
       }
 
-      if (key === ' ') {
-        engineRef.current.applyCommand({ toggleEngine: true }, 0);
-        event.preventDefault();
-        return;
-      }
+      if (key === ' ' || key === 'p' || key === 'r') {
+        // Don't hijack browser/OS shortcuts that happen to share these keys
+        // (Ctrl/Cmd+R refresh, Ctrl/Cmd+P print, Alt combos, etc.).
+        if (event.ctrlKey || event.metaKey || event.altKey) {
+          return;
+        }
 
-      if (key === 'p') {
-        engineRef.current.togglePause();
-        event.preventDefault();
-        return;
-      }
-
-      if (key === 'r') {
-        engineRef.current.reset(createInitialGameState(missionConfigurationRef.current));
+        if (key === ' ') {
+          engineRef.current.applyCommand({ toggleEngine: true }, 0);
+        } else if (key === 'p') {
+          engineRef.current.togglePause();
+        } else {
+          engineRef.current.reset(createInitialGameState(missionConfigurationRef.current));
+        }
         event.preventDefault();
       }
     }

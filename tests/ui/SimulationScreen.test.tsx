@@ -129,6 +129,37 @@ describe('SimulationScreen', () => {
     expect(screen.getByText('MISSION READY')).toBeInTheDocument();
   });
 
+  it('does not reset on Ctrl+R / Cmd+R, leaving the browser refresh shortcut alone', () => {
+    const frame = renderScreen();
+    clearCountdown(frame);
+
+    fireEvent.keyDown(window, { key: ' ' });
+    frame.advance(16);
+    expect(screen.getByText('ENGINE ONLINE')).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: 'r', ctrlKey: true });
+    frame.advance(16);
+    expect(screen.getByText('ENGINE ONLINE')).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: 'r', metaKey: true });
+    frame.advance(16);
+    expect(screen.getByText('ENGINE ONLINE')).toBeInTheDocument();
+  });
+
+  it('does not toggle pause on Ctrl+P / Cmd+P, leaving the browser print shortcut alone', () => {
+    const frame = renderScreen();
+    clearCountdown(frame);
+    expect(screen.getByRole('button', { name: 'Pause (P)' })).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: 'p', ctrlKey: true });
+    frame.advance(16);
+    expect(screen.getByRole('button', { name: 'Pause (P)' })).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: 'p', metaKey: true });
+    frame.advance(16);
+    expect(screen.getByRole('button', { name: 'Pause (P)' })).toBeInTheDocument();
+  });
+
   it('transitions from PRE-LAUNCH to FLIGHT once the engine ignites and the ship clears the pad', () => {
     const frame = renderScreen();
     clearCountdown(frame);
