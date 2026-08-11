@@ -145,6 +145,43 @@ describe('SimulationEngine keeps a grounded, engine-off spacecraft parked on the
   });
 });
 
+describe('SimulationEngine freezes fuel consumption while grounded', () => {
+  /**
+   * A game state whose spacecraft is grounded, has its engine already on,
+   * but is turned sideways (heading perpendicular to "up"): thrust has no
+   * vertical component, so gravity always wins and the ship never lifts
+   * off, no matter how long the engine burns.
+   */
+  function createGroundedSidewaysState(): GameState {
+    const state = createFlightReadyState();
+    const { spacecraft } = state;
+
+    return {
+      ...state,
+      spacecraft: {
+        ...spacecraft,
+        heading: Math.PI / 2,
+        engine: { ...spacecraft.engine, active: true, throttle: 1 },
+      },
+    };
+  }
+
+  it('does not deplete fuel while stuck on the ground with the engine on', () => {
+    const engine = new SimulationEngine(createGroundedSidewaysState());
+    const initialFuel = engine.getState().spacecraft.fuelMass;
+
+    for (let i = 0; i < 20; i += 1) {
+      engine.step(1);
+    }
+
+    const { spacecraft, centralBody } = engine.getState();
+    const altitude = Math.hypot(spacecraft.position.x, spacecraft.position.y) - centralBody.radius;
+
+    expect(altitude).toBe(0);
+    expect(spacecraft.fuelMass).toBe(initialFuel);
+  });
+});
+
 describe('createInitialGameState with a mission configuration', () => {
   it('defaults to "Explorer I" and "Orbit-01" when no configuration is given', () => {
     const state = createInitialGameState();

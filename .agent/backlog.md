@@ -10,14 +10,15 @@ résultat, sauvegarde, plusieurs missions, machine à états complète,
 sélection de fusée, progression) est entièrement terminée — voir les
 items cochés ci-dessous pour l'historique et les notes d'implémentation.
 
-Revue du 2026-08-11 (3e passe) : code, tests (`npm test`, 237 tests),
+Revue du 2026-08-11 (3e passe) : code, tests (`npm test`, 238 tests),
 lint (`npm run lint`) et typecheck (`npx tsc --noEmit`) sont tous
 propres, aucun `TODO`/`FIXME` dans le code, et chaque module de
 `src/simulation` et `src/rendering` a un fichier de test dédié. Trois
 bugs concrets ont été identifiés en lisant `SimulationEngine.step` et
-`SimulationScreen`'s `onKeyDown` (voir "Bugs connus" ci-dessous) ;
-aucun trou de couverture supplémentaire ni doc obsolète trouvé cette
-fois-ci (le `README.md` reste cohérent avec `src/app`).
+`SimulationScreen`'s `onKeyDown` (voir "Bugs connus" ci-dessous, dont
+un déjà corrigé le même jour) ; aucun trou de couverture supplémentaire
+ni doc obsolète trouvé cette fois-ci (le `README.md` reste cohérent
+avec `src/app`).
 
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
@@ -55,32 +56,22 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   désormais `MISSION: Orbit-01`, et un nouveau test couvre l'affichage
   d'un nom de mission personnalisé (`'Mission 01'`).
 
-- [ ] Le carburant se consomme intégralement même quand le vaisseau est
+- [x] Le carburant se consomme intégralement même quand le vaisseau est
   immobilisé au sol, ce qui peut rendre la mission injouable sans
   jamais se terminer
 
-  `SimulationEngine.step` (`src/simulation/simulation-engine.ts:246-253`)
-  appelle `applyFuelConsumption` de façon inconditionnelle, même quand
-  `isGrounded(...)` (ligne 67-77) vaut `true`. Or `applyCommand`
-  (ligne 190-219) autorise `turnDelta` sans aucune restriction liée à
-  l'état "au sol" : si le joueur tourne le vaisseau suffisamment loin
-  de la verticale (`heading` proche de `π/2`) avant d'allumer le
-  moteur, la composante verticale de la poussée reste insuffisante
-  pour décoller, donc `isGrounded` reste vrai indéfiniment et le
-  vaisseau reste cloué au sol. Pendant ce temps, le carburant se vide
-  quand même jusqu'à épuisement (`spacecraft.ts:66-85` coupe alors le
-  moteur), et `evaluateMission` (`src/simulation/missions/mission.ts:90`)
-  ne déclenche un échec que si `altitude < CRASH_ALTITUDE` (0), ce qui
-  n'est jamais le cas au sol (`altitude === 0`) : la mission reste
-  `'active'` pour toujours, sans carburant ni possibilité de décoller.
-
-  Geler la consommation de carburant tant que `isGrounded` est vrai
-  (ou, alternative plus invasive, limiter la rotation avant décollage).
-  Ajouter un test dans `tests/simulation-engine.test.ts` couvrant le
-  scénario : vaisseau au sol, `turnDelta` appliqué pour orienter le
-  cap loin de la verticale, moteur allumé, plusieurs `step` — le
-  carburant ne doit pas descendre à zéro tant que le vaisseau reste
-  cloué au sol.
+  Fait le 2026-08-11 : `SimulationEngine.step`
+  (`src/simulation/simulation-engine.ts`) calcule maintenant `grounded`
+  une seule fois via `isGrounded(...)` et n'appelle
+  `applyFuelConsumption` que lorsque `grounded` est `false` — tant que
+  le vaisseau reste cloué au sol (poussée verticale insuffisante pour
+  décoller, y compris lorsque le joueur a tourné le cap loin de la
+  verticale), le carburant ne diminue plus, même moteur allumé. Test
+  ajouté dans `tests/simulation-engine.test.ts` ("SimulationEngine
+  freezes fuel consumption while grounded") : un vaisseau au sol, cap à
+  `π/2` (donc sans composante de poussée verticale) et moteur actif dès
+  le départ, soumis à 20 `step(1)` — l'altitude reste à `0` et
+  `fuelMass` reste strictement égal à sa valeur initiale.
 
 - [ ] `SimulationScreen.onKeyDown` détourne des raccourcis navigateur
   (Ctrl/Cmd+R, Ctrl/Cmd+P) au lieu de les laisser au navigateur

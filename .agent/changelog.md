@@ -1,5 +1,33 @@
 # Changelog agent
 
+## 2026-08-11T23-15-00Z — Fix: le carburant se consommait intégralement au sol
+
+Tâche reçue : bugfix — "Le carburant se consomme intégralement même
+quand le vaisseau est immobilisé au sol" (section "Bugs connus" de
+`.agent/backlog.md`).
+
+- `SimulationEngine.step` (`src/simulation/simulation-engine.ts`)
+  appelait `applyFuelConsumption` de façon inconditionnelle, même
+  quand `isGrounded(...)` valait `true`. Si le joueur tournait le cap
+  loin de la verticale avant d'allumer le moteur, la poussée verticale
+  restait insuffisante pour décoller : le vaisseau restait cloué au
+  sol indéfiniment tout en vidant son carburant, sans jamais que la
+  mission échoue (`altitude === 0`, jamais `< CRASH_ALTITUDE`) — partie
+  injouable sans fin possible.
+- `step` calcule désormais `grounded` une seule fois via
+  `isGrounded(...)` et n'appelle `applyFuelConsumption` que si
+  `grounded` est `false`. Le carburant est donc gelé tant que le
+  vaisseau reste au sol, quel que soit l'état du moteur.
+- `tests/simulation-engine.test.ts` : nouveau describe
+  "SimulationEngine freezes fuel consumption while grounded" avec le
+  test "does not deplete fuel while stuck on the ground with the
+  engine on" — vaisseau au sol, cap à `π/2` (poussée sans composante
+  verticale) et moteur actif dès le départ, 20 `step(1)` : l'altitude
+  reste à `0` et `fuelMass` reste égal à sa valeur initiale.
+- `npm test` (238 tests), `npm run lint` et `npx tsc --noEmit` sont
+  tous propres après le changement.
+- Backlog mis à jour : l'item est coché dans `.agent/backlog.md`.
+
 ## 2026-08-11T23-05-00Z — Revue périodique du backlog
 
 Tâche reçue : planning — "Le backlog ne contient plus de tâche

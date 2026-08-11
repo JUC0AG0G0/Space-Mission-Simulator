@@ -243,14 +243,15 @@ export class SimulationEngine {
     const thrustAcceleration = computeThrustAcceleration(spacecraft);
     const totalAcceleration = add(gravityAcceleration, thrustAcceleration);
 
-    const { position, velocity } = isGrounded(spacecraft, centralBody, totalAcceleration)
+    const grounded = isGrounded(spacecraft, centralBody, totalAcceleration);
+    const { position, velocity } = grounded
       ? { position: spacecraft.position, velocity: spacecraft.velocity }
       : integrate(spacecraft.position, spacecraft.velocity, totalAcceleration, deltaTime);
 
-    spacecraft = applyFuelConsumption(
-      { ...spacecraft, position, velocity },
-      deltaTime,
-    );
+    spacecraft = { ...spacecraft, position, velocity };
+    if (!grounded) {
+      spacecraft = applyFuelConsumption(spacecraft, deltaTime);
+    }
 
     const simulationTime = this.state.simulationTime + deltaTime;
     const trajectory = recordTrajectoryPoint(
