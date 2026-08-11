@@ -3,12 +3,14 @@ import { MainMenu } from '../ui/MainMenu';
 import { MissionSetup } from '../ui/MissionSetup';
 import { SimulationScreen } from './SimulationScreen';
 import {
+  continueSavedMission,
   createInitialAppState,
   exitSimulation,
   returnToMainMenu,
   startNewMission,
   startSimulation,
 } from './app-state';
+import { loadSavedMission, saveMission } from '../simulation/persistence/mission-save';
 
 /**
  * Routes between the main menu, mission setup, and the active simulation.
@@ -17,23 +19,29 @@ import {
  */
 export function App() {
   const [appState, setAppState] = useState(createInitialAppState);
+  const savedMission = loadSavedMission();
 
   switch (appState.phase) {
     case 'main-menu':
       return (
         <MainMenu
-          hasSavedMission={false}
+          hasSavedMission={savedMission !== null}
           onNewMission={() => setAppState(startNewMission)}
-          onContinue={() => {}}
+          onContinue={() => {
+            if (savedMission) {
+              setAppState((state) => continueSavedMission(state, savedMission));
+            }
+          }}
         />
       );
     case 'mission-setup':
       return (
         <MissionSetup
           onBack={() => setAppState(returnToMainMenu)}
-          onLaunch={(configuration) =>
-            setAppState((state) => startSimulation(state, configuration))
-          }
+          onLaunch={(configuration) => {
+            saveMission(configuration);
+            setAppState((state) => startSimulation(state, configuration));
+          }}
         />
       );
     case 'simulation':

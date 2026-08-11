@@ -861,3 +861,19 @@ Aucun changement de code dans ce run — tâche de planification uniquement.
 - Description: Revue périodique planifiée : relis .agent/backlog.md, ajuste les priorités, et ajoute toute tâche manquante identifiée en lisant le code (TODOs, zones sans tests, doc obsolète).
 - Branche/push: main (direct)
 - Coût estimé: 0.9747378999999997 USD
+
+## 2026-08-11T16-30-00-000Z — feature
+- Description: Ajouter la sauvegarde de la configuration de mission. Nouveau
+  module pur `src/simulation/persistence/mission-save.ts`
+  (`saveMission`/`loadSavedMission`/`clearSavedMission`, `localStorage`,
+  jamais d'exception sur donnée absente/corrompue/invalide). `App.tsx`
+  sauvegarde au lancement et dérive `hasSavedMission` via
+  `loadSavedMission()` ; nouvelle transition `continueSavedMission` dans
+  `src/app/app-state.ts` (main-menu → simulation avec la configuration
+  restaurée). Tests : `tests/persistence/mission-save.test.ts`,
+  ajouts dans `tests/app/app-state.test.ts` et `tests/ui/App.test.tsx`.
+  Ajouté `tests/test-utils/memory-storage.ts` (stub `localStorage` en
+  mémoire) car le `localStorage` global de Node (récent) masque celui de
+  jsdom dans l'environnement de test actuel.
+- Branche/push: main (direct)
+- Coût estimé: n/a

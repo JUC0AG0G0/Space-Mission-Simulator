@@ -38,6 +38,17 @@ export function startSimulation(
   return { ...state, phase: 'simulation', missionConfiguration: configuration };
 }
 
+/** From the main menu, resumes the simulation with a previously saved mission configuration. */
+export function continueSavedMission(
+  state: AppState,
+  configuration: MissionConfiguration,
+): AppState {
+  if (state.phase !== 'main-menu') {
+    return state;
+  }
+  return { ...state, phase: 'simulation', missionConfiguration: configuration };
+}
+
 /** Returns to the main menu from mission setup. */
 export function returnToMainMenu(state: AppState): AppState {
   if (state.phase !== 'mission-setup') {
