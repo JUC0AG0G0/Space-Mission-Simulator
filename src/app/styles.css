@@ -499,6 +499,44 @@ body {
   cursor: not-allowed;
 }
 
+.main-menu__progress {
+  width: 240px;
+  text-align: left;
+}
+
+.main-menu__progress-title {
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+  margin: 0 0 8px;
+}
+
+.main-menu__progress-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.main-menu__progress-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-dim);
+}
+
+.main-menu__progress-entry--completed {
+  color: var(--color-text);
+}
+
+.main-menu__progress-marker {
+  color: var(--color-accent);
+}
+
 /* --- Mission result ------------------------------------------------------ */
 
 .mission-result {

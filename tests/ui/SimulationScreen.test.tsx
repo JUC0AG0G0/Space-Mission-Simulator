@@ -1,10 +1,12 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SimulationScreen } from '../../src/app/SimulationScreen';
 import { SimulationEngine, createInitialGameState } from '../../src/simulation/simulation-engine';
 import { createDefaultMissionConfiguration } from '../../src/simulation/missions/mission-configuration';
 import { DEFAULT_ORBIT_SUCCESS_CRITERIA } from '../../src/simulation/missions/mission';
+import { loadCompletedMissionIds } from '../../src/simulation/progression/mission-progress';
+import { createMemoryStorage } from '../test-utils/memory-storage';
 import type { GameState } from '../../src/types/simulation';
 
 /**
@@ -66,6 +68,10 @@ function clearCountdown(frame: ReturnType<typeof mockAnimationFrame>) {
 }
 
 describe('SimulationScreen', () => {
+  beforeEach(() => {
+    vi.stubGlobal('localStorage', createMemoryStorage());
+  });
+
   afterEach(() => {
     vi.unstubAllGlobals();
   });
@@ -216,6 +222,34 @@ describe('SimulationScreen', () => {
     expect(resetSpy).toHaveBeenCalledTimes(1);
 
     resetSpy.mockRestore();
+    getStateSpy.mockRestore();
+  });
+
+  it('records the mission profile as completed once the mission succeeds', () => {
+    const frame = renderScreen();
+    const missionConfiguration = createDefaultMissionConfiguration();
+
+    expect(loadCompletedMissionIds()).not.toContain(missionConfiguration.missionProfileId);
+
+    const succeededState: GameState = {
+      ...createInitialGameState(missionConfiguration),
+      countdown: null,
+      activeMission: {
+        id: 'ORBIT-01',
+        name: 'Mission 01',
+        description: 'Reach a stable orbit.',
+        status: 'succeeded',
+        objectives: [],
+        successCriteria: DEFAULT_ORBIT_SUCCESS_CRITERIA,
+      },
+    };
+    const getStateSpy = vi
+      .spyOn(SimulationEngine.prototype, 'getState')
+      .mockReturnValue(succeededState);
+    frame.advance(16);
+
+    expect(loadCompletedMissionIds()).toContain(missionConfiguration.missionProfileId);
+
     getStateSpy.mockRestore();
   });
 });

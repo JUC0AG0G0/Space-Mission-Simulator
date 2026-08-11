@@ -19,7 +19,7 @@ de priorité recommandé pour les prochaines exécutions de
 9. Sélection de fusée
 10. Progression
 
-(items 1 à 9 terminés — item restant : progression)
+(tous les items 1 à 10 sont terminés)
 
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
@@ -394,7 +394,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   `tests/missions/mission-configuration.test.ts`,
   `tests/ui/MissionSetup.test.tsx` et `tests/simulation-engine.test.ts`.
 
-- [ ] Ajouter un système de progression
+- [x] Ajouter un système de progression
 
   Conserver localement les missions réussies.
 
@@ -411,6 +411,30 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
   Le système doit être conçu pour permettre l'ajout futur de nouvelles
   missions sans modifier la logique générale de progression.
+
+  Fait le 2026-08-11 : `src/simulation/progression/mission-progress.ts`
+  expose `loadCompletedMissionIds`, `markMissionCompleted` et
+  `buildMissionProgress`, basés sur `localStorage` (même pattern que
+  `mission-save.ts` : jamais d'exception, données corrompues ignorées).
+  `SimulationScreen.tsx` appelle `markMissionCompleted(missionConfiguration
+  .missionProfileId)` dans un `useEffect` déclenché quand
+  `state.activeMission?.status` passe à `'succeeded'` (dépendances sur le
+  statut et l'id de profil, donc un seul appel malgré le re-render à
+  chaque frame). `buildMissionProgress` construit la liste affichée en
+  itérant `AVAILABLE_MISSION_PROFILES` : ajouter un profil futur (mission
+  lunaire, Mars, ...) l'ajoute automatiquement à l'écran sans toucher à
+  cette fonction, conformément à la contrainte de conception. `MainMenu`
+  reçoit `missionProgress` en prop (calculé par `App.tsx` via
+  `buildMissionProgress()`) et affiche une section "Missions" sous les
+  actions principales, avec ✓ pour les missions terminées et 🔒 sinon —
+  vérifié visuellement (dev server + Playwright headless) dans les deux
+  états. Aucune restriction de jouabilité ajoutée : la sélection de
+  mission dans `MissionSetup` reste inchangée, 🔒 est un indicateur de
+  progression, pas un verrou de gameplay (non demandé par ce ticket).
+  Tests ajoutés dans `tests/progression/mission-progress.test.ts`
+  (persistance) et étendus dans `tests/ui/MainMenu.test.tsx` (marqueurs
+  ✓/🔒) et `tests/ui/SimulationScreen.test.tsx` (enregistrement au
+  succès de la mission).
 
 ## Tests manquants
 

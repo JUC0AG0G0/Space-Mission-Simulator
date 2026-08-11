@@ -1,10 +1,18 @@
+import type { MissionProgressEntry } from '../simulation/progression/mission-progress';
+
 interface MainMenuProps {
   hasSavedMission: boolean;
+  missionProgress: MissionProgressEntry[];
   onNewMission: () => void;
   onContinue: () => void;
 }
 
-export function MainMenu({ hasSavedMission, onNewMission, onContinue }: MainMenuProps) {
+export function MainMenu({
+  hasSavedMission,
+  missionProgress,
+  onNewMission,
+  onContinue,
+}: MainMenuProps) {
   return (
     <div className="main-menu">
       <h1 className="main-menu__title">Space Mission Simulator</h1>
@@ -21,6 +29,26 @@ export function MainMenu({ hasSavedMission, onNewMission, onContinue }: MainMenu
           Options
         </button>
       </nav>
+      <section className="main-menu__progress">
+        <h2 className="main-menu__progress-title">Missions</h2>
+        <ul className="main-menu__progress-list">
+          {missionProgress.map((entry) => (
+            <li
+              key={entry.id}
+              className={
+                entry.completed
+                  ? 'main-menu__progress-entry main-menu__progress-entry--completed'
+                  : 'main-menu__progress-entry'
+              }
+            >
+              <span className="main-menu__progress-marker" aria-hidden="true">
+                {entry.completed ? '✓' : '🔒'}
+              </span>
+              {entry.destinationName}
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }

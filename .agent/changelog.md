@@ -1,5 +1,55 @@
 # Changelog agent
 
+## 2026-08-11T21-00-00Z — Ajouter un système de progression
+
+Tâche reçue : feature — "Ajouter un système de progression" (dernier item
+restant de la section "Features à ajouter" de `.agent/backlog.md`).
+
+- Ajouté `src/simulation/progression/mission-progress.ts` :
+  `loadCompletedMissionIds`, `markMissionCompleted` et
+  `buildMissionProgress`, persistés dans `localStorage` sous
+  `space-mission-simulator:mission-progress` (même pattern défensif que
+  `mission-save.ts` : jamais d'exception, données absentes/corrompues
+  traitées comme "rien de complété"). `buildMissionProgress` construit sa
+  liste en itérant `AVAILABLE_MISSION_PROFILES`
+  (`mission-configuration.ts`), donc un futur profil de mission
+  apparaît automatiquement sans modifier cette fonction — c'était une
+  contrainte explicite du ticket.
+- `SimulationScreen.tsx` : nouvel `useEffect` qui appelle
+  `markMissionCompleted(missionConfiguration.missionProfileId)` quand
+  `state.activeMission?.status` passe à `'succeeded'`. Les dépendances
+  de l'effet sont le statut et l'id de profil (pas tout `state`, qui
+  change à chaque frame), donc l'appel ne se déclenche qu'une seule fois
+  par succès malgré la boucle de jeu.
+- `MainMenu.tsx` reçoit une nouvelle prop `missionProgress` et affiche une
+  section "Missions" sous les boutons principaux (✓ pour une mission
+  terminée, 🔒 sinon). `App.tsx` calcule cette liste via
+  `buildMissionProgress()`, au même endroit et de la même façon que
+  `loadSavedMission()` est déjà lu à chaque rendu pour "Continuer".
+  Styles ajoutés dans `src/app/styles.css` (`.main-menu__progress*`).
+- Aucune restriction de jouabilité ajoutée : `MissionSetup` permet
+  toujours de choisir n'importe quel profil, complété ou non — le
+  verrou 🔒 est un indicateur de progression affiché au menu, pas un
+  gate de sélection ; ce n'était pas demandé par le ticket et aurait
+  élargi le scope.
+- Vérifié visuellement : serveur de dev + script Playwright headless
+  (état vide → les 3 missions en 🔒 ; `localStorage` pré-rempli avec
+  `earth-orbit` → cette entrée passe en ✓, les deux autres restent en
+  🔒), aucune erreur console.
+- Tests : nouveau `tests/progression/mission-progress.test.ts`
+  (persistance : vide par défaut, enregistrement, dédoublonnage,
+  accumulation, données corrompues/mal formées ignorées,
+  `buildMissionProgress` avec et sans argument explicite). Étendus
+  `tests/ui/MainMenu.test.tsx` (marqueurs ✓/🔒, classe
+  `--completed`) et `tests/ui/SimulationScreen.test.tsx` (le profil de
+  la mission active est marqué complété une fois `succeeded`).
+- `npm test` (233 tests, 31 fichiers), `npm run lint` et `tsc --noEmit`
+  passent sans erreur.
+- `.agent/backlog.md` : item "Ajouter un système de progression" coché,
+  note "tous les items 1 à 10 sont terminés" mise à jour (la section
+  "Features à ajouter" est maintenant intégralement traitée — seule la
+  section "Divers / à clarifier" contient encore des idées non scopées).
+
 ## 2026-08-11T18-00-00Z — Séparer clairement les phases de jeu
 
 Tâche reçue : feature — "Séparer clairement les phases de jeu" (item 8 de

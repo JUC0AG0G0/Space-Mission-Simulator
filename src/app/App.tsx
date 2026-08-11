@@ -11,6 +11,7 @@ import {
   startSimulation,
 } from './app-state';
 import { loadSavedMission, saveMission } from '../simulation/persistence/mission-save';
+import { buildMissionProgress } from '../simulation/progression/mission-progress';
 
 /**
  * Routes between the main menu, mission setup, and the active simulation.
@@ -26,6 +27,7 @@ export function App() {
       return (
         <MainMenu
           hasSavedMission={savedMission !== null}
+          missionProgress={buildMissionProgress()}
           onNewMission={() => setAppState(startNewMission)}
           onContinue={() => {
             if (savedMission) {

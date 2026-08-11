@@ -3,6 +3,7 @@ import type { GameState, SimulationCommand } from '../types/simulation';
 import { SimulationEngine, createInitialGameState } from '../simulation/simulation-engine';
 import type { MissionConfiguration } from '../simulation/missions/mission-configuration';
 import { buildMissionResultStats } from '../simulation/missions/mission-result';
+import { markMissionCompleted } from '../simulation/progression/mission-progress';
 import { determineGamePhase } from './game-phase';
 import { renderScene } from '../rendering/canvas-renderer';
 import { Hud } from '../ui/Hud';
@@ -149,6 +150,15 @@ export function SimulationScreen({ missionConfiguration, onExit }: SimulationScr
     animationFrame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(animationFrame);
   }, []);
+
+  // Record progression once the active mission succeeds. `state` changes on
+  // every frame, but the effect only fires again when the mission status or
+  // the profile actually changes, so this runs exactly once per success.
+  useEffect(() => {
+    if (state.activeMission?.status === 'succeeded') {
+      markMissionCompleted(missionConfiguration.missionProfileId);
+    }
+  }, [state.activeMission?.status, missionConfiguration.missionProfileId]);
 
   const gamePhase = determineGamePhase('simulation', state);
   const isMissionOver = gamePhase === 'mission-complete' || gamePhase === 'mission-failed';
