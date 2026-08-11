@@ -764,3 +764,8 @@ Aucun changement de code dans ce run — tâche de planification uniquement.
 - Description: Ajouter une vraie phase de lancement
 - Branche/push: main (direct)
 - Coût estimé: 2.1416519000000003 USD
+
+## 2026-08-11T05-40-27-867Z — planning
+- Description: Revue périodique planifiée : relis .agent/backlog.md, ajuste les priorités, et ajoute toute tâche manquante identifiée en lisant le code (TODOs, zones sans tests, doc obsolète).
+- Branche/push: main (direct)
+- Coût estimé: 0.8537096 USD
