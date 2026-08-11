@@ -6,7 +6,9 @@ import {
   isWithinOrbitRange,
 } from '../../src/simulation/missions/mission';
 import { createEarth } from '../../src/simulation/celestial/celestial-body';
+import { computeOrbitRadiusBounds } from '../../src/simulation/physics/orbit';
 import { createSpacecraft } from '../../src/simulation/spacecraft/spacecraft';
+import type { Vector2 } from '../../src/types/simulation';
 
 const centralBody = createEarth();
 const { minAltitude: ORBIT_MIN_ALTITUDE, maxAltitude: ORBIT_MAX_ALTITUDE, holdDurationSeconds: ORBIT_HOLD_DURATION } =
@@ -25,6 +27,25 @@ function spacecraftAtAltitude(altitude: number) {
     engineThrust: 100,
     engineFuelConsumption: 1,
   });
+}
+
+function spacecraftOnOrbit(position: Vector2, velocity: Vector2, fuelMass: number) {
+  return createSpacecraft({
+    id: 'ship',
+    name: 'Ship',
+    position,
+    velocity,
+    heading: 0,
+    dryMass: 100,
+    fuelMass,
+    maxFuel: 1000,
+    engineThrust: 100,
+    engineFuelConsumption: 1,
+  });
+}
+
+function circularOrbitVelocity(radius: number): Vector2 {
+  return { x: 0, y: Math.sqrt(centralBody.gravitationalParameter / radius) };
 }
 
 describe('isWithinOrbitRange', () => {
@@ -166,6 +187,65 @@ describe('evaluateMission', () => {
     );
 
     expect(updated.status).toBe('failed');
+  });
+
+  it('fails the mission once a fuel-depleted circular orbit never reaches the target band', () => {
+    const radius = centralBody.radius + ORBIT_MIN_ALTITUDE - 50_000;
+    const spacecraft = spacecraftOnOrbit(
+      { x: radius, y: 0 },
+      circularOrbitVelocity(radius),
+      0,
+    );
+
+    const { mission: updated } = evaluateMission(
+      { mission: createOrbitMission(), spacecraft, centralBody, secondsInOrbitRange: 0 },
+      1,
+    );
+
+    expect(updated.status).toBe('failed');
+  });
+
+  it('does not fail a stranded-looking orbit while fuel remains', () => {
+    const radius = centralBody.radius + ORBIT_MIN_ALTITUDE - 50_000;
+    const spacecraft = spacecraftOnOrbit(
+      { x: radius, y: 0 },
+      circularOrbitVelocity(radius),
+      10,
+    );
+
+    const { mission: updated } = evaluateMission(
+      { mission: createOrbitMission(), spacecraft, centralBody, secondsInOrbitRange: 0 },
+      1,
+    );
+
+    expect(updated.status).toBe('active');
+  });
+
+  it('does not fail a fuel-depleted elliptical orbit that still periodically crosses the target band', () => {
+    const periapsisRadius = centralBody.radius + ORBIT_MIN_ALTITUDE - 50_000;
+    // A little faster than circular speed at this radius makes it the
+    // periapsis of an ellipse whose apoapsis swings back up into the band.
+    const speed = Math.sqrt(centralBody.gravitationalParameter / periapsisRadius) * 1.05;
+    const spacecraft = spacecraftOnOrbit(
+      { x: periapsisRadius, y: 0 },
+      { x: 0, y: speed },
+      0,
+    );
+
+    const bounds = computeOrbitRadiusBounds(
+      spacecraft.position,
+      spacecraft.velocity,
+      centralBody,
+    );
+    expect(bounds).not.toBeNull();
+    expect(bounds!.apoapsis - centralBody.radius).toBeGreaterThanOrEqual(ORBIT_MIN_ALTITUDE);
+
+    const { mission: updated } = evaluateMission(
+      { mission: createOrbitMission(), spacecraft, centralBody, secondsInOrbitRange: 0 },
+      1,
+    );
+
+    expect(updated.status).toBe('active');
   });
 
   it('leaves a completed mission unchanged', () => {

@@ -1,5 +1,32 @@
 # Changelog agent
 
+## 2026-08-11T21-15-00-000Z — bugfix
+- Description: Une mission peut rester bloquée en statut `active` indéfiniment (orbite stable hors bande, carburant épuisé)
+- Détail : Nouveau module `src/simulation/physics/orbit.ts` exposant
+  `computeOrbitRadiusBounds(position, velocity, body)`, qui calcule le
+  périapside/apoapside de la trajectoire képlérienne non propulsée
+  courante (équation vis-viva + moment cinétique spécifique), et renvoie
+  `null` pour une trajectoire non liée (échappement). `evaluateMission`
+  (`src/simulation/missions/mission.ts`) ajoute une garde
+  `isStrandedOutsideTargetBand` : si `spacecraft.fuelMass <= 0`, que les
+  objectifs de mission ne sont pas tous complétés, et que la plage
+  `[périapside, apoapside]` (en altitude) ne recouvre pas
+  `[minAltitude, maxAltitude]` de la mission, le statut passe à
+  `'failed'` plutôt que de rester bloqué à `'active'` pour toujours. Une
+  orbite avec du carburant restant, ou une orbite elliptique sans
+  carburant dont l'apoapside/périapside retombe encore dans la bande
+  cible, ne sont pas affectées (comportement inchangé). L'écran de
+  résultat (`mission-result.ts`) affichait déjà "Fuel depleted" pour ce
+  cas, donc aucun changement nécessaire côté UI. Tests ajoutés dans
+  `tests/physics/orbit.test.ts` (orbite circulaire, orbite elliptique à
+  bornes connues, trajectoire d'échappement → `null`) et
+  `tests/missions/mission.test.ts` (orbite circulaire hors bande +
+  carburant épuisé → `'failed'` ; même orbite avec carburant restant →
+  `'active'` ; orbite elliptique hors bande courante mais qui retombe
+  dans la bande à l'apoapside, carburant épuisé → `'active'`). `npm
+  test` (247 tests), `npm run lint` et `npx tsc --noEmit` propres.
+- Branche/push: main (direct)
+
 ## 2026-08-11T21-05-00-000Z — planning
 - Description: Revue complète du repo et régénération du backlog (aucune tâche actionnable ne restait)
 - Détail : Analyse de la structure (`src/`, `tests/`), recherche de

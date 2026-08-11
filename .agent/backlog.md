@@ -39,13 +39,19 @@ La mission reste `'active'` indéfiniment (voir "Bugs connus"
 ci-dessous). Aucun autre trou de couverture, doc obsolète ou
 incohérence README trouvé cette fois-ci.
 
+Suivi du 2026-08-11 : le bug ci-dessus est corrigé (`evaluateMission`
+fait désormais échouer une mission bloquée sur une orbite hors bande
+avec carburant épuisé, voir la note "Fait le 2026-08-11" sous l'item
+correspondant). `npm test` (247 tests), `npm run lint` et `npx tsc
+--noEmit` sont propres.
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Bugs connus
 
-- [ ] Une mission peut rester bloquée en statut `active` indéfiniment :
+- [x] Une mission peut rester bloquée en statut `active` indéfiniment :
   aucune condition d'échec ne se déclenche pour un vaisseau à court de
   carburant, installé sur une orbite stable qui ne croise jamais la
   bande d'altitude cible de la mission.
@@ -85,6 +91,34 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   (`src/simulation/missions/mission-result.ts:15`) sait déjà afficher
   "Fuel depleted" comme cause — cette tâche consiste à faire en sorte
   que ce statut soit réellement atteint plutôt qu'à ajouter l'affichage.
+
+  Fait le 2026-08-11 : nouveau module `src/simulation/physics/orbit.ts`
+  exposant `computeOrbitRadiusBounds(position, velocity, body)`, qui
+  calcule le périapside et l'apoapside (en distance au centre du corps
+  central) de la trajectoire képlérienne non propulsée à partir de la
+  position/vitesse courantes (équation vis-viva + moment cinétique
+  spécifique), et renvoie `null` pour une trajectoire non liée
+  (parabolique/hyperbolique, énergie spécifique ≥ 0) qui n'a pas
+  d'orbite refermée à raisonner. `evaluateMission`
+  (`src/simulation/missions/mission.ts`) utilise cette fonction dans une
+  nouvelle garde `isStrandedOutsideTargetBand` : si `spacecraft.fuelMass
+  <= 0`, que les objectifs ne sont pas tous complétés, et que la plage
+  `[périapside, apoapside]` (convertie en altitude) ne recouvre pas
+  `[minAltitude, maxAltitude]` de la mission, le statut passe à
+  `'failed'` au lieu de rester bloqué à `'active'`. Une orbite avec du
+  carburant restant, ou une orbite elliptique sans carburant dont
+  l'apoapside ou le périapside retombe encore dans la bande cible, ne
+  sont pas affectées (le statut reste `'active'`, conformément à la
+  mise en garde de la piste ci-dessus contre un échec prématuré).
+  `describeFailureCause` (`mission-result.ts`) affichait déjà "Fuel
+  depleted" pour `spacecraft.fuelMass <= 0`, donc l'écran de résultat
+  fonctionne sans modification. Tests ajoutés dans
+  `tests/physics/orbit.test.ts` (orbite circulaire, orbite elliptique
+  avec périapside/apoapside connus, trajectoire d'échappement → `null`)
+  et dans `tests/missions/mission.test.ts` (orbite circulaire hors bande
+  + carburant épuisé → `'failed'` ; même orbite avec carburant restant →
+  `'active'` ; orbite elliptique hors bande courante mais dont
+  l'apoapside retombe dans la bande, carburant épuisé → `'active'`).
 
 - [x] `SimulationEngine.applyCommand` ignore l'état `paused`
 

@@ -4,6 +4,7 @@ import type {
   OrbitSuccessCriteria,
   Spacecraft,
 } from '../../types/simulation';
+import { computeOrbitRadiusBounds } from '../physics/orbit';
 import { magnitude, subtract } from '../physics/vectors';
 
 /** Success criteria used when a mission is created without a `MissionProfile`. */
@@ -55,6 +56,41 @@ export function isWithinOrbitRange(
   criteria: OrbitSuccessCriteria,
 ): boolean {
   return altitude >= criteria.minAltitude && altitude <= criteria.maxAltitude;
+}
+
+/**
+ * True once a spacecraft that has run out of fuel is locked onto an
+ * unpowered orbit that never crosses the mission's target altitude band —
+ * the player has no thrust left to correct course, so the mission can never
+ * be completed from here. `false` for an orbit that still periodically
+ * dips into (or is currently inside) the band, and for unbound trajectories
+ * (no repeating orbit to reason about).
+ */
+function isStrandedOutsideTargetBand(
+  spacecraft: Spacecraft,
+  centralBody: CelestialBody,
+  criteria: OrbitSuccessCriteria,
+): boolean {
+  if (spacecraft.fuelMass > 0) {
+    return false;
+  }
+
+  const bounds = computeOrbitRadiusBounds(
+    spacecraft.position,
+    spacecraft.velocity,
+    centralBody,
+  );
+  if (!bounds) {
+    return false;
+  }
+
+  const lowestAltitudeReached = bounds.periapsis - centralBody.radius;
+  const highestAltitudeReached = bounds.apoapsis - centralBody.radius;
+
+  return (
+    highestAltitudeReached < criteria.minAltitude ||
+    lowestAltitudeReached > criteria.maxAltitude
+  );
 }
 
 export interface MissionEvaluationInput {
@@ -115,12 +151,15 @@ export function evaluateMission(
   });
 
   const allCompleted = objectives.every((objective) => objective.completed);
+  const stranded =
+    !allCompleted &&
+    isStrandedOutsideTargetBand(spacecraft, centralBody, mission.successCriteria);
 
   return {
     mission: {
       ...mission,
       objectives,
-      status: allCompleted ? 'succeeded' : 'active',
+      status: allCompleted ? 'succeeded' : stranded ? 'failed' : 'active',
     },
     secondsInOrbitRange,
   };
