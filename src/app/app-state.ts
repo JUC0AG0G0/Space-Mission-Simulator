@@ -45,3 +45,11 @@ export function returnToMainMenu(state: AppState): AppState {
   }
   return { ...state, phase: 'main-menu', missionConfiguration: null };
 }
+
+/** Leaves the simulation (e.g. from the mission result screen) for the main menu. */
+export function exitSimulation(state: AppState): AppState {
+  if (state.phase !== 'simulation') {
+    return state;
+  }
+  return { ...state, phase: 'main-menu', missionConfiguration: null };
+}

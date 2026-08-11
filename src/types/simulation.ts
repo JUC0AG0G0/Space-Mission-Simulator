@@ -112,6 +112,11 @@ export interface GameState {
    * ignored. Null once flight has started.
    */
   countdown: Countdown | null;
+
+  /** Highest altitude above the surface reached so far, in meters. */
+  maxAltitude: number;
+  /** Highest speed reached so far, in meters per second. */
+  maxSpeed: number;
 }
 
 /** Player-issued commands applied on every simulation step. */

@@ -32,6 +32,8 @@ function buildState(): GameState {
       { position: { x: 10, y: 0 }, time: 1 },
     ],
     countdown: null,
+    maxAltitude: 150_000,
+    maxSpeed: 0,
   };
 }
 

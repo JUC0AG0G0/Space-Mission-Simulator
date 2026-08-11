@@ -1,5 +1,54 @@
 # Changelog agent
 
+## 2026-08-11T00-00-00Z — Feature : écran de résumé de mission
+
+Tâche reçue : "Ajouter un écran de résumé de mission" (backlog, section
+"Features à ajouter").
+
+- `GameState` (`src/types/simulation.ts`) suit désormais `maxAltitude` et
+  `maxSpeed` (en plus des valeurs instantanées) ; `SimulationEngine.step`
+  (`src/simulation/simulation-engine.ts`) les met à jour à chaque tick via
+  `Math.max`, initialisés à 0 dans `createInitialGameState`.
+- Nouveau module pur `src/simulation/missions/mission-result.ts`
+  (`buildMissionResultStats`) : dérive du `GameState` réel (nom de
+  mission, nom du vaisseau, succès/échec, temps de mission, altitude/
+  vitesse max, objectifs, cause d'échec) les données affichées par
+  l'écran de résultat, sans aucun calcul côté composant. La cause d'échec
+  reste minimale pour l'instant (`Fuel depleted` si `fuelMass <= 0`,
+  sinon `Spacecraft crashed`) car le moteur de mission ne distingue pas
+  encore d'autres causes.
+- Nouveau composant `src/ui/MissionResult.tsx`, affiché par
+  `src/app/SimulationScreen.tsx` à la place du HUD dès que
+  `activeMission.status` vaut `succeeded`/`failed`. Deux actions :
+  "Back to menu" (nouvelle transition `exitSimulation` dans
+  `src/app/app-state.ts`, branchée dans `src/app/App.tsx`) et "Replay"
+  (réutilise `engine.reset(createInitialGameState(missionConfiguration))`,
+  déjà utilisé par le raccourci `R`).
+- Styles ajoutés dans `src/app/styles.css` (`.mission-result*`), en
+  réutilisant les classes `.objective`/`.objective--done` existantes pour
+  la liste des objectifs.
+- Tests ajoutés : `tests/missions/mission-result.test.ts` (succès, échec
+  carburant épuisé, échec crash avec carburant restant, mission absente),
+  `tests/ui/MissionResult.test.tsx` (rendu succès/échec, boutons),
+  suivi des maxima dans `tests/simulation-engine.test.ts` (non-décroissant
+  même quand l'altitude/vitesse instantanée redescend, sur une orbite
+  elliptique décroissante construite pour l'occasion), transition
+  `exitSimulation` dans `tests/app/app-state.test.ts`, et deux tests
+  d'intégration dans `tests/ui/SimulationScreen.test.tsx` (bascule vers
+  l'écran de résultat + bouton retour menu + bouton rejouer, via un spy
+  sur `SimulationEngine.prototype.getState` pour rester déterministe sans
+  driver toute la physique jusqu'à un vrai succès/échec).
+- Vérifié manuellement dans un vrai navigateur (Playwright, installé puis
+  désinstallé pour l'occasion, non committé) : lancement d'une mission,
+  décollage bref puis coupure moteur jusqu'au crash, affichage de l'écran
+  "MISSION FAILED" avec les bonnes stats, et retour au menu principal via
+  "Back to menu".
+- `npm test` (186/186), `npm run lint` et `tsc --noEmit` passent sans
+  erreur. Au passage, corrigé `tests/rendering/canvas-renderer.test.ts`
+  qui construisait un `GameState` littéral sans les deux nouveaux champs.
+- Backlog mis à jour : item "Ajouter un écran de résumé de mission" coché,
+  note de scoping remplacée par un résumé de ce qui a été fait.
+
 ## 2026-08-11T05-45-00-000Z — Revue périodique du backlog
 
 Tâche reçue : revue périodique planifiée — relire `.agent/backlog.md`,

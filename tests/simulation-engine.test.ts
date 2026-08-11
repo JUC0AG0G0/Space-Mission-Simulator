@@ -107,6 +107,12 @@ describe('createInitialGameState starts the spacecraft on the surface', () => {
     const state = createInitialGameState();
     expect(state.countdown).toEqual({ remainingSeconds: COUNTDOWN_DURATION_SECONDS });
   });
+
+  it('starts with zero recorded altitude and speed maxima', () => {
+    const state = createInitialGameState();
+    expect(state.maxAltitude).toBe(0);
+    expect(state.maxSpeed).toBe(0);
+  });
 });
 
 describe('SimulationEngine keeps a grounded, engine-off spacecraft parked on the pad', () => {
@@ -310,6 +316,79 @@ describe('SimulationEngine reset', () => {
     expect(state.simulationTime).toBe(0);
     expect(state.trajectory).toHaveLength(0);
     expect(state.spacecraft.engine.active).toBe(false);
+  });
+});
+
+describe('SimulationEngine tracks altitude and speed maxima', () => {
+  /**
+   * A spacecraft placed at the apoapsis of an eccentric orbit (tangential
+   * speed slightly below circular speed for that radius): altitude and
+   * speed both decrease from the very first step as it falls toward
+   * periapsis, letting us verify the recorded maxima hold steady instead of
+   * tracking the instantaneous, decreasing values.
+   */
+  function createDecayingOrbitState(): GameState {
+    const state = createFlightReadyState();
+    const { centralBody } = state;
+    const radius = centralBody.radius + 50_000;
+    const circularSpeed = Math.sqrt(centralBody.gravitationalParameter / radius);
+
+    return {
+      ...state,
+      spacecraft: {
+        ...state.spacecraft,
+        position: { x: radius, y: 0 },
+        velocity: { x: 0, y: circularSpeed * 0.9 },
+      },
+    };
+  }
+
+  it('never decrease, even while the instantaneous altitude and speed fall', () => {
+    const engine = new SimulationEngine(createDecayingOrbitState());
+    const { centralBody } = engine.getState();
+
+    // Mirrors `altitudeAboveSurface`/`magnitude` exactly (sqrt(x^2 + y^2), not
+    // `Math.hypot`) so the recomputed values here never differ from the
+    // engine's own by a rounding ULP.
+    function altitudeOf(position: { x: number; y: number }): number {
+      return Math.sqrt(position.x ** 2 + position.y ** 2) - centralBody.radius;
+    }
+    function speedOf(velocity: { x: number; y: number }): number {
+      return Math.sqrt(velocity.x ** 2 + velocity.y ** 2);
+    }
+
+    let sawAltitudeDrop = false;
+    let previousAltitude = altitudeOf(engine.getState().spacecraft.position);
+    let previousMaxAltitude = engine.getState().maxAltitude;
+    let previousMaxSpeed = engine.getState().maxSpeed;
+
+    for (let i = 0; i < 200; i += 1) {
+      engine.step(1);
+      const { spacecraft, maxAltitude, maxSpeed } = engine.getState();
+      const altitude = altitudeOf(spacecraft.position);
+      const speed = speedOf(spacecraft.velocity);
+
+      if (altitude < previousAltitude) {
+        sawAltitudeDrop = true;
+      }
+      expect(maxAltitude).toBeGreaterThanOrEqual(previousMaxAltitude);
+      expect(maxSpeed).toBeGreaterThanOrEqual(previousMaxSpeed);
+      expect(maxAltitude).toBeGreaterThanOrEqual(altitude);
+      expect(maxSpeed).toBeGreaterThanOrEqual(speed);
+
+      previousAltitude = altitude;
+      previousMaxAltitude = maxAltitude;
+      previousMaxSpeed = maxSpeed;
+    }
+
+    expect(sawAltitudeDrop).toBe(true);
+  });
+
+  it('does not advance while counting down', () => {
+    const engine = new SimulationEngine(createInitialGameState());
+    engine.step(1);
+    expect(engine.getState().maxAltitude).toBe(0);
+    expect(engine.getState().maxSpeed).toBe(0);
   });
 });
 

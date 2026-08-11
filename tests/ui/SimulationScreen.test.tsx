@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { SimulationScreen } from '../../src/app/SimulationScreen';
-import { SimulationEngine } from '../../src/simulation/simulation-engine';
+import { SimulationEngine, createInitialGameState } from '../../src/simulation/simulation-engine';
 import { createDefaultMissionConfiguration } from '../../src/simulation/missions/mission-configuration';
+import type { GameState } from '../../src/types/simulation';
 
 /**
  * Replaces `requestAnimationFrame`/`cancelAnimationFrame` with a
@@ -42,9 +44,14 @@ function mockAnimationFrame() {
   };
 }
 
-function renderScreen() {
+function renderScreen(onExit: () => void = () => {}) {
   const frame = mockAnimationFrame();
-  render(<SimulationScreen missionConfiguration={createDefaultMissionConfiguration()} />);
+  render(
+    <SimulationScreen
+      missionConfiguration={createDefaultMissionConfiguration()}
+      onExit={onExit}
+    />,
+  );
   return frame;
 }
 
@@ -145,5 +152,67 @@ describe('SimulationScreen', () => {
     expect(command.throttleDelta).toBe(1);
 
     applyCommandSpy.mockRestore();
+  });
+
+  it('shows the mission result screen once the mission fails, and returns to the menu from it', async () => {
+    const user = userEvent.setup();
+    const onExit = vi.fn();
+    const frame = renderScreen(onExit);
+
+    const failedState: GameState = {
+      ...createInitialGameState(createDefaultMissionConfiguration()),
+      countdown: null,
+      simulationTime: 42,
+      maxAltitude: 1_000,
+      maxSpeed: 50,
+      activeMission: {
+        id: 'ORBIT-01',
+        name: 'Mission 01',
+        description: 'Reach a stable orbit.',
+        status: 'failed',
+        objectives: [],
+      },
+    };
+    const getStateSpy = vi
+      .spyOn(SimulationEngine.prototype, 'getState')
+      .mockReturnValue(failedState);
+
+    frame.advance(16);
+
+    expect(screen.getByText('MISSION FAILED')).toBeInTheDocument();
+    expect(screen.queryByText(/ENGINE/)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Back to menu' }));
+    expect(onExit).toHaveBeenCalledTimes(1);
+
+    getStateSpy.mockRestore();
+  });
+
+  it('resets the engine when "Replay" is clicked from the mission result screen', () => {
+    const frame = renderScreen();
+
+    const succeededState: GameState = {
+      ...createInitialGameState(createDefaultMissionConfiguration()),
+      countdown: null,
+      activeMission: {
+        id: 'ORBIT-01',
+        name: 'Mission 01',
+        description: 'Reach a stable orbit.',
+        status: 'succeeded',
+        objectives: [],
+      },
+    };
+    const getStateSpy = vi
+      .spyOn(SimulationEngine.prototype, 'getState')
+      .mockReturnValue(succeededState);
+    frame.advance(16);
+    expect(screen.getByText('MISSION COMPLETE')).toBeInTheDocument();
+
+    const resetSpy = vi.spyOn(SimulationEngine.prototype, 'reset');
+    fireEvent.click(screen.getByRole('button', { name: 'Replay' }));
+    expect(resetSpy).toHaveBeenCalledTimes(1);
+
+    resetSpy.mockRestore();
+    getStateSpy.mockRestore();
   });
 });

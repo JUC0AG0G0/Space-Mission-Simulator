@@ -4,6 +4,7 @@ import { MissionSetup } from '../ui/MissionSetup';
 import { SimulationScreen } from './SimulationScreen';
 import {
   createInitialAppState,
+  exitSimulation,
   returnToMainMenu,
   startNewMission,
   startSimulation,
@@ -37,7 +38,10 @@ export function App() {
       );
     case 'simulation':
       return appState.missionConfiguration ? (
-        <SimulationScreen missionConfiguration={appState.missionConfiguration} />
+        <SimulationScreen
+          missionConfiguration={appState.missionConfiguration}
+          onExit={() => setAppState(exitSimulation)}
+        />
       ) : null;
     default:
       return null;

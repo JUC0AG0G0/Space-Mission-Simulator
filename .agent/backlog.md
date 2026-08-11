@@ -182,7 +182,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
   Ajouter les tests couvrant les transitions principales.
 
-- [ ] Ajouter un écran de résumé de mission
+- [x] Ajouter un écran de résumé de mission
 
   À la fin d'une mission, ne pas retourner directement au menu.
 
@@ -222,17 +222,14 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   simulation, pas être calculées directement dans le composant
   d'interface.
 
-  Note de scoping (lecture du code au 2026-08-11) : `GameState`
-  (`src/types/simulation.ts`) et `SimulationEngine`
-  (`src/simulation/simulation-engine.ts`) ne suivent actuellement que les
-  valeurs instantanées (position/vitesse courantes, `simulationTime`).
-  Il n'existe pas de altitude/vitesse maximale mémorisée. Le tableau
-  `trajectory` est en plus tronqué à `MAX_TRAJECTORY_POINTS` (500 points),
-  donc il ne peut pas servir de source fiable pour reconstituer un maximum
-  sur toute la durée d'une mission longue. Il faudra donc ajouter le
-  suivi de ces maxima (altitude, vitesse) directement dans `GameState`/
-  `SimulationEngine.step`, mis à jour à chaque tick, pour que l'écran de
-  résultat puisse les lire sans recalcul côté composant.
+  Fait le 2026-08-11 : `GameState` suit désormais `maxAltitude` et
+  `maxSpeed`, mis à jour à chaque `SimulationEngine.step`. Le composant
+  `src/ui/MissionResult.tsx` lit ces valeurs (et les objectifs de la
+  mission active) via `buildMissionResultStats`
+  (`src/simulation/missions/mission-result.ts`), sans recalcul côté
+  composant. La cause d'échec affichée reste minimale ("Fuel depleted" /
+  "Spacecraft crashed", déduite de `spacecraft.fuelMass`) : le moteur de
+  mission ne distingue pas encore d'autres causes d'échec.
 
 - [ ] Ajouter la sauvegarde de la configuration de mission
 

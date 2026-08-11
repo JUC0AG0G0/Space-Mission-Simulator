@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import type { GameState, SimulationCommand } from '../types/simulation';
 import { SimulationEngine, createInitialGameState } from '../simulation/simulation-engine';
 import type { MissionConfiguration } from '../simulation/missions/mission-configuration';
+import { buildMissionResultStats } from '../simulation/missions/mission-result';
 import { renderScene } from '../rendering/canvas-renderer';
 import { Hud } from '../ui/Hud';
 import { CountdownOverlay } from '../ui/CountdownOverlay';
+import { MissionResult } from '../ui/MissionResult';
 import { ControlsPanel } from '../ui/ControlsPanel';
 import { MissionPanel } from '../ui/MissionPanel';
 import { SimulationControls } from '../ui/SimulationControls';
@@ -38,6 +40,8 @@ function buildCommandFromKeys(held: Set<string>): SimulationCommand {
 
 interface SimulationScreenProps {
   missionConfiguration: MissionConfiguration;
+  /** Called when the player leaves the simulation from the mission result screen. */
+  onExit: () => void;
 }
 
 /**
@@ -45,7 +49,7 @@ interface SimulationScreenProps {
  * `SimulationEngine` on every animation frame using a deterministic
  * `deltaTime`, and calls the renderer to draw the current state.
  */
-export function SimulationScreen({ missionConfiguration }: SimulationScreenProps) {
+export function SimulationScreen({ missionConfiguration, onExit }: SimulationScreenProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<SimulationEngine>(
     new SimulationEngine(createInitialGameState(missionConfiguration)),
@@ -144,6 +148,21 @@ export function SimulationScreen({ missionConfiguration }: SimulationScreenProps
     animationFrame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(animationFrame);
   }, []);
+
+  const isMissionOver =
+    state.activeMission?.status === 'succeeded' || state.activeMission?.status === 'failed';
+
+  if (isMissionOver) {
+    return (
+      <MissionResult
+        stats={buildMissionResultStats(state)}
+        onMenu={onExit}
+        onReplay={() =>
+          engineRef.current.reset(createInitialGameState(missionConfiguration))
+        }
+      />
+    );
+  }
 
   return (
     <div className="app">

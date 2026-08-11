@@ -11,7 +11,7 @@ import { altitudeAboveSurface, createOrbitMission, evaluateMission } from './mis
 import type { MissionConfiguration } from './missions/mission-configuration';
 import { computeGravitationalAcceleration } from './physics/gravity';
 import { integrate } from './physics/integration';
-import { add, dot, normalize } from './physics/vectors';
+import { add, dot, magnitude, normalize } from './physics/vectors';
 import {
   applyFuelConsumption,
   computeThrustAcceleration,
@@ -91,6 +91,8 @@ export function createInitialGameState(
     activeMission: createOrbitMission(configuration?.missionName),
     trajectory: [],
     countdown: { remainingSeconds: COUNTDOWN_DURATION_SECONDS },
+    maxAltitude: 0,
+    maxSpeed: 0,
   };
 }
 
@@ -241,6 +243,12 @@ export class SimulationEngine {
       simulationTime,
     );
 
+    const maxAltitude = Math.max(
+      this.state.maxAltitude,
+      altitudeAboveSurface(spacecraft, centralBody),
+    );
+    const maxSpeed = Math.max(this.state.maxSpeed, magnitude(spacecraft.velocity));
+
     let activeMission = this.state.activeMission;
     if (activeMission) {
       const evaluation = evaluateMission(
@@ -262,6 +270,8 @@ export class SimulationEngine {
       simulationTime,
       trajectory,
       activeMission,
+      maxAltitude,
+      maxSpeed,
     };
   }
 }

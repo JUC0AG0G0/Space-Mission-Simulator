@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   createInitialAppState,
+  exitSimulation,
   returnToMainMenu,
   startNewMission,
   startSimulation,
@@ -48,5 +49,17 @@ describe('app-state', () => {
   it('ignores returnToMainMenu when not in mission setup', () => {
     const state = { phase: 'simulation', missionConfiguration: null } as const;
     expect(returnToMainMenu(state)).toEqual(state);
+  });
+
+  it('leaves the simulation for the main menu, clearing the mission configuration', () => {
+    const configuration = createDefaultMissionConfiguration();
+    const state = exitSimulation({ phase: 'simulation', missionConfiguration: configuration });
+
+    expect(state).toEqual({ phase: 'main-menu', missionConfiguration: null });
+  });
+
+  it('ignores exitSimulation when not in the simulation', () => {
+    const state = { phase: 'mission-setup', missionConfiguration: null } as const;
+    expect(exitSimulation(state)).toEqual(state);
   });
 });
