@@ -170,6 +170,8 @@ function MissionSummary({ configuration, onEdit, onLaunch }: MissionSummaryProps
         <dd>{rocketModel?.name}</dd>
         <dt>Destination</dt>
         <dd>{profile?.destinationName}</dd>
+        <dt>Difficulty</dt>
+        <dd>{profile && MISSION_DIFFICULTY_LABELS[profile.difficulty]}</dd>
         <dt>Objective</dt>
         <dd>{profile?.objectiveDescription}</dd>
       </dl>

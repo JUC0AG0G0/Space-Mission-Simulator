@@ -287,7 +287,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Features à ajouter
 
-- [ ] La difficulté du profil de mission choisi n'apparaît pas sur
+- [x] La difficulté du profil de mission choisi n'apparaît pas sur
   l'écran de résumé de `MissionSetup`
 
   Le sélecteur "Mission profile" (`src/ui/MissionSetup.tsx:83-88`)
@@ -308,6 +308,18 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   dans `MissionSummary`). Étendre `tests/ui/MissionSetup.test.tsx` pour
   vérifier que le libellé de difficulté capitalisé apparaît sur l'écran
   de résumé.
+
+  Fait le 2026-08-11 : `MissionSummary`
+  (`src/ui/MissionSetup.tsx`) affiche désormais une paire
+  `<dt>Difficulty</dt><dd>{...}</dd>` dans `dl.mission-setup__summary`,
+  juste après "Destination" et avant "Objective", à partir de
+  `MISSION_DIFFICULTY_LABELS[profile.difficulty]` (le `profile` résolu
+  via `findMissionProfile` était déjà disponible dans le composant).
+  Test ajouté dans `tests/ui/MissionSetup.test.tsx` ("shows the
+  capitalized difficulty of the selected profile in the summary") :
+  sélectionne le profil `high-orbit`, passe à l'écran de résumé, et
+  vérifie que "Difficulty" et "Medium" y apparaissent. `npm test`
+  (250 tests), `npm run lint` et `npx tsc --noEmit` restent propres.
 
 - [x] Adapter le zoom de la caméra au profil de mission actif
 

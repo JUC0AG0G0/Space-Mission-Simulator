@@ -111,6 +111,17 @@ describe('MissionSetup', () => {
     expect(screen.getByText('Reach a stable high orbit')).toBeInTheDocument();
   });
 
+  it('shows the capitalized difficulty of the selected profile in the summary', async () => {
+    const user = userEvent.setup();
+    render(<MissionSetup onBack={() => {}} onLaunch={() => {}} />);
+
+    await user.selectOptions(screen.getByLabelText('Mission profile'), 'high-orbit');
+    await user.click(screen.getByRole('button', { name: 'Review mission' }));
+
+    expect(screen.getByText('Difficulty')).toBeInTheDocument();
+    expect(screen.getByText('Medium')).toBeInTheDocument();
+  });
+
   it('returns to the editable form when "Edit" is clicked from the summary', async () => {
     const user = userEvent.setup();
     render(<MissionSetup onBack={() => {}} onLaunch={() => {}} />);

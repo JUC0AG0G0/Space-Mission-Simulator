@@ -1,5 +1,23 @@
 # Changelog agent
 
+## 2026-08-11T23-35-00-000Z — feature
+- Description: La difficulté du profil de mission choisi n'apparaissait pas sur l'écran de résumé de `MissionSetup`
+- Détail : `MissionSummary` (`src/ui/MissionSetup.tsx`) affiche
+  désormais une ligne "Difficulty" dans `dl.mission-setup__summary`,
+  juste après "Destination" et avant "Objective", à partir de
+  `MISSION_DIFFICULTY_LABELS[profile.difficulty]` (le `profile` était
+  déjà résolu via `findMissionProfile` dans ce composant, donc aucune
+  nouvelle donnée à charger). Le joueur voit maintenant le niveau de
+  difficulté choisi au moment où il confirme le lancement, et plus
+  seulement dans le sélecteur du formulaire. Test ajouté dans
+  `tests/ui/MissionSetup.test.tsx` ("shows the capitalized difficulty
+  of the selected profile in the summary") : sélectionne le profil
+  `high-orbit`, passe à l'écran de résumé, vérifie la présence de
+  "Difficulty" et "Medium". `npm test` (250 tests), `npm run lint` et
+  `npx tsc --noEmit` restent propres. `.agent/backlog.md` mis à jour
+  (item coché avec note d'implémentation).
+- Branche/push: main (direct)
+
 ## 2026-08-11T23-30-00-000Z — bugfix
 - Description: Les noms saisis dans `MissionSetup` ne sont pas recadrés (`trim()`)
 - Détail : `onSubmit` du formulaire dans `src/ui/MissionSetup.tsx`
