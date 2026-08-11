@@ -1,5 +1,41 @@
 # Changelog agent
 
+## 2026-08-11T05-45-00-000Z — Revue périodique du backlog
+
+Tâche reçue : revue périodique planifiée — relire `.agent/backlog.md`,
+ajuster les priorités, ajouter toute tâche manquante identifiée en lisant
+le code (TODOs, zones sans tests, doc obsolète).
+
+- Vérifié : aucun `TODO`/`FIXME`/`XXX` dans `src/`.
+- Confirmé que "Ajouter une vraie phase de lancement" (item précédent) est
+  bien terminé et solidement testé : `src/simulation/flight-phase.ts` +
+  `tests/flight-phase.test.ts` couvrent les 5 phases (`pre-launch`,
+  `launch`, `flight`, `mission-complete`, `mission-failed`) et leurs cas
+  limites (mission déjà terminée prioritaire sur un countdown encore
+  actif, etc.), et la phase est bien branchée dans `src/ui/Hud.tsx`.
+- Comparé chaque fichier de `src/` à sa couverture dans `tests/` : aucune
+  nouvelle lacune identifiée (les fonctions de
+  `src/simulation/spacecraft/engine.ts` type `toggleEngine`/
+  `adjustThrottle` sont bien exercées indirectement via
+  `tests/spacecraft/spacecraft.test.ts` et `tests/simulation-engine.test.ts`).
+- Doc (`README.md`) relue : la section "Architecture" reflète toujours
+  correctement `App.tsx` (routeur) vs `SimulationScreen.tsx` (boucle de
+  jeu). Rien à corriger.
+- Prochain item du backlog ("Ajouter un écran de résumé de mission")
+  enrichi d'une note de scoping : en lisant `src/types/simulation.ts` et
+  `src/simulation/simulation-engine.ts`, `GameState` ne garde que des
+  valeurs instantanées (pas d'altitude/vitesse maximale suivie), et le
+  tableau `trajectory` est tronqué à `MAX_TRAJECTORY_POINTS` (500 points)
+  donc impropre à reconstituer un maximum sur une mission longue. Le
+  prochain run devra ajouter le suivi de ces maxima dans `GameState`/
+  `SimulationEngine.step` avant de pouvoir les afficher sur l'écran de
+  résultat sans les recalculer dans le composant (ce que l'item du
+  backlog interdit explicitement).
+- Ordre de priorité des "Features à ajouter" inchangé : il reste cohérent
+  avec l'état du code (4 premiers items terminés, "Écran de résumé de
+  mission" est le prochain).
+- `npm test` (170/170) et `npm run lint` passent sans erreur.
+
 ## 2026-08-11T00-00-00Z — Feature : vraie phase de lancement (PRE-LAUNCH/LAUNCH/FLIGHT/MISSION_COMPLETE/MISSION_FAILED)
 
 Tâche reçue : feature — "Ajouter une vraie phase de lancement" (item du

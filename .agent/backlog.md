@@ -222,6 +222,18 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   simulation, pas être calculées directement dans le composant
   d'interface.
 
+  Note de scoping (lecture du code au 2026-08-11) : `GameState`
+  (`src/types/simulation.ts`) et `SimulationEngine`
+  (`src/simulation/simulation-engine.ts`) ne suivent actuellement que les
+  valeurs instantanées (position/vitesse courantes, `simulationTime`).
+  Il n'existe pas de altitude/vitesse maximale mémorisée. Le tableau
+  `trajectory` est en plus tronqué à `MAX_TRAJECTORY_POINTS` (500 points),
+  donc il ne peut pas servir de source fiable pour reconstituer un maximum
+  sur toute la durée d'une mission longue. Il faudra donc ajouter le
+  suivi de ces maxima (altitude, vitesse) directement dans `GameState`/
+  `SimulationEngine.step`, mis à jour à chaque tick, pour que l'écran de
+  résultat puisse les lire sans recalcul côté composant.
+
 - [ ] Ajouter la sauvegarde de la configuration de mission
 
   Permettre de sauvegarder localement la configuration préparée par le
