@@ -1931,3 +1931,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Revue périodique planifiée : relis .agent/backlog.md, ajuste les priorités, et ajoute toute tâche manquante identifiée en lisant le code (TODOs, zones sans tests, doc obsolète).
 - Branche/push: main (direct)
 - Coût estimé: 0.8049833000000001 USD
+
+## 2026-08-11T22-23-08-008Z — test
+- Description: Les branches d'échec silencieux de `localStorage` ne sont testées
+- Branche/push: main (direct)
+- Coût estimé: 0.9065409999999999 USD
