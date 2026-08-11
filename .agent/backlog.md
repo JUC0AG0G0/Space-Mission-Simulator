@@ -18,15 +18,73 @@ bugs concrets ont été identifiés en lisant `SimulationEngine.step` et
 `SimulationScreen`'s `onKeyDown` (voir "Bugs connus" ci-dessous, tous
 corrigés depuis, y compris le key-repeat sur `onKeyDown`) ; aucun trou
 de couverture supplémentaire ni doc obsolète trouvé cette fois-ci (le
-`README.md` reste cohérent avec `src/app`). Aucun bug connu ouvert à ce
-jour — une nouvelle revue du repo est nécessaire pour repeupler le
-backlog.
+`README.md` reste cohérent avec `src/app`).
+
+Revue du 2026-08-11 (4e passe) : `npm test` (241 tests), `npm run lint`
+et `npx tsc --noEmit` sont propres, aucun `TODO`/`FIXME`, et tout le
+code pur de `src/simulation`/`src/rendering` a un fichier de test dédié
+(y compris `src/simulation/spacecraft/engine.ts`, couvert indirectement
+via `tests/spacecraft/spacecraft.test.ts`). En lisant
+`SimulationEngine.step`, `evaluateMission` (`src/simulation/missions/
+mission.ts`) et `computeThrustAcceleration`/`applyFuelConsumption`
+(`src/simulation/spacecraft/spacecraft.ts`), un bug de logique de
+mission a été identifié : une fois le carburant épuisé, un vaisseau qui
+a atteint une orbite stable (donc qui ne retombe jamais sous
+`CRASH_ALTITUDE`) mais située hors de la bande `[minAltitude,
+maxAltitude]` du profil de mission ne peut plus jamais faire évoluer
+son statut — `evaluateMission` ne renvoie `'failed'` que sur un crash,
+et `'succeeded'` que si l'altitude entre un jour dans la bande cible,
+ce qui n'arrivera jamais pour une orbite fermée qui ne la croise pas.
+La mission reste `'active'` indéfiniment (voir "Bugs connus"
+ci-dessous). Aucun autre trou de couverture, doc obsolète ou
+incohérence README trouvé cette fois-ci.
 
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Bugs connus
+
+- [ ] Une mission peut rester bloquée en statut `active` indéfiniment :
+  aucune condition d'échec ne se déclenche pour un vaisseau à court de
+  carburant, installé sur une orbite stable qui ne croise jamais la
+  bande d'altitude cible de la mission.
+
+  `evaluateMission` (`src/simulation/missions/mission.ts:78`) ne fait
+  passer une mission à `'failed'` que si `altitude < CRASH_ALTITUDE`
+  (le vaisseau touche le sol), et à `'succeeded'` que si l'altitude
+  entre un jour dans `[minAltitude, maxAltitude]` assez longtemps.
+  Or la physique (`src/simulation/physics/gravity.ts` +
+  `integration.ts`) est une gravité à deux corps sans atmosphère : une
+  orbite fermée (circulaire ou elliptique) qui ne croise ni le sol ni
+  la bande cible est stable indéfiniment. `computeThrustAcceleration`
+  et `applyFuelConsumption` (`src/simulation/spacecraft/spacecraft.ts`)
+  coupent bien la poussée à carburant nul, donc le joueur n'a alors
+  plus aucun moyen de corriger sa trajectoire — mais rien ne fait
+  échouer la mission pour autant : `SimulationEngine.step` continue de
+  tourner et le mission-result screen (`src/simulation/missions/
+  mission-result.ts`) n'est jamais atteint. C'est la même famille de
+  bug que l'ancien "carburant qui rend la mission injouable au sol",
+  déjà corrigé, mais en vol.
+
+  Exemple reproductible en test unitaire : construire un `Spacecraft`
+  avec `fuelMass: 0`, positionné/orienté pour une orbite circulaire
+  stable sous `minAltitude` (ex. rayon = `centralBody.radius + 50_000`
+  avec la vitesse orbitale circulaire correspondante), moteur éteint,
+  puis appeler `SimulationEngine.step` un grand nombre de fois : le
+  statut de `activeMission` reste `'active'` alors que l'altitude ne
+  rejoindra jamais la bande cible et que le vaisseau ne peut plus
+  manœuvrer.
+
+  Piste : ajouter une condition d'échec explicite (ex. carburant épuisé
+  ET objectif `reach-altitude` non complété ET vaisseau hors bande
+  cible) dans `evaluateMission`, en veillant à ne pas faire échouer
+  prématurément une trajectoire elliptique sans carburant qui
+  traverserait encore la bande cible périodiquement (périapside/
+  apoapside). `describeFailureCause`
+  (`src/simulation/missions/mission-result.ts:15`) sait déjà afficher
+  "Fuel depleted" comme cause — cette tâche consiste à faire en sorte
+  que ce statut soit réellement atteint plutôt qu'à ajouter l'affichage.
 
 - [x] `SimulationEngine.applyCommand` ignore l'état `paused`
 

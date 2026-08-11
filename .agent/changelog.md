@@ -1,5 +1,34 @@
 # Changelog agent
 
+## 2026-08-11T21-05-00-000Z — planning
+- Description: Revue complète du repo et régénération du backlog (aucune tâche actionnable ne restait)
+- Détail : Analyse de la structure (`src/`, `tests/`), recherche de
+  `TODO`/`FIXME`, exécution de `npm test` (241 tests), `npm run lint` et
+  `npx tsc --noEmit` — tout propre, aucun trou de couverture de tests
+  sur le code pur (chaque module de `src/simulation`/`src/rendering`/
+  `src/ui` a un fichier de test, y compris `spacecraft/engine.ts` via
+  `tests/spacecraft/spacecraft.test.ts`), et `README.md` toujours
+  cohérent avec `src/app`. En lisant `SimulationEngine.step`,
+  `evaluateMission` (`src/simulation/missions/mission.ts`) et
+  `computeThrustAcceleration`/`applyFuelConsumption`
+  (`src/simulation/spacecraft/spacecraft.ts`), un vrai bug de logique
+  de mission a été identifié : sans carburant, un vaisseau installé sur
+  une orbite stable (2 corps, sans atmosphère, donc pas de décroissance
+  orbitale) mais située hors de la bande d'altitude cible ne peut plus
+  jamais faire échouer ni réussir la mission — `evaluateMission` ne
+  déclenche `'failed'` que sur un crash au sol, jamais sur un
+  épuisement de carburant sans issue. `activeMission.status` reste
+  `'active'` indéfiniment, empêchant le joueur d'atteindre l'écran de
+  résultat de mission. Documenté comme nouveau "bug connu" en tête de
+  `.agent/backlog.md`, avec repro (orbite circulaire stable sous
+  `minAltitude`, carburant à 0, `step()` répété) et piste de correction
+  (condition d'échec explicite dans `evaluateMission`, en prenant garde
+  à ne pas casser les trajectoires elliptiques qui retraversent
+  périodiquement la bande cible). Aucun code modifié dans ce run
+  (tâche de planification uniquement) ; `npm test`/`npm run lint`/
+  `npx tsc --noEmit` restent propres (aucun changement de code).
+- Branche/push: main (direct)
+
 ## 2026-08-11T21-01-11-000Z — bugfix
 - Description: `SimulationScreen.onKeyDown` réagit au key-repeat du système, déclenchant plusieurs actions pour une seule pression de touche
 - Détail : `onKeyDown` (`src/app/SimulationScreen.tsx`) ignore désormais
