@@ -1605,3 +1605,19 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Le sélecteur "Mission profile" de `MissionSetup` affiche la
 - Branche/push: main (direct)
 - Coût estimé: 0.8928003999999999 USD
+
+## 2026-08-11T21-50-00-000Z — doc
+- Description: `README.md` ne décrivait pas le déroulé de jeu réellement implémenté
+- Détail : Nouvelle section "## Gameplay" ajoutée dans `README.md`,
+  entre "Controls" et "Architecture", résumant l'enchaînement
+  main menu → mission setup → pre-launch/countdown → launch → flight →
+  mission complete/failed, avec un paragraphe par étape couvrant la
+  progression des missions et "Continuer" (menu principal), le choix du
+  profil de mission et du modèle de fusée + sauvegarde locale (mission
+  setup), le compte à rebours basé sur le temps de simulation, le
+  contrôle manuel en vol, et l'écran de résultat (stats, objectifs,
+  rejouer/menu). Item documentation pure, vérifié par lecture de
+  `src/app/game-phase.ts`, `src/simulation/flight-phase.ts`,
+  `src/ui/MainMenu.tsx` et `src/ui/MissionResult.tsx` — aucun fichier
+  source modifié. `npm run lint` et `npx tsc --noEmit` restent propres.
+- Branche/push: main (direct)

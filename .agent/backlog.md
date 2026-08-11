@@ -727,7 +727,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   routeur entre écrans et cette responsabilité vit dans
   `src/app/SimulationScreen.tsx`. Corrigé.
 
-- [ ] `README.md` ne décrit pas le déroulé de jeu réellement implémenté
+- [x] `README.md` ne décrit pas le déroulé de jeu réellement implémenté
 
   Le `README.md` actuel s'arrête à : installation, dev, tests, lint,
   table de contrôles, et une section "Architecture" qui ne couvre que
@@ -758,6 +758,24 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   d'écrans en quelques lignes, pour qu'un nouveau lecteur comprenne ce
   que fait réellement l'application avant de lire le code. Item
   documentation pure — aucun changement de code ni de test attendu.
+
+  Fait le 2026-08-11 : nouvelle section "## Gameplay" ajoutée dans
+  `README.md`, entre "Controls" et "Architecture". Elle décrit
+  l'enchaînement d'écrans/phases (main menu → mission setup →
+  pre-launch/countdown → launch → flight → mission complete/failed)
+  sous forme de schéma texte, puis un paragraphe par étape mentionnant
+  les mécaniques réellement implémentées : progression des missions et
+  bouton "Continuer" sur le menu principal, choix du profil de mission
+  et du modèle de fusée + sauvegarde locale sur l'écran de préparation,
+  compte à rebours basé sur le temps de simulation avant le lancement,
+  contrôle manuel WASD/flèches en vol, et écran de résultat
+  (succès/échec, stats, objectifs, rejouer/menu). Contenu vérifié par
+  lecture directe de `src/app/game-phase.ts`,
+  `src/simulation/flight-phase.ts`, `src/ui/MainMenu.tsx` et
+  `src/ui/MissionResult.tsx` pour rester fidèle au comportement réel.
+  Item documentation pure : aucun changement de code, `npm test`
+  (247 tests), `npm run lint` et `npx tsc --noEmit` restent propres
+  (aucun fichier source touché).
 
 ## Divers / à clarifier
 
