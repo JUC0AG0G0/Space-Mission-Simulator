@@ -954,3 +954,27 @@ Aucun changement de code dans ce run — tâche de planification uniquement.
 - Description: Ajouter plusieurs profils de mission
 - Branche/push: main (direct)
 - Coût estimé: 3.32258 USD
+
+## 2026-08-11T16-53-34-000Z — planning
+- Description: Revue périodique planifiée : relis .agent/backlog.md,
+  ajuste les priorités, et ajoute toute tâche manquante identifiée en
+  lisant le code (TODOs, zones sans tests, doc obsolète). Vérifié :
+  aucun `TODO`/`FIXME`/`XXX` dans `src/` ; `npm test` (201 tests) et
+  `npm run lint` passent sans erreur ; `npm outdated` ne montre que des
+  montées de version majeures (React 18→19, TS 5→7, vite 5→8, etc.),
+  hors périmètre d'un item de backlog scopé. Relu en détail le refactor
+  "plusieurs profils de mission" du run précédent : `app-state.ts`,
+  `flight-phase.ts`, `mission.ts`, `mission-configuration.ts`,
+  `mission-result.ts`, `mission-save.ts` (confirmé : plus aucune
+  référence à `destinationId`/`objectiveId`, la validation de forme dans
+  `loadSavedMission` rejette proprement une ancienne sauvegarde sans
+  `missionProfileId`), `simulation-engine.ts`, `MissionSetup.tsx`,
+  `MissionPanel.tsx` : cohérents entre eux, chaque module `src/` garde
+  son fichier de test dédié sous `tests/`. README vérifié à jour
+  (contrôles, architecture). Aucune nouvelle tâche identifiée ; l'ordre
+  de priorité en tête de `.agent/backlog.md` (état machine complète,
+  sélection de fusée, progression) reste correct et correspond à
+  l'ordre des items non cochés de "Features à ajouter".
+  `.agent/backlog.md` inchangé.
+- Branche/push: main (direct)
+- Coût estimé: n/a
