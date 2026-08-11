@@ -1,5 +1,24 @@
 # Changelog agent
 
+## 2026-08-12T00-20-00-000Z — test
+- Description: La branche "trajectoire non liée" d'`isStrandedOutsideTargetBand` n'était pas exercée par les tests
+- Détail : nouveau test "does not fail a fuel-depleted spacecraft on an
+  unbound (escape) trajectory" dans `tests/missions/mission.test.ts`
+  (`describe('evaluateMission', ...)`). Il construit un vaisseau
+  `fuelMass: 0` hors de la bande cible d'altitude, sur une trajectoire
+  d'échappement (vitesse tangentielle légèrement supérieure à la
+  vitesse de libération au rayon courant, même formule que
+  `tests/physics/orbit.test.ts`), vérifie que `computeOrbitRadiusBounds`
+  renvoie bien `null` pour cette trajectoire, puis que `evaluateMission`
+  laisse le statut de la mission à `'active'` (et non `'failed'`) —
+  couvrant la garde `if (!bounds) { return false; }` dans
+  `isStrandedOutsideTargetBand` (`src/simulation/missions/mission.ts:84-85`),
+  jusqu'ici non exercée d'après `npm run coverage`. Aucun changement de
+  code de production. `npm test` (253 tests), `npm run lint` et `npx
+  tsc --noEmit` restent propres ; `npm run coverage` confirme que la
+  garde est désormais couverte.
+- Branche/push: main (non commité par l'agent)
+
 ## 2026-08-12T00-05-00-000Z — feature
 - Description: `createSpacecraft` construit son `Engine` inline au lieu d'appeler `createEngine`
 - Détail : `createSpacecraft` (`src/simulation/spacecraft/spacecraft.ts`)

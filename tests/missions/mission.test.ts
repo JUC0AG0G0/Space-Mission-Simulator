@@ -267,6 +267,34 @@ describe('evaluateMission', () => {
     expect(updated.status).toBe('active');
   });
 
+  it('does not fail a fuel-depleted spacecraft on an unbound (escape) trajectory', () => {
+    // isStrandedOutsideTargetBand only reasons about closed orbits: an
+    // escape trajectory has no periapsis/apoapsis to compare against the
+    // target band, so computeOrbitRadiusBounds returns null and the
+    // mission must stay active rather than being wrongly failed.
+    const radius = centralBody.radius + ORBIT_MAX_ALTITUDE + 50_000;
+    const escapeSpeed = Math.sqrt((2 * centralBody.gravitationalParameter) / radius);
+    const spacecraft = spacecraftOnOrbit(
+      { x: radius, y: 0 },
+      { x: 0, y: escapeSpeed + 1 },
+      0,
+    );
+
+    const bounds = computeOrbitRadiusBounds(
+      spacecraft.position,
+      spacecraft.velocity,
+      centralBody,
+    );
+    expect(bounds).toBeNull();
+
+    const { mission: updated } = evaluateMission(
+      { mission: createOrbitMission(), spacecraft, centralBody, secondsInOrbitRange: 0 },
+      1,
+    );
+
+    expect(updated.status).toBe('active');
+  });
+
   it('leaves a completed mission unchanged', () => {
     const mission = { ...createOrbitMission(), status: 'succeeded' as const };
     const spacecraft = spacecraftAtAltitude(0);

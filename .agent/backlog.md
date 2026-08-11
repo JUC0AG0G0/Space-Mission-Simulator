@@ -926,7 +926,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Tests manquants
 
-- [ ] La branche "trajectoire non liée" d'`isStrandedOutsideTargetBand`
+- [x] La branche "trajectoire non liée" d'`isStrandedOutsideTargetBand`
   n'est pas exercée par les tests
 
   `isStrandedOutsideTargetBand` (`src/simulation/missions/mission.ts:69-94`)
@@ -950,6 +950,22 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   `'active'` inchangé (même schéma que les tests voisins "does not fail
   a stranded-looking orbit while fuel remains" / "does not fail a
   fuel-depleted elliptical orbit...").
+
+  Fait le 2026-08-11 : nouveau test "does not fail a fuel-depleted
+  spacecraft on an unbound (escape) trajectory" dans
+  `tests/missions/mission.test.ts` (`describe('evaluateMission', ...)`)
+  — construit un vaisseau `fuelMass: 0` positionné hors bande cible
+  (`radius = centralBody.radius + ORBIT_MAX_ALTITUDE + 50_000`) avec une
+  vitesse tangentielle légèrement supérieure à la vitesse de libération
+  à ce rayon (`escapeSpeed + 1`, même formule que
+  `tests/physics/orbit.test.ts`), vérifie d'abord que
+  `computeOrbitRadiusBounds` renvoie bien `null` pour cette trajectoire
+  (même garde qu'attendu dans `isStrandedOutsideTargetBand`), puis que
+  `evaluateMission` laisse le statut de la mission à `'active'` au lieu
+  de basculer à tort en `'failed'`. `npm run coverage` confirme que la
+  garde `if (!bounds) { return false; }` (`mission.ts:84-85`) est
+  désormais couverte. `npm test` (253 tests), `npm run lint` et `npx
+  tsc --noEmit` restent propres.
 
 - [ ] La branche moteur inactif de `computeFuelConsumed` n'est pas
   testée
