@@ -996,7 +996,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   désormais couverte. `npm test` (253 tests), `npm run lint` et `npx
   tsc --noEmit` restent propres.
 
-- [ ] La branche moteur inactif de `computeFuelConsumed` n'est pas
+- [x] La branche moteur inactif de `computeFuelConsumed` n'est pas
   testée
 
   `computeFuelConsumed` (`src/simulation/spacecraft/engine.ts:42-48`,
@@ -1011,6 +1011,17 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   côté des tests existants de `computeFuelConsumed`) : un `Engine` avec
   `active: false` passé à `computeFuelConsumed(engine, deltaTime)` pour
   un `deltaTime` non nul doit renvoyer `0`.
+
+  Fait le 2026-08-12 : nouveau test "consumes no fuel while the engine
+  is inactive, even for a non-zero deltaTime" dans
+  `tests/spacecraft/spacecraft.test.ts` (`describe('applyFuelConsumption',
+  ...)`, à côté des deux tests existants de `computeFuelConsumed`) — un
+  `Engine` fraîchement créé par `createEngine` (donc `active: false`)
+  passé à `computeFuelConsumed(engine, 5)` doit renvoyer `0`. `npm run
+  coverage` confirme que `src/simulation/spacecraft/engine.ts` est
+  désormais à 100 % de couverture (lignes/branches/fonctions). `npm
+  test` (254 tests), `npm run lint` et `npx tsc --noEmit` restent
+  propres.
 
 - [ ] Les branches d'échec silencieux de `localStorage` ne sont testées
   dans aucune des deux couches de persistance

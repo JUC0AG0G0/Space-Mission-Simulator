@@ -1,5 +1,19 @@
 # Changelog agent
 
+## 2026-08-12T00-00-00-000Z — test
+- Description: La branche moteur inactif de `computeFuelConsumed` n'était pas testée
+- Détail : nouveau test "consumes no fuel while the engine is inactive,
+  even for a non-zero deltaTime" dans `tests/spacecraft/spacecraft.test.ts`
+  (à côté des deux tests existants de `computeFuelConsumed`) — un
+  `Engine` fraîchement créé par `createEngine` (donc `active: false`)
+  passé à `computeFuelConsumed(engine, 5)` doit renvoyer `0`, couvrant
+  la garde `if (!engine.active) { return 0; }`
+  (`src/simulation/spacecraft/engine.ts:43-45`). `npm run coverage`
+  confirme que `engine.ts` est désormais à 100 % de couverture. `npm
+  test` (254 tests), `npm run lint` et `npx tsc --noEmit` restent
+  propres. Item coché sous "Tests manquants" dans `.agent/backlog.md`.
+- Branche/push: main (non commité par l'agent)
+
 ## 2026-08-12T00-35-00-000Z — planning
 - Description: Revue périodique du backlog (8e passe) — vérification de l'état du projet et recherche de nouveaux trous de couverture
 - Détail : aucun changement de code de production. `npm test` (253

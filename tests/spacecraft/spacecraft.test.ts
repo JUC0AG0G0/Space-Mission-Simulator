@@ -158,4 +158,11 @@ describe('applyFuelConsumption', () => {
     const actual = computeFuelConsumed(active, 0.1);
     expect(actual).toBeCloseTo(1, 8);
   });
+
+  it('consumes no fuel while the engine is inactive, even for a non-zero deltaTime', () => {
+    const engine = createEngine({ thrust: 1000, fuelConsumption: 10 });
+
+    const actual = computeFuelConsumed(engine, 5);
+    expect(actual).toBe(0);
+  });
 });
