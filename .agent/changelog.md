@@ -1484,3 +1484,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: `SimulationScreen.onKeyDown` détourne des raccourcis navigateur
 - Branche/push: main (direct)
 - Coût estimé: 0.7298858999999999 USD
+
+## 2026-08-11T21-00-15-886Z — bugfix
+- Description: `SimulationScreen.onKeyDown` réagit au key-repeat du système,
+- Branche/push: main (direct)
+- Coût estimé: 0.5965836000000001 USD
