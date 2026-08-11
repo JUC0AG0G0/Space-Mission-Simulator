@@ -1576,3 +1576,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Une mission peut rester bloquée en statut `active` indéfiniment :
 - Branche/push: main (direct)
 - Coût estimé: 1.4967921999999998 USD
+
+## 2026-08-11T21-13-58-759Z — planning
+- Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
+- Branche/push: main (direct)
+- Coût estimé: 1.3119796000000001 USD
