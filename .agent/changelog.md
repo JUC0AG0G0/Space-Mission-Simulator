@@ -1789,3 +1789,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
   le nouveau champ. `npm test` (252 tests), `npm run lint` et `npx tsc
   --noEmit` restent propres.
 - Branche/push: main (direct, non poussé par l'agent)
+
+## 2026-08-11T21-39-34-855Z — bugfix
+- Description: `describeFailureCause` affiche une cause d'échec trompeuse quand
+- Branche/push: main (direct)
+- Coût estimé: 1.5923129999999999 USD
