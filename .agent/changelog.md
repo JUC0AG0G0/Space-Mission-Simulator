@@ -1,5 +1,25 @@
 # Changelog agent
 
+## 2026-08-11T23-30-00-000Z — bugfix
+- Description: Les noms saisis dans `MissionSetup` ne sont pas recadrés (`trim()`)
+- Détail : `onSubmit` du formulaire dans `src/ui/MissionSetup.tsx`
+  recadre désormais `missionName` et `spacecraftName` (état
+  `configuration`, via `setConfiguration`) juste avant de passer à
+  l'écran de résumé (`setReviewing(true)`), au lieu de stocker la
+  valeur brute de l'`<input>` à chaque frappe (`updateField`) — ce qui
+  aurait empêché de taper un espace entre deux mots pendant la saisie.
+  L'écran de résumé et `onLaunch` (donc `saveMission`,
+  `createOrbitMission`, `createInitialSpacecraft`) reçoivent désormais
+  la valeur déjà recadrée, ce qui élimine les espaces parasites
+  précédemment affichés tels quels dans le HUD, le panneau de mission
+  et l'écran de résultat. Test ajouté dans
+  `tests/ui/MissionSetup.test.tsx` ("trims leading/trailing whitespace
+  from mission and spacecraft names on review"). `npm test`
+  (249 tests), `npm run lint` et `npx tsc --noEmit` restent propres.
+  `.agent/backlog.md` mis à jour (item coché avec note
+  d'implémentation).
+- Branche/push: main (direct)
+
 ## 2026-08-11T22-15-00-000Z — planning
 - Description: Le backlog ne contenait plus de tâche actionnable (bug/feature/test/doc) — regénération après analyse du repo (6e passe)
 - Détail : `npm test` (248 tests), `npm run lint` et `npx tsc --noEmit`

@@ -55,6 +55,11 @@ export function MissionSetup({ onBack, onLaunch }: MissionSetupProps) {
         className="mission-setup__form"
         onSubmit={(event) => {
           event.preventDefault();
+          setConfiguration((current) => ({
+            ...current,
+            missionName: current.missionName.trim(),
+            spacecraftName: current.spacecraftName.trim(),
+          }));
           setReviewing(true);
         }}
       >

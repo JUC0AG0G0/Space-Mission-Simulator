@@ -121,6 +121,28 @@ describe('MissionSetup', () => {
     expect(screen.getByLabelText('Mission name')).toHaveValue('Mission 01');
   });
 
+  it('trims leading/trailing whitespace from mission and spacecraft names on review', async () => {
+    const onLaunch = vi.fn();
+    const user = userEvent.setup();
+    render(<MissionSetup onBack={() => {}} onLaunch={onLaunch} />);
+
+    await user.clear(screen.getByLabelText('Mission name'));
+    await user.type(screen.getByLabelText('Mission name'), '  Mission 01  ');
+    await user.clear(screen.getByLabelText('Spacecraft name'));
+    await user.type(screen.getByLabelText('Spacecraft name'), '  Falcon  ');
+    await user.click(screen.getByRole('button', { name: 'Review mission' }));
+
+    expect(screen.queryByLabelText('Mission name')).not.toBeInTheDocument();
+    expect(screen.getByText('Mission 01')).toBeInTheDocument();
+    expect(screen.getByText('Falcon')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Launch mission' }));
+
+    expect(onLaunch).toHaveBeenCalledWith(
+      expect.objectContaining({ missionName: 'Mission 01', spacecraftName: 'Falcon' }),
+    );
+  });
+
   it('calls onLaunch with the reviewed configuration when "Launch mission" is clicked', async () => {
     const onLaunch = vi.fn();
     const user = userEvent.setup();

@@ -60,6 +60,12 @@ compte à rebours, la sélection de fusée/profil de mission, la
 sauvegarde/`Continuer`, l'écran de résultat ou le suivi de
 progression, qui sont pourtant tous fonctionnels).
 
+Suivi du 2026-08-11 (bis) : le bug de recadrage des noms de mission/
+fusée dans `MissionSetup` (identifié lors de la 6e passe ci-dessous)
+est corrigé — voir la note "Fait le 2026-08-11" sous l'item
+correspondant. `npm test` (249 tests), `npm run lint` et `npx tsc
+--noEmit` sont propres.
+
 Revue du 2026-08-11 (6e passe) : `npm test` (248 tests), `npm run lint`
 et `npx tsc --noEmit` sont propres, aucun `TODO`/`FIXME`, et chaque
 fichier de `src/simulation`/`src/rendering` a un fichier de test dédié.
@@ -87,7 +93,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Bugs connus
 
-- [ ] Les noms saisis dans `MissionSetup` ne sont pas recadrés
+- [x] Les noms saisis dans `MissionSetup` ne sont pas recadrés
   (`trim()`), contrairement à ce que la validation laisse croire
 
   `isValidMissionConfiguration` (`src/simulation/missions/
@@ -113,6 +119,22 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   `tests/ui/MissionSetup.test.tsx` vérifiant qu'un nom saisi avec des
   espaces en début/fin est recadré dans la configuration transmise à
   `onLaunch`.
+
+  Fait le 2026-08-11 : le `onSubmit` du formulaire dans
+  `src/ui/MissionSetup.tsx` recadre désormais `missionName` et
+  `spacecraftName` dans l'état `configuration` (via `setConfiguration`,
+  `.trim()` sur les deux champs) juste avant `setReviewing(true)`, donc
+  au moment où le joueur passe du formulaire à l'écran de résumé —
+  plutôt qu'à chaque frappe dans `updateField`, ce qui aurait empêché de
+  taper un espace entre deux mots. L'écran de résumé (`MissionSummary`)
+  et `onLaunch` lisent la même valeur d'état déjà recadrée, donc plus
+  aucune trace des espaces parasites en sauvegarde/HUD/résultat. Test
+  ajouté dans `tests/ui/MissionSetup.test.tsx` ("trims leading/trailing
+  whitespace from mission and spacecraft names on review") : saisit
+  `"  Mission 01  "` / `"  Falcon  "`, vérifie que le résumé affiche les
+  valeurs recadrées puis que `onLaunch` est appelé avec
+  `missionName: 'Mission 01'` / `spacecraftName: 'Falcon'`. `npm test`
+  (249 tests), `npm run lint` et `npx tsc --noEmit` restent propres.
 
 - [x] Une mission peut rester bloquée en statut `active` indéfiniment :
   aucune condition d'échec ne se déclenche pour un vaisseau à court de
