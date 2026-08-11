@@ -46,10 +46,23 @@ describe('Hud', () => {
     expect(screen.getByText('7.2 t')).toBeInTheDocument();
   });
 
-  it('shows the active mission id', () => {
+  it('shows the active mission name', () => {
     render(<Hud state={makeState()} />);
 
-    expect(screen.getByText(/MISSION: /)).toHaveTextContent('MISSION: ORBIT-01');
+    expect(screen.getByText(/MISSION: /)).toHaveTextContent('MISSION: Orbit-01');
+  });
+
+  it('shows the custom mission name when the mission was renamed', () => {
+    const state = makeState();
+    const renamedState: GameState = {
+      ...state,
+      activeMission: state.activeMission
+        ? { ...state.activeMission, name: 'Mission 01' }
+        : null,
+    };
+    render(<Hud state={renamedState} />);
+
+    expect(screen.getByText(/MISSION: /)).toHaveTextContent('MISSION: Mission 01');
   });
 
   it('shows a placeholder when there is no active mission', () => {

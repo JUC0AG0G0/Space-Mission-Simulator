@@ -26,22 +26,19 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 - [x] La configuration de mission saisie dans `MissionSetup` est ignorée
   au lancement
 
-- [ ] Le HUD de vol affiche un identifiant de mission constant au lieu
+- [x] Le HUD de vol affiche un identifiant de mission constant au lieu
   du nom réel de la mission
 
-  `src/ui/Hud.tsx:54` affiche `state.activeMission?.id`. Or
-  `createOrbitMission` (`src/simulation/missions/mission.ts:22`) fixe
-  `id: 'ORBIT-01'` en dur pour toute mission, quel que soit le profil
-  choisi (`earth-orbit` / `high-orbit` / `fast-orbit`) — seul le champ
-  `name` varie réellement (nom saisi par le joueur dans `MissionSetup`,
-  ex. "Mission 01"). Résultat : le HUD affiche toujours
-  `MISSION: ORBIT-01` en vol, quelle que soit la mission réellement en
-  cours (verrouillé par `tests/ui/Hud.test.tsx:52`), ce qui n'aide pas
-  le joueur à identifier sa mission.
-
-  Corriger `Hud.tsx` pour afficher `activeMission.name` (ou une valeur
-  dérivée du profil de mission actif) à la place de `activeMission.id`,
-  et mettre à jour `tests/ui/Hud.test.tsx` en conséquence.
+  Fait le 2026-08-11 : `Hud.tsx` affichait `state.activeMission?.id`,
+  qui vaut toujours la constante `'ORBIT-01'` (fixée dans
+  `createOrbitMission`), quel que soit le profil de mission choisi
+  (`earth-orbit` / `high-orbit` / `fast-orbit`) ou le nom saisi par le
+  joueur dans `MissionSetup`. `src/ui/Hud.tsx:54` affiche désormais
+  `state.activeMission?.name`, qui reflète le nom réel de la mission
+  (`'Orbit-01'` par défaut, ou le nom personnalisé saisi par le joueur).
+  `tests/ui/Hud.test.tsx` mis à jour : le test existant vérifie
+  désormais `MISSION: Orbit-01`, et un nouveau test couvre l'affichage
+  d'un nom de mission personnalisé (`'Mission 01'`).
 
 ## Features à ajouter
 

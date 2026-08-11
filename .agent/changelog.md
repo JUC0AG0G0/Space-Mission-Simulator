@@ -1,5 +1,27 @@
 # Changelog agent
 
+## 2026-08-11T22-34-00Z — Fix: HUD affichait l'id de mission au lieu du nom
+
+Tâche reçue : bugfix — "Le HUD de vol affiche un identifiant de mission
+constant au lieu du nom réel de la mission" (section "Bugs connus" de
+`.agent/backlog.md`).
+
+- `src/ui/Hud.tsx:54` affichait `state.activeMission?.id`, qui vaut
+  toujours `'ORBIT-01'` (constante fixée dans `createOrbitMission`,
+  `src/simulation/missions/mission.ts:23`) quel que soit le profil de
+  mission choisi ou le nom saisi par le joueur dans `MissionSetup`.
+  Remplacé par `state.activeMission?.name`, qui reflète le nom réel de
+  la mission active.
+- `tests/ui/Hud.test.tsx` : le test `shows the active mission id` est
+  renommé `shows the active mission name` et vérifie désormais
+  `MISSION: Orbit-01` (nom par défaut de `createOrbitMission`) ; ajouté
+  un nouveau test `shows the custom mission name when the mission was
+  renamed` qui vérifie l'affichage d'un nom personnalisé
+  (`'Mission 01'`).
+- `npm test` (234 tests), `npm run lint` et `npx tsc --noEmit` sont tous
+  propres après le changement.
+- Backlog mis à jour : l'item est coché dans `.agent/backlog.md`.
+
 ## 2026-08-11T21-00-00Z — Ajouter un système de progression
 
 Tâche reçue : feature — "Ajouter un système de progression" (dernier item

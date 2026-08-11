@@ -51,7 +51,7 @@ export function Hud({ state }: HudProps) {
   return (
     <div className="hud">
       <div className="hud__mission">
-        MISSION: {state.activeMission?.id ?? '—'}
+        MISSION: {state.activeMission?.name ?? '—'}
       </div>
       <div className={`hud__phase hud__phase--${phase}`}>{phaseLabel(phase)}</div>
       <dl className="hud__grid">
