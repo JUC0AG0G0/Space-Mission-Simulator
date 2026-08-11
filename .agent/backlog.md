@@ -10,14 +10,14 @@ résultat, sauvegarde, plusieurs missions, machine à états complète,
 sélection de fusée, progression) est entièrement terminée — voir les
 items cochés ci-dessous pour l'historique et les notes d'implémentation.
 
-Revue du 2026-08-11 (2e passe) : code, tests (`npm test`, 236 tests),
+Revue du 2026-08-11 (3e passe) : code, tests (`npm test`, 237 tests),
 lint (`npm run lint`) et typecheck (`npx tsc --noEmit`) sont tous
 propres, aucun `TODO`/`FIXME` dans le code, et chaque module de
-`src/simulation` et `src/rendering` a un fichier de test dédié. Un bug
-concret a été identifié en lisant `SimulationEngine.applyCommand` (voir
-"Bugs connus" ci-dessous) ; aucun trou de couverture supplémentaire ni
-doc obsolète trouvé cette fois-ci (le `README.md` reste cohérent avec
-`src/app`).
+`src/simulation` et `src/rendering` a un fichier de test dédié. Trois
+bugs concrets ont été identifiés en lisant `SimulationEngine.step` et
+`SimulationScreen`'s `onKeyDown` (voir "Bugs connus" ci-dessous) ;
+aucun trou de couverture supplémentaire ni doc obsolète trouvé cette
+fois-ci (le `README.md` reste cohérent avec `src/app`).
 
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
@@ -54,6 +54,72 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   `tests/ui/Hud.test.tsx` mis à jour : le test existant vérifie
   désormais `MISSION: Orbit-01`, et un nouveau test couvre l'affichage
   d'un nom de mission personnalisé (`'Mission 01'`).
+
+- [ ] Le carburant se consomme intégralement même quand le vaisseau est
+  immobilisé au sol, ce qui peut rendre la mission injouable sans
+  jamais se terminer
+
+  `SimulationEngine.step` (`src/simulation/simulation-engine.ts:246-253`)
+  appelle `applyFuelConsumption` de façon inconditionnelle, même quand
+  `isGrounded(...)` (ligne 67-77) vaut `true`. Or `applyCommand`
+  (ligne 190-219) autorise `turnDelta` sans aucune restriction liée à
+  l'état "au sol" : si le joueur tourne le vaisseau suffisamment loin
+  de la verticale (`heading` proche de `π/2`) avant d'allumer le
+  moteur, la composante verticale de la poussée reste insuffisante
+  pour décoller, donc `isGrounded` reste vrai indéfiniment et le
+  vaisseau reste cloué au sol. Pendant ce temps, le carburant se vide
+  quand même jusqu'à épuisement (`spacecraft.ts:66-85` coupe alors le
+  moteur), et `evaluateMission` (`src/simulation/missions/mission.ts:90`)
+  ne déclenche un échec que si `altitude < CRASH_ALTITUDE` (0), ce qui
+  n'est jamais le cas au sol (`altitude === 0`) : la mission reste
+  `'active'` pour toujours, sans carburant ni possibilité de décoller.
+
+  Geler la consommation de carburant tant que `isGrounded` est vrai
+  (ou, alternative plus invasive, limiter la rotation avant décollage).
+  Ajouter un test dans `tests/simulation-engine.test.ts` couvrant le
+  scénario : vaisseau au sol, `turnDelta` appliqué pour orienter le
+  cap loin de la verticale, moteur allumé, plusieurs `step` — le
+  carburant ne doit pas descendre à zéro tant que le vaisseau reste
+  cloué au sol.
+
+- [ ] `SimulationScreen.onKeyDown` détourne des raccourcis navigateur
+  (Ctrl/Cmd+R, Ctrl/Cmd+P) au lieu de les laisser au navigateur
+
+  `onKeyDown` (`src/app/SimulationScreen.tsx:68-93`) compare uniquement
+  `event.key.toLowerCase()` (`' '`, `'p'`, `'r'`) sans jamais vérifier
+  `event.ctrlKey`, `event.metaKey` ou `event.altKey`, puis appelle
+  `event.preventDefault()`. Résultat : `Ctrl+R`/`Cmd+R` (rafraîchir la
+  page) déclenche `engineRef.current.reset(...)` au lieu de recharger
+  la page, et `Ctrl+P`/`Cmd+P` (imprimer) déclenche `togglePause()` —
+  ces raccourcis navigateur ne sont pas protégés par défaut et
+  `preventDefault()` bloque leur comportement natif.
+
+  Ignorer l'événement (ne pas traiter `' '`/`'p'`/`'r'`, ne pas appeler
+  `preventDefault()`) si `event.ctrlKey`, `event.metaKey` ou
+  `event.altKey` est vrai. Ajouter un test dans
+  `tests/ui/SimulationScreen.test.tsx` simulant un `keydown` sur `'r'`
+  avec `ctrlKey: true` (ou `metaKey: true`) et vérifiant que l'état de
+  jeu n'est pas réinitialisé.
+
+- [ ] `SimulationScreen.onKeyDown` réagit au key-repeat du système,
+  déclenchant plusieurs actions pour une seule pression de touche
+
+  Le même `onKeyDown` (`src/app/SimulationScreen.tsx:68-93`) ne
+  vérifie jamais `event.repeat`. Un `keydown` natif se répète
+  automatiquement tant qu'une touche reste enfoncée (après un court
+  délai, puis en continu). Maintenir `P` ou `R` légèrement plus
+  longtemps que le délai de répétition du système déclenche donc
+  `togglePause()` ou `reset()` plusieurs fois pour une seule pression
+  physique — l'état de pause finit dans un état imprévisible selon la
+  durée exacte de l'appui ; `SPACE` bascule le moteur plusieurs fois de
+  façon similaire.
+
+  Ignorer l'événement quand `event.repeat` est vrai pour ces trois
+  touches (`' '`, `'p'`, `'r'`), comme c'est déjà fait implicitement
+  pour les touches continues via `heldKeysRef`. Ajouter un test dans
+  `tests/ui/SimulationScreen.test.tsx` simulant deux `keydown`
+  consécutifs sur `' '` avec le second `repeat: true`, et vérifiant
+  qu'une seule bascule du moteur a eu lieu.
 
 ## Features à ajouter
 

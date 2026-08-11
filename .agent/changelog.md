@@ -1,5 +1,47 @@
 # Changelog agent
 
+## 2026-08-11T23-05-00Z — Revue périodique du backlog
+
+Tâche reçue : planning — "Le backlog ne contient plus de tâche
+actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs
+dans le code, couverture de tests, README) et regénère un backlog
+priorisé dans `.agent/backlog.md`."
+
+- `npm test` (237 tests), `npm run lint` et `npx tsc --noEmit` sont
+  tous propres. Aucun `TODO`/`FIXME` dans `src/`.
+- Comparé chaque fichier de `src/` à sa couverture dans `tests/` :
+  aucune lacune identifiée, chaque module a un fichier de test dédié.
+- `README.md` relu : toujours cohérent avec `src/app`.
+- Lecture approfondie de `SimulationEngine.step`
+  (`src/simulation/simulation-engine.ts`) et de
+  `SimulationScreen.onKeyDown` (`src/app/SimulationScreen.tsx`),
+  vérification croisée avec `spacecraft.ts` et `mission.ts` : trois
+  bugs concrets identifiés et vérifiés par lecture directe du code
+  (pas de spéculation), ajoutés à la section "Bugs connus" de
+  `.agent/backlog.md` :
+  1. `applyFuelConsumption` est appelée inconditionnellement dans
+     `step`, même quand `isGrounded` vaut `true` ; comme `applyCommand`
+     autorise `turnDelta` sans restriction avant décollage, un joueur
+     peut orienter le vaisseau loin de la verticale au sol, allumer le
+     moteur, et vider tout le carburant sans jamais décoller — la
+     mission reste `'active'` indéfiniment (`evaluateMission` n'échoue
+     que si `altitude < 0`, jamais atteint au sol). Softlock potentiel.
+  2. `onKeyDown` ne vérifie pas `event.ctrlKey`/`metaKey`/`altKey` avant
+     de traiter `' '`/`'p'`/`'r'` et appelle `preventDefault()` : les
+     raccourcis navigateur `Ctrl/Cmd+R` (rafraîchir) et `Ctrl/Cmd+P`
+     (imprimer) sont détournés vers `reset()`/`togglePause()`.
+  3. `onKeyDown` ne vérifie pas `event.repeat` : maintenir `P`/`R`/
+     `SPACE` au-delà du délai de répétition clavier du système
+     déclenche l'action plusieurs fois pour une seule pression.
+- Vérifié qu'aucun de ces trois cas n'est déjà couvert par les tests
+  existants (`grep` sur `repeat`/`ctrlKey`/`metaKey`/`altKey` dans
+  `tests/ui/SimulationScreen.test.tsx`, et sur `grounded` dans
+  `tests/simulation-engine.test.ts`).
+- Pas de nouvel item en "Tests manquants"/"Features à ajouter"/
+  "Documentation" : rien de solide identifié qui ne soit pas déjà dans
+  "Divers / à clarifier" (non scopé, volontairement laissé de côté).
+- Pas de changement de code applicatif dans cette tâche (planning pur).
+
 ## 2026-08-11T22-45-00Z — Fix: `SimulationEngine.applyCommand` ignorait l'état `paused`
 
 Tâche reçue : bugfix — "`SimulationEngine.applyCommand` ignore l'état
