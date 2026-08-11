@@ -60,11 +60,59 @@ compte à rebours, la sélection de fusée/profil de mission, la
 sauvegarde/`Continuer`, l'écran de résultat ou le suivi de
 progression, qui sont pourtant tous fonctionnels).
 
+Revue du 2026-08-11 (6e passe) : `npm test` (248 tests), `npm run lint`
+et `npx tsc --noEmit` sont propres, aucun `TODO`/`FIXME`, et chaque
+fichier de `src/simulation`/`src/rendering` a un fichier de test dédié.
+Quatre points concrets ont été identifiés en lisant `MissionSetup.tsx`,
+`src/rendering/canvas/world-to-screen.ts`,
+`src/simulation/spacecraft/engine.ts` et `package.json` (voir "Bugs
+connus", "Features à ajouter", "Tests manquants" et "Divers /
+à clarifier" ci-dessous) : les noms de mission/fusée saisis dans
+`MissionSetup` ne sont jamais recadrés (`trim()`) avant d'être
+sauvegardés/affichés, alors que la validation, elle, les recadre ; le
+niveau de difficulté du profil choisi n'apparaît que dans le
+sélecteur, pas sur l'écran de résumé avant lancement ; aucun outillage
+de couverture de tests n'est configuré (`npx vitest run --coverage`
+échoue faute de `@vitest/coverage-v8`), ce qui rend la recherche de
+trous de couverture entièrement manuelle à chaque revue ; et deux
+fonctions exportées (`screenToWorld`,
+`src/rendering/canvas/world-to-screen.ts:34`, et `createEngine`,
+`src/simulation/spacecraft/engine.ts:3`) ont chacune un fichier de test
+dédié mais ne sont appelées nulle part dans `src/`. Aucun bug de
+logique de jeu supplémentaire trouvé cette fois-ci.
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Bugs connus
+
+- [ ] Les noms saisis dans `MissionSetup` ne sont pas recadrés
+  (`trim()`), contrairement à ce que la validation laisse croire
+
+  `isValidMissionConfiguration` (`src/simulation/missions/
+  mission-configuration.ts:105-113`) vérifie `configuration.missionName
+  .trim().length > 0` et `configuration.spacecraftName.trim().length >
+  0` avant d'activer le bouton "Review mission" — donc un nom composé
+  uniquement d'espaces est bien rejeté. Mais `updateField` dans
+  `src/ui/MissionSetup.tsx` (appelé depuis les `onChange` des champs
+  "Mission name" et "Spacecraft name", lignes 66 et 74) stocke la
+  valeur brute de l'`<input>` telle quelle, sans jamais la recadrer.
+  Un nom valide mais avec des espaces en début/fin (ex. `"  Mission 01
+  "`) passe donc la validation intacte, est transmis à `onLaunch`, puis
+  sauvegardé par `saveMission` (`src/simulation/persistence/
+  mission-save.ts`) et utilisé par `createOrbitMission`
+  (`src/simulation/missions/mission.ts`) et `createInitialSpacecraft`
+  (`src/simulation/simulation-engine.ts`) sans normalisation — les
+  espaces parasites se retrouvent donc affichés tels quels dans le HUD
+  (`src/ui/Hud.tsx`), le panneau de mission (`src/ui/MissionPanel.tsx`)
+  et l'écran de résultat (`src/ui/MissionResult.tsx`).
+
+  Recadrer la valeur avant de l'écrire dans `updateField` (ou juste
+  avant `onLaunch`) pour les deux champs texte, et ajouter un test dans
+  `tests/ui/MissionSetup.test.tsx` vérifiant qu'un nom saisi avec des
+  espaces en début/fin est recadré dans la configuration transmise à
+  `onLaunch`.
 
 - [x] Une mission peut rester bloquée en statut `active` indéfiniment :
   aucune condition d'échec ne se déclenche pour un vaisseau à court de
@@ -216,6 +264,28 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   fois (`ENGINE ONLINE`).
 
 ## Features à ajouter
+
+- [ ] La difficulté du profil de mission choisi n'apparaît pas sur
+  l'écran de résumé de `MissionSetup`
+
+  Le sélecteur "Mission profile" (`src/ui/MissionSetup.tsx:83-88`)
+  affiche la difficulté de chaque profil via `MISSION_DIFFICULTY_LABELS
+  [profile.difficulty]` (ex. "Mission 02 — High orbit (Medium)"), mais
+  une fois que le joueur valide et passe sur l'écran de résumé
+  (`MissionSummary`, `src/ui/MissionSetup.tsx:152-181`), cette
+  information disparaît : le `<dl className="mission-setup__summary">`
+  n'affiche que Mission / Spacecraft / Rocket model / Destination /
+  Objective, sans ligne "Difficulty". Le joueur perd donc de vue le
+  niveau de difficulté choisi au moment précis où il confirme le
+  lancement.
+
+  Ajouter une paire `<dt>Difficulty</dt><dd>{...}</dd>` dans `dl.
+  mission-setup__summary`, juste après la ligne "Destination" ou
+  "Objective", en réutilisant `MISSION_DIFFICULTY_LABELS[profile.
+  difficulty]` (le `profile` est déjà résolu via `findMissionProfile`
+  dans `MissionSummary`). Étendre `tests/ui/MissionSetup.test.tsx` pour
+  vérifier que le libellé de difficulté capitalisé apparaît sur l'écran
+  de résumé.
 
 - [x] Adapter le zoom de la caméra au profil de mission actif
 
@@ -718,6 +788,29 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
     tant qu'elles ne sont pas traitées par la boucle de jeu (pas
     d'action au `keydown` seul).
 
+- [ ] Aucun outillage de couverture de tests n'est configuré
+
+  `package.json` ne définit qu'un script `"test": "vitest run"`, sans
+  variante couverture, et `@vitest/coverage-v8` (ou `@vitest/coverage-
+  istanbul`) n'est pas dans `devDependencies`. `npx vitest run
+  --coverage` échoue avec `MISSING DEPENDENCY 'Cannot find dependency
+  "@vitest/coverage-v8"'`. Chaque revue de ce backlog (5 passes à ce
+  jour) a donc dû vérifier "chaque fichier de `src/` a un fichier de
+  test dédié" en comparant manuellement les deux arborescences, ce qui
+  ne dit rien des branches non couvertes *à l'intérieur* d'un fichier
+  testé (ex. ce run a trouvé deux fonctions exportées jamais appelées
+  en dehors de leurs propres tests, voir "Divers / à clarifier"
+  ci-dessous — un rapport de couverture aurait signalé leur usage nul
+  en un coup d'œil).
+
+  Ajouter `@vitest/coverage-v8` en `devDependency` et un script `"
+  coverage": "vitest run --coverage"` dans `package.json` (Vitest
+  utilise déjà V8 comme moteur, donc pas de configuration
+  supplémentaire nécessaire au-delà du provider par défaut). Vérifier
+  que `npm run coverage` produit un rapport exploitable localement ;
+  l'intégration à la CI ou un seuil de couverture minimum ne sont pas
+  demandés par ce ticket.
+
 ## Documentation
 
 - [x] La section "Architecture" du `README.md` attribuait encore la
@@ -778,6 +871,33 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   (aucun fichier source touché).
 
 ## Divers / à clarifier
+
+- [ ] Deux fonctions exportées (`screenToWorld`, `createEngine`) ont
+  chacune un test dédié mais ne sont appelées nulle part dans `src/`
+
+  `screenToWorld` (`src/rendering/canvas/world-to-screen.ts:34`,
+  l'inverse de `worldToScreen`) est couverte par
+  `tests/rendering/world-to-screen.test.ts`, et `createEngine`
+  (`src/simulation/spacecraft/engine.ts:3`) par
+  `tests/spacecraft/spacecraft.test.ts` — mais ni l'une ni l'autre
+  n'est référencée ailleurs dans `src/` (`createSpacecraft`,
+  `src/simulation/spacecraft/spacecraft.ts:17-33`, construit l'objet
+  `engine` inline plutôt que d'appeler `createEngine`). Ce n'est pas
+  forcément du code mort à supprimer : `screenToWorld` a la forme
+  exacte d'un utilitaire pour une future interaction souris sur le
+  canvas (ex. cliquer sur la trajectoire, sélectionner le vaisseau —
+  voir "Interface" dans les idées ci-dessous), et `createEngine`
+  pourrait remplacer la construction inline de `createSpacecraft` pour
+  éviter la duplication du `Engine` par défaut (`active: false,
+  throttle: 1`) si un second point de construction apparaît.
+
+  À trancher avant d'agir : soit les supprimer maintenant (avec leurs
+  tests) puisque rien ne les appelle aujourd'hui, soit les garder et
+  documenter explicitement à quelle feature à venir elles sont
+  destinées (et éventuellement faire appeler `createEngine` par
+  `createSpacecraft` dès maintenant pour justifier sa présence). Ne
+  pas supprimer sans confirmer qu'aucune tâche du backlog ci-dessus
+  n'en a besoin.
 
 - [ ] Idées identifiées pour plus tard (non scopées, à détailler avant
   toute exécution)

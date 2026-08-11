@@ -1,5 +1,34 @@
 # Changelog agent
 
+## 2026-08-11T22-15-00-000Z — planning
+- Description: Le backlog ne contenait plus de tâche actionnable (bug/feature/test/doc) — regénération après analyse du repo (6e passe)
+- Détail : `npm test` (248 tests), `npm run lint` et `npx tsc --noEmit`
+  sont propres, aucun `TODO`/`FIXME`. Quatre points concrets ajoutés au
+  backlog après lecture de `MissionSetup.tsx`,
+  `mission-configuration.ts`, `mission-save.ts`,
+  `world-to-screen.ts`, `engine.ts`/`spacecraft.ts`, `mission.ts`
+  (incl. `isStrandedOutsideTargetBand`/`computeOrbitRadiusBounds`,
+  revérifiés sans trouver de régression), `simulation-engine.ts`,
+  `App.tsx`, `SimulationScreen.tsx`, `Hud.tsx`, `MissionPanel.tsx`,
+  `MissionResult.tsx`/`mission-result.ts`, `MainMenu.tsx`,
+  `CountdownOverlay.tsx`, `flight-phase.ts`, `game-phase.ts`,
+  `trajectory-renderer.ts`, `spacecraft-renderer.ts`,
+  `canvas-renderer.ts` et `package.json` : (1) Bug — les noms saisis
+  dans `MissionSetup` (mission/vaisseau) ne sont jamais recadrés
+  (`trim()`) avant sauvegarde/affichage alors que la validation, elle,
+  les recadre ; (2) Feature — la difficulté du profil choisi
+  n'apparaît que dans le sélecteur, pas sur l'écran de résumé avant
+  lancement ; (3) Tests manquants — aucun outillage de couverture
+  configuré (`@vitest/coverage-v8` absent), ce qui rend la recherche de
+  trous de couverture manuelle à chaque revue ; (4) Divers — deux
+  fonctions exportées et testées (`screenToWorld`, `createEngine`) ne
+  sont appelées nulle part en dehors de leurs propres tests, à trancher
+  (garder pour une feature future vs. supprimer). Aucun autre bug de
+  logique de jeu trouvé. `.agent/backlog.md` mis à jour avec ces 4
+  items (nouvelle note de revue "6e passe", historique des items déjà
+  cochés conservé intact) ; aucun fichier source touché.
+- Branche/push: main (direct)
+
 ## 2026-08-11T21-45-00-000Z — feature
 - Description: Le sélecteur "Mission profile" de `MissionSetup` affichait la difficulté brute (`easy`/`medium`/`hard`) au lieu d'un libellé lisible
 - Détail : Nouvelle map `MISSION_DIFFICULTY_LABELS: Record<
