@@ -6,6 +6,18 @@ import {
   isValidMissionConfiguration,
   type MissionConfiguration,
 } from '../simulation/missions/mission-configuration';
+import {
+  AVAILABLE_ROCKET_MODELS,
+  findRocketModel,
+} from '../simulation/spacecraft/rocket-models';
+
+function formatTonnes(kilograms: number): string {
+  return `${(kilograms / 1000).toFixed(1)} t`;
+}
+
+function formatKilonewtons(newtons: number): string {
+  return `${(newtons / 1000).toFixed(0)} kN`;
+}
 
 interface MissionSetupProps {
   onBack: () => void;
@@ -78,6 +90,45 @@ export function MissionSetup({ onBack, onLaunch }: MissionSetupProps) {
         <p className="mission-setup__field-hint">
           {findMissionProfile(configuration.missionProfileId)?.description}
         </p>
+        <div className="mission-setup__field">
+          <span>Rocket model</span>
+          <div className="mission-setup__rocket-list">
+            {AVAILABLE_ROCKET_MODELS.map((model) => {
+              const selected = model.id === configuration.rocketModelId;
+              return (
+                <div
+                  key={model.id}
+                  className={
+                    selected
+                      ? 'mission-setup__rocket-card mission-setup__rocket-card--selected'
+                      : 'mission-setup__rocket-card'
+                  }
+                >
+                  <p className="mission-setup__rocket-card-name">{model.name}</p>
+                  <dl className="mission-setup__rocket-card-specs">
+                    <dt>Mass</dt>
+                    <dd>{formatTonnes(model.dryMass + model.fuelMass)}</dd>
+                    <dt>Fuel</dt>
+                    <dd>{model.fuelMass} kg</dd>
+                    <dt>Thrust</dt>
+                    <dd>{formatKilonewtons(model.engineThrust)}</dd>
+                  </dl>
+                  <p className="mission-setup__rocket-card-description">
+                    {model.description}
+                  </p>
+                  <button
+                    type="button"
+                    aria-label={`Select ${model.name}`}
+                    aria-pressed={selected}
+                    onClick={() => updateField('rocketModelId', model.id)}
+                  >
+                    {selected ? 'Selected' : 'Select'}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
         <div className="mission-setup__actions">
           <button type="button" onClick={onBack}>
             Back
@@ -99,6 +150,7 @@ interface MissionSummaryProps {
 
 function MissionSummary({ configuration, onEdit, onLaunch }: MissionSummaryProps) {
   const profile = findMissionProfile(configuration.missionProfileId);
+  const rocketModel = findRocketModel(configuration.rocketModelId);
 
   return (
     <div className="mission-setup">
@@ -108,6 +160,8 @@ function MissionSummary({ configuration, onEdit, onLaunch }: MissionSummaryProps
         <dd>{configuration.missionName}</dd>
         <dt>Spacecraft</dt>
         <dd>{configuration.spacecraftName}</dd>
+        <dt>Rocket model</dt>
+        <dd>{rocketModel?.name}</dd>
         <dt>Destination</dt>
         <dd>{profile?.destinationName}</dd>
         <dt>Objective</dt>

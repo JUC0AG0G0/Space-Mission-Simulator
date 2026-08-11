@@ -1074,3 +1074,49 @@ puis progression) reste correct et correspond à l'état réel du code.
 - Description: Revue périodique planifiée : relis .agent/backlog.md, ajuste les priorités, et ajoute toute tâche manquante identifiée en lisant le code (TODOs, zones sans tests, doc obsolète).
 - Branche/push: main (direct)
 - Coût estimé: 0.5364952 USD
+
+## 2026-08-11T20-30-00Z — Ajouter un écran de sélection de fusée
+
+Tâche reçue : feature — "Ajouter un écran de sélection de fusée" (item 9
+de `.agent/backlog.md`), pour permettre au joueur de choisir un modèle de
+fusée parmi plusieurs, avec des caractéristiques définies en données
+plutôt que codées en dur dans l'UI ou le moteur.
+
+- Ajouté `src/simulation/spacecraft/rocket-models.ts` : `RocketModel`
+  (id, nom, description, masse à vide, carburant, poussée moteur,
+  consommation) et `AVAILABLE_ROCKET_MODELS` (3 modèles prédéfinis —
+  `explorer-i`, `stalwart`, `javelin` — chacun avec un ratio
+  poussée/poids au sol supérieur à 1) et `findRocketModel`. Le modèle
+  `explorer-i` reprend exactement les anciennes constantes codées en dur
+  de `createInitialSpacecraft`, donc aucun changement de comportement par
+  défaut.
+- `MissionConfiguration` (`mission-configuration.ts`) porte désormais
+  `rocketModelId`, résolu via `findRocketModel` ; `createDefaultMissionConfiguration`
+  choisit le premier modèle, `isValidMissionConfiguration` vérifie qu'il
+  existe. `mission-save.ts` valide aussi la présence de ce champ dans les
+  données lues depuis `localStorage`.
+- `src/simulation/simulation-engine.ts` : `createInitialSpacecraft` prend
+  désormais un `RocketModel` et construit le vaisseau à partir de ses
+  caractéristiques ; `createInitialGameState` résout le modèle choisi
+  dans la configuration (repli sur le premier modèle disponible si la
+  configuration est absente ou invalide), suivant le même patron que la
+  résolution du `MissionProfile`.
+- `src/ui/MissionSetup.tsx` : ajout d'une section "Rocket model" dans le
+  formulaire, affichant chaque modèle sous forme de carte (masse totale
+  en tonnes, carburant, poussée en kN, description) avec un bouton
+  `Select`/`Selected` ; le modèle choisi est mis en évidence et repris
+  dans l'écran de résumé (nouvelle ligne "Rocket model"). Styles ajoutés
+  dans `src/app/styles.css` (`.mission-setup__rocket-*`), en réutilisant
+  les variables de couleur/typographie existantes.
+- Tests ajoutés : `tests/spacecraft/rocket-models.test.ts` (modèles
+  prédéfinis, ids uniques, specs positives, `findRocketModel`) ;
+  `tests/missions/mission-configuration.test.ts` (valeur par défaut,
+  rejet d'un `rocketModelId` inconnu) ; `tests/ui/MissionSetup.test.tsx`
+  (affichage des cartes, changement de sélection, reflet dans le résumé) ;
+  `tests/simulation-engine.test.ts` (le vaisseau construit reprend bien
+  les caractéristiques du modèle configuré).
+- `npm test` (221 tests, 29 fichiers) et `npm run lint` passent sans
+  erreur.
+- `.agent/backlog.md` mis à jour : item "Ajouter un écran de sélection de
+  fusée" coché, note de priorité en tête ajustée (seul "progression"
+  reste à faire dans la section "Features à ajouter").

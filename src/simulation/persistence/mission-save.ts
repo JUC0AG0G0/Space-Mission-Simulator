@@ -20,7 +20,8 @@ function isMissionConfigurationShape(value: unknown): value is MissionConfigurat
   return (
     typeof candidate.missionName === 'string' &&
     typeof candidate.spacecraftName === 'string' &&
-    typeof candidate.missionProfileId === 'string'
+    typeof candidate.missionProfileId === 'string' &&
+    typeof candidate.rocketModelId === 'string'
   );
 }
 

@@ -8,6 +8,7 @@ import {
 import { createSpacecraft } from '../src/simulation/spacecraft/spacecraft';
 import type { GameState } from '../src/types/simulation';
 import { createDefaultMissionConfiguration } from '../src/simulation/missions/mission-configuration';
+import { AVAILABLE_ROCKET_MODELS } from '../src/simulation/spacecraft/rocket-models';
 
 /**
  * A game state with the pre-flight countdown already cleared, so `step()`
@@ -162,6 +163,24 @@ describe('createInitialGameState with a mission configuration', () => {
 
     expect(state.spacecraft.name).toBe('Falcon');
     expect(state.activeMission?.name).toBe('Ares 1');
+  });
+
+  it('builds the spacecraft from the configured rocket model', () => {
+    const rocketModel = AVAILABLE_ROCKET_MODELS[1];
+    const configuration = {
+      ...createDefaultMissionConfiguration(),
+      rocketModelId: rocketModel.id,
+    };
+
+    const state = createInitialGameState(configuration);
+
+    expect(state.spacecraft.dryMass).toBe(rocketModel.dryMass);
+    expect(state.spacecraft.fuelMass).toBe(rocketModel.fuelMass);
+    expect(state.spacecraft.maxFuel).toBe(rocketModel.fuelMass);
+    expect(state.spacecraft.engine.thrust).toBe(rocketModel.engineThrust);
+    expect(state.spacecraft.engine.fuelConsumption).toBe(
+      rocketModel.engineFuelConsumption,
+    );
   });
 });
 

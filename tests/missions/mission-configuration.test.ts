@@ -5,6 +5,7 @@ import {
   findMissionProfile,
   isValidMissionConfiguration,
 } from '../../src/simulation/missions/mission-configuration';
+import { AVAILABLE_ROCKET_MODELS } from '../../src/simulation/spacecraft/rocket-models';
 
 describe('createDefaultMissionConfiguration', () => {
   it('returns a valid, non-blank configuration', () => {
@@ -19,6 +20,12 @@ describe('createDefaultMissionConfiguration', () => {
     const configuration = createDefaultMissionConfiguration();
 
     expect(configuration.missionProfileId).toBe(AVAILABLE_MISSION_PROFILES[0].id);
+  });
+
+  it('picks the first available rocket model', () => {
+    const configuration = createDefaultMissionConfiguration();
+
+    expect(configuration.rocketModelId).toBe(AVAILABLE_ROCKET_MODELS[0].id);
   });
 });
 
@@ -77,6 +84,14 @@ describe('isValidMissionConfiguration', () => {
     const configuration = {
       ...createDefaultMissionConfiguration(),
       missionProfileId: 'mars-landing',
+    };
+    expect(isValidMissionConfiguration(configuration)).toBe(false);
+  });
+
+  it('rejects an unknown rocket model id', () => {
+    const configuration = {
+      ...createDefaultMissionConfiguration(),
+      rocketModelId: 'mega-booster',
     };
     expect(isValidMissionConfiguration(configuration)).toBe(false);
   });

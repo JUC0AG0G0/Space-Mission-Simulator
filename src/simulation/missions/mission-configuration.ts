@@ -4,11 +4,13 @@
  */
 
 import type { OrbitSuccessCriteria } from '../../types/simulation';
+import { AVAILABLE_ROCKET_MODELS, findRocketModel } from '../spacecraft/rocket-models';
 
 export interface MissionConfiguration {
   missionName: string;
   spacecraftName: string;
   missionProfileId: string;
+  rocketModelId: string;
 }
 
 export type MissionDifficulty = 'easy' | 'medium' | 'hard';
@@ -81,12 +83,13 @@ export function createDefaultMissionConfiguration(): MissionConfiguration {
     missionName: 'Mission 01',
     spacecraftName: 'Explorer I',
     missionProfileId: AVAILABLE_MISSION_PROFILES[0].id,
+    rocketModelId: AVAILABLE_ROCKET_MODELS[0].id,
   };
 }
 
 /**
  * A configuration is valid when both names are non-blank and the selected
- * mission profile is among the available ones.
+ * mission profile and rocket model are among the available ones.
  */
 export function isValidMissionConfiguration(
   configuration: MissionConfiguration,
@@ -94,6 +97,7 @@ export function isValidMissionConfiguration(
   return (
     configuration.missionName.trim().length > 0 &&
     configuration.spacecraftName.trim().length > 0 &&
-    findMissionProfile(configuration.missionProfileId) !== undefined
+    findMissionProfile(configuration.missionProfileId) !== undefined &&
+    findRocketModel(configuration.rocketModelId) !== undefined
   );
 }

@@ -19,8 +19,7 @@ de priorité recommandé pour les prochaines exécutions de
 9. Sélection de fusée
 10. Progression
 
-(items 1 à 8 terminés — items restants dans l'ordre : sélection de fusée,
-progression)
+(items 1 à 9 terminés — item restant : progression)
 
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
@@ -352,7 +351,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   invalides au niveau écran restent couvertes par
   `tests/app/app-state.test.ts` (déjà en place).
 
-- [ ] Ajouter un écran de sélection de fusée
+- [x] Ajouter un écran de sélection de fusée
 
   Faire évoluer `MissionSetup` afin de permettre au joueur de choisir
   une fusée parmi plusieurs modèles.
@@ -373,6 +372,27 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
   Les caractéristiques doivent être définies dans des données de
   configuration et non codées directement dans les composants UI.
+
+  Fait le 2026-08-11 : `src/simulation/spacecraft/rocket-models.ts`
+  expose `AVAILABLE_ROCKET_MODELS` (3 fusées prédéfinies : `explorer-i`,
+  `stalwart`, `javelin`, chacune avec nom, description, masse à vide,
+  carburant, poussée moteur et consommation) et `findRocketModel`.
+  `MissionConfiguration` porte désormais un champ `rocketModelId`
+  (résolu via `findRocketModel`), validé par
+  `isValidMissionConfiguration` et couvert par la persistance
+  (`mission-save.ts`). `MissionSetup.tsx` affiche chaque modèle sous
+  forme de carte (masse totale, carburant, poussée, description) avec un
+  bouton `Select`/`Selected`, et le résumé de mission affiche le modèle
+  choisi. Côté moteur, `createInitialSpacecraft`
+  (`simulation-engine.ts`) construit désormais le vaisseau à partir des
+  caractéristiques du `RocketModel` sélectionné (repli sur le premier
+  modèle disponible si la configuration est absente ou invalide) au lieu
+  de constantes codées en dur — les valeurs par défaut de `explorer-i`
+  reprennent exactement les anciennes constantes, donc le comportement
+  par défaut (décollage, consommation de carburant) est inchangé. Tests
+  ajoutés dans `tests/spacecraft/rocket-models.test.ts`,
+  `tests/missions/mission-configuration.test.ts`,
+  `tests/ui/MissionSetup.test.tsx` et `tests/simulation-engine.test.ts`.
 
 - [ ] Ajouter un système de progression
 

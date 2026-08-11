@@ -22,6 +22,7 @@ import {
   turnSpacecraft,
 } from './spacecraft/spacecraft';
 import { adjustThrottle, toggleEngine } from './spacecraft/engine';
+import { AVAILABLE_ROCKET_MODELS, findRocketModel, type RocketModel } from './spacecraft/rocket-models';
 
 /** Radians per second applied while a turn command is held. */
 export const TURN_RATE = 1.5;
@@ -35,6 +36,7 @@ export const COUNTDOWN_DURATION_SECONDS = 3;
 function createInitialSpacecraft(
   centralBody: CelestialBody,
   name: string,
+  rocketModel: RocketModel,
 ): Spacecraft {
   // Start on the launch pad: resting on the surface, no initial velocity
   // (the central body doesn't rotate in this simulation), facing straight
@@ -45,13 +47,14 @@ function createInitialSpacecraft(
     position: { x: centralBody.radius, y: 0 },
     velocity: { x: 0, y: 0 },
     heading: 0,
-    dryMass: 6_000,
-    fuelMass: 2_400,
-    maxFuel: 2_400,
-    // Thrust-to-weight ratio must exceed 1 at the surface for the ship to
-    // ever be able to lift off against gravity.
-    engineThrust: 120_000,
-    engineFuelConsumption: 12,
+    dryMass: rocketModel.dryMass,
+    fuelMass: rocketModel.fuelMass,
+    maxFuel: rocketModel.fuelMass,
+    // Every predefined rocket model keeps a thrust-to-weight ratio above 1
+    // at the surface, so the ship is always able to lift off against
+    // gravity.
+    engineThrust: rocketModel.engineThrust,
+    engineFuelConsumption: rocketModel.engineFuelConsumption,
   });
 }
 
@@ -85,6 +88,9 @@ export function createInitialGameState(
   const missionProfile = configuration
     ? findMissionProfile(configuration.missionProfileId)
     : undefined;
+  const rocketModel =
+    (configuration ? findRocketModel(configuration.rocketModelId) : undefined) ??
+    AVAILABLE_ROCKET_MODELS[0];
 
   return {
     simulationTime: 0,
@@ -93,6 +99,7 @@ export function createInitialGameState(
     spacecraft: createInitialSpacecraft(
       centralBody,
       configuration?.spacecraftName ?? 'Explorer I',
+      rocketModel,
     ),
     activeMission: createOrbitMission(
       configuration?.missionName,

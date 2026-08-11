@@ -20,6 +20,44 @@ describe('MissionSetup', () => {
     expect(screen.getByLabelText('Mission name')).toHaveValue('Mission 01');
     expect(screen.getByLabelText('Spacecraft name')).toHaveValue('Explorer I');
     expect(screen.getByLabelText('Mission profile')).toHaveValue('earth-orbit');
+    expect(screen.getByRole('button', { name: 'Select Explorer I' })).toHaveTextContent(
+      'Selected',
+    );
+  });
+
+  it('shows specs and a select button for each rocket model', () => {
+    render(<MissionSetup onBack={() => {}} onLaunch={() => {}} />);
+
+    expect(screen.getByText('Stalwart')).toBeInTheDocument();
+    expect(screen.getByText('Javelin')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Select Stalwart' })).toHaveTextContent(
+      'Select',
+    );
+  });
+
+  it('switches the selected rocket model when another one is chosen', async () => {
+    const user = userEvent.setup();
+    render(<MissionSetup onBack={() => {}} onLaunch={() => {}} />);
+
+    await user.click(screen.getByRole('button', { name: 'Select Stalwart' }));
+
+    expect(screen.getByRole('button', { name: 'Select Stalwart' })).toHaveTextContent(
+      'Selected',
+    );
+    expect(screen.getByRole('button', { name: 'Select Explorer I' })).toHaveTextContent(
+      'Select',
+    );
+  });
+
+  it('reflects the selected rocket model in the summary', async () => {
+    const user = userEvent.setup();
+    render(<MissionSetup onBack={() => {}} onLaunch={() => {}} />);
+
+    await user.click(screen.getByRole('button', { name: 'Select Stalwart' }));
+    await user.click(screen.getByRole('button', { name: 'Review mission' }));
+
+    expect(screen.getByText('Rocket model')).toBeInTheDocument();
+    expect(screen.getAllByText('Stalwart').length).toBeGreaterThan(0);
   });
 
   it('disables "Review mission" when the mission name is blank', async () => {
