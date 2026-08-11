@@ -1069,3 +1069,8 @@ Vérifications effectuées :
 Aucun TODO, trou de couverture ou doc obsolète identifié. `.agent/backlog.md`
 inchangé : l'ordre de priorité en tête du fichier (sélection de fusée,
 puis progression) reste correct et correspond à l'état réel du code.
+
+## 2026-08-11T20-01-45-417Z — planning
+- Description: Revue périodique planifiée : relis .agent/backlog.md, ajuste les priorités, et ajoute toute tâche manquante identifiée en lisant le code (TODOs, zones sans tests, doc obsolète).
+- Branche/push: main (direct)
+- Coût estimé: 0.5364952 USD
