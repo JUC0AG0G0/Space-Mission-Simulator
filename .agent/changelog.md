@@ -1967,3 +1967,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
   et `npx tsc --noEmit` restent propres. Backlog mis à jour (item coché
   sous "Tests manquants").
 - Branche/push: main (direct)
+
+## 2026-08-11T22-34-58-421Z — test
+- Description: `MissionResult` ne teste jamais le rendu d'un objectif non
+- Branche/push: main (direct)
+- Coût estimé: 0.9207818 USD
