@@ -87,11 +87,70 @@ fonctions exportées (`screenToWorld`,
 dédié mais ne sont appelées nulle part dans `src/`. Aucun bug de
 logique de jeu supplémentaire trouvé cette fois-ci.
 
+Revue du 2026-08-11 (7e passe) : `npm test` (250 tests), `npm run lint`
+et `npx tsc --noEmit` sont propres, aucun `TODO`/`FIXME`, et chaque
+fichier de `src/simulation`/`src/rendering` a un fichier de test dédié.
+`@vitest/coverage-v8` étant désormais installé (voir la 6e passe),
+`npm run coverage` a été utilisé pour la première fois pour cibler la
+recherche de trous de couverture au lieu de comparer les arborescences
+à la main : couverture globale 97.18 % de lignes / 94.94 % de branches,
+avec une poignée de branches non exercées repérées précisément (voir
+"Tests manquants" ci-dessous pour celles jugées utiles à couvrir — les
+branches purement défensives dans du code DOM/React, comme le repli
+`fuelPercent = 0` de `Hud.tsx` quand `maxFuel <= 0` qui ne peut pas se
+produire avec les modèles de fusée actuels, ou la boucle
+`requestAnimationFrame`/le redimensionnement du canvas dans
+`SimulationScreen.tsx`, ont été jugées trop marginales pour justifier un
+item de backlog dédié). En lisant `mission-result.ts` en détail pour
+comprendre une de ces branches non couvertes
+(`describeFailureCause`), un bug de logique a été identifié : la cause
+d'échec affichée sur l'écran de résultat se trompe quand un vaisseau
+sans carburant s'écrase au sol (voir "Bugs connus" ci-dessous). La
+décision laissée en suspens depuis la 6e passe sur `screenToWorld`/
+`createEngine` (section "Divers / à clarifier") a été tranchée : les
+deux sont conservées, et `createEngine` doit être câblée dans
+`createSpacecraft` pour cesser d'être un export sans appelant (voir le
+nouvel item "Features à ajouter" ci-dessous).
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Bugs connus
+
+- [ ] `describeFailureCause` affiche une cause d'échec trompeuse quand
+  un vaisseau à court de carburant s'écrase au sol
+
+  `describeFailureCause` (`src/simulation/missions/mission-result.ts:15-17`)
+  déduit la cause affichée sur l'écran `MissionResult` uniquement à
+  partir de `state.spacecraft.fuelMass` au moment où la mission passe à
+  `'failed'` : `fuelMass <= 0` → "Fuel depleted", sinon → "Spacecraft
+  crashed". Or `evaluateMission`
+  (`src/simulation/missions/mission.ts:126-131`) fait déjà échouer la
+  mission pour un crash (`altitude < CRASH_ALTITUDE`) indépendamment du
+  niveau de carburant. Un scénario de jeu tout à fait normal — le joueur
+  épuise son carburant en montée, le moteur se coupe automatiquement
+  (`applyFuelConsumption`, `src/simulation/spacecraft/spacecraft.ts:70`),
+  puis le vaisseau retombe en trajectoire balistique et finit par
+  toucher le sol (`altitude < 0`) — déclenche le statut `'failed'` via
+  la branche crash, mais `describeFailureCause` affiche "Fuel depleted"
+  au lieu de "Spacecraft crashed" : le joueur perd l'information que
+  c'est bien l'impact au sol, et pas seulement la panne sèche, qui a mis
+  fin à la mission.
+
+  Piste : plutôt que de re-dériver la cause depuis l'état courant (ce
+  qui perd l'information de *quelle* branche d'`evaluateMission` a fait
+  échouer la mission), faire porter la cause directement par le
+  `Mission` au moment où `evaluateMission` bascule son `status` à
+  `'failed'` (ex. un champ `failureReason: 'crashed' | 'fuel-depleted'
+  | null` dans `src/types/simulation.ts`, renseigné dans les deux
+  branches d'échec de `mission.ts`), et faire lire ce champ par
+  `describeFailureCause` au lieu de réinspecter `spacecraft.fuelMass`.
+  Ajouter un test dans `tests/missions/mission.test.ts` couvrant un
+  crash avec `fuelMass: 0`, et un test dans
+  `tests/missions/mission-result.test.ts` vérifiant que
+  `buildMissionResultStats` reporte bien "Spacecraft crashed" (et non
+  "Fuel depleted") pour ce cas.
 
 - [x] Les noms saisis dans `MissionSetup` ne sont pas recadrés
   (`trim()`), contrairement à ce que la validation laisse croire
@@ -286,6 +345,36 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   fois (`ENGINE ONLINE`).
 
 ## Features à ajouter
+
+- [ ] `createSpacecraft` construit son `Engine` inline au lieu d'appeler
+  `createEngine`
+
+  Décidé le 2026-08-11 (voir "Divers / à clarifier" pour l'historique) :
+  `createEngine` (`src/simulation/spacecraft/engine.ts:3-13`) et
+  `screenToWorld` (`src/rendering/canvas/world-to-screen.ts:34`) sont
+  conservées — chacune a un test dédié et une utilité crédible
+  (`screenToWorld` pour une future interaction souris/canvas,
+  `createEngine` pour éviter de dupliquer la forme par défaut d'un
+  `Engine`) — mais `createEngine` doit avoir un vrai appelant dans
+  `src/` pour que sa présence soit justifiée plutôt que théorique.
+  `createSpacecraft` (`src/simulation/spacecraft/spacecraft.ts:17-32`)
+  construit actuellement l'objet `engine` à la main (`{ thrust: ...,
+  fuelConsumption: ..., active: false, throttle: 1 }`) au lieu d'appeler
+  `createEngine({ thrust: params.engineThrust, fuelConsumption:
+  params.engineFuelConsumption })`, qui produit exactement la même
+  forme.
+
+  Remplacer la construction inline par un appel à `createEngine` dans
+  `createSpacecraft`. Le comportement observable ne change pas (même
+  valeurs par défaut `active: false`, `throttle: 1`), donc les tests
+  existants de `tests/spacecraft/spacecraft.test.ts` et
+  `tests/simulation-engine.test.ts` doivent continuer à passer sans
+  modification ; pas de nouveau test requis au-delà de la couverture
+  déjà existante de `createEngine` elle-même
+  (`tests/spacecraft/spacecraft.test.ts`). `screenToWorld` reste sans
+  appelant dans `src/` pour l'instant — aucune action requise dessus, sa
+  justification reste documentée ici et dans son propre commentaire de
+  code.
 
 - [x] La difficulté du profil de mission choisi n'apparaît pas sur
   l'écran de résumé de `MissionSetup`
@@ -803,6 +892,88 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Tests manquants
 
+- [ ] La branche "trajectoire non liée" d'`isStrandedOutsideTargetBand`
+  n'est pas exercée par les tests
+
+  `isStrandedOutsideTargetBand` (`src/simulation/missions/mission.ts:69-94`)
+  a une garde `if (!bounds) { return false; }` (lignes 83-85, repérée
+  via `npm run coverage` comme non couverte) pour le cas où
+  `computeOrbitRadiusBounds` renvoie `null`, c'est-à-dire une
+  trajectoire d'échappement (parabolique/hyperbolique) plutôt qu'une
+  orbite fermée. `tests/missions/mission.test.ts` couvre déjà ce cas
+  pour `computeOrbitRadiusBounds` directement
+  (`tests/physics/orbit.test.ts`), mais aucun test de `evaluateMission`
+  ne construit un vaisseau à carburant nul sur une trajectoire
+  d'échappement pour vérifier que la mission reste `'active'` plutôt que
+  de basculer à tort en `'failed'` faute de bornes d'orbite à comparer à
+  la bande cible.
+
+  Ajouter un test dans `describe('evaluateMission', ...)` de
+  `tests/missions/mission.test.ts` : un vaisseau avec `fuelMass: 0` et
+  une vitesse supérieure à la vitesse de libération au rayon courant
+  (`Math.sqrt(2 * centralBody.gravitationalParameter / radius)`), hors
+  de la bande cible, doit laisser `evaluateMission` renvoyer un statut
+  `'active'` inchangé (même schéma que les tests voisins "does not fail
+  a stranded-looking orbit while fuel remains" / "does not fail a
+  fuel-depleted elliptical orbit...").
+
+- [ ] La branche moteur inactif de `computeFuelConsumed` n'est pas
+  testée
+
+  `computeFuelConsumed` (`src/simulation/spacecraft/engine.ts:42-48`,
+  repérée via `npm run coverage` comme non couverte aux lignes 43-45)
+  renvoie `0` sans calcul quand `!engine.active`. `tests/spacecraft/
+  spacecraft.test.ts` (lignes 150 et 158) n'appelle actuellement
+  `computeFuelConsumed` qu'avec un moteur `active: true` ; la garde
+  "moteur éteint → aucune consommation" n'est donc vérifiée qu'
+  indirectement, via `applyFuelConsumption`.
+
+  Ajouter un test direct dans `tests/spacecraft/spacecraft.test.ts` (à
+  côté des tests existants de `computeFuelConsumed`) : un `Engine` avec
+  `active: false` passé à `computeFuelConsumed(engine, deltaTime)` pour
+  un `deltaTime` non nul doit renvoyer `0`.
+
+- [ ] Les branches d'échec silencieux de `localStorage` ne sont testées
+  dans aucune des deux couches de persistance
+
+  `saveMission`/`clearSavedMission` (`src/simulation/persistence/
+  mission-save.ts:29-35,60-66`) et `markMissionCompleted`
+  (`src/simulation/progression/mission-progress.ts:42-50`) documentent
+  toutes les trois la même garantie — "ne lève jamais, le stockage est
+  facultatif" — via un `try { ... } catch { /* ... */ }` autour de
+  l'appel à `localStorage`. `npm run coverage` montre ces blocs `catch`
+  comme non couverts (`mission-save.ts:34,65`, `mission-progress.ts:49`) :
+  les suites de tests existantes (`tests/persistence/
+  mission-save.test.ts`, `tests/progression/mission-progress.test.ts`)
+  couvrent bien les données corrompues/invalides *lues* depuis le
+  stockage, mais aucun test ne simule un `localStorage.setItem`/
+  `removeItem` qui lève (quota dépassé, navigation privée) pour
+  vérifier que ces trois fonctions avalent bien l'exception plutôt que
+  de la laisser remonter.
+
+  Ajouter, dans chacun des deux fichiers de test, un cas où
+  `localStorage.setItem` (et `removeItem` pour `clearSavedMission`) est
+  remplacé par un stub qui lève (`vi.spyOn` sur l'objet renvoyé par
+  `createMemoryStorage`, ou un stub dédié), et vérifier que l'appel ne
+  lève pas d'exception (`expect(() => saveMission(...)).not.toThrow()`,
+  etc.).
+
+- [ ] `MissionResult` ne teste jamais le rendu d'un objectif non
+  complété
+
+  Le fixture `makeStats` de `tests/ui/MissionResult.test.tsx:7-21` ne
+  construit que des objectifs `completed: true`. La branche "objectif
+  non complété" de `src/ui/MissionResult.tsx:52-61` (classe `objective`
+  sans `--done`, marqueur `○` au lieu de `✓`) n'est donc jamais rendue
+  dans les tests (`npm run coverage` la repère comme non couverte,
+  lignes 56-58) — la même branche existe et est déjà testée pour
+  `MissionPanel` (`src/ui/MissionPanel.tsx:34-44`), qui partage le même
+  motif.
+
+  Ajouter un cas à un objectif `completed: false` dans `makeStats` (ou
+  un nouveau test dédié) et vérifier la présence du marqueur `○` et
+  l'absence de la classe `objective--done` sur cet élément.
+
 - [x] `src/app/SimulationScreen.tsx` n'a aucun test dédié
 
   Ce composant traduit les événements clavier (WASD/flèches, `SPACE`,
@@ -923,7 +1094,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Divers / à clarifier
 
-- [ ] Deux fonctions exportées (`screenToWorld`, `createEngine`) ont
+- [x] Deux fonctions exportées (`screenToWorld`, `createEngine`) ont
   chacune un test dédié mais ne sont appelées nulle part dans `src/`
 
   `screenToWorld` (`src/rendering/canvas/world-to-screen.ts:34`,
@@ -949,6 +1120,13 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   `createSpacecraft` dès maintenant pour justifier sa présence). Ne
   pas supprimer sans confirmer qu'aucune tâche du backlog ci-dessus
   n'en a besoin.
+
+  Décidé le 2026-08-11 (7e passe) : les deux sont conservées plutôt que
+  supprimées (voir le nouvel item "Features à ajouter" ci-dessus, qui
+  câble `createEngine` dans `createSpacecraft` pour lui donner un
+  appelant réel ; `screenToWorld` reste documentée comme utilitaire en
+  attente d'une future interaction souris sur le canvas, sans action
+  requise dessus pour l'instant).
 
 - [ ] Idées identifiées pour plus tard (non scopées, à détailler avant
   toute exécution)

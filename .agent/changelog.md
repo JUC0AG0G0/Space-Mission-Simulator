@@ -1,5 +1,39 @@
 # Changelog agent
 
+## 2026-08-11T23-45-00-000Z — planning
+- Description: Le backlog ne contenait plus de tâche actionnable ; analyse du repo et regénération d'un backlog priorisé
+- Détail : aucun changement de code. Repris `npm run coverage` (outillé
+  lors du run précédent) pour cibler la recherche de trous de couverture
+  au lieu de comparer les arborescences `src/`/`tests/` à la main
+  (97.18 % de lignes / 94.94 % de branches globales, 250 tests). Un bug
+  concret a été trouvé en creusant une branche non couverte de
+  `mission-result.ts` : `describeFailureCause`
+  (`src/simulation/missions/mission-result.ts:15-17`) affiche "Fuel
+  depleted" même quand la mission a en réalité échoué par crash au sol
+  (`evaluateMission` fait échouer sur `altitude < CRASH_ALTITUDE`
+  indépendamment du carburant), ce qui arrive dans un scénario de jeu
+  normal (carburant épuisé en montée → moteur coupé → retombée
+  balistique → impact). Quatre trous de couverture jugés utiles à
+  combler ont été identifiés dans du code pur ou proche
+  (`isStrandedOutsideTargetBand`'s branche trajectoire non liée dans
+  `mission.ts`, la branche moteur inactif de `computeFuelConsumed` dans
+  `engine.ts`, les blocs `catch` de secours de `mission-save.ts`/
+  `mission-progress.ts`, et le rendu d'objectif non complété de
+  `MissionResult.tsx`) ; les branches purement défensives dans du code
+  DOM/React (redimensionnement du canvas, repli `fuelPercent = 0`
+  inatteignable avec les modèles de fusée actuels) ont été jugées trop
+  marginales pour un item dédié. La décision en suspens depuis la 6e
+  passe sur `screenToWorld`/`createEngine` (section "Divers / à
+  clarifier") a été tranchée : les deux sont conservées, avec un nouvel
+  item "Features à ajouter" pour câbler `createEngine` dans
+  `createSpacecraft` et lui donner un appelant réel. `.agent/
+  backlog.md` mis à jour : nouvelle revue "7e passe", un item "Bugs
+  connus", un item "Features à ajouter", quatre items "Tests
+  manquants", et résolution de l'item "Divers / à clarifier"
+  correspondant. `npm test` (250 tests), `npm run lint` et `npx tsc
+  --noEmit` restent propres (aucun fichier source touché).
+- Branche/push: main (direct)
+
 ## 2026-08-11T23-40-00-000Z — test
 - Description: Aucun outillage de couverture de tests n'était configuré
 - Détail : `@vitest/coverage-v8@^2.1.9` ajouté en `devDependency`
