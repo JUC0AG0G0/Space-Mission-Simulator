@@ -1154,3 +1154,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
   priorité (seul "Ajouter un système de progression" reste dans
   "Features à ajouter", items 1 à 9 déjà terminés) reste correct, aucun
   nouveau bug, trou de couverture ou doc obsolète identifié cette fois-ci.
+
+## 2026-08-11T20-13-58-856Z — planning
+- Description: Revue périodique planifiée : relis .agent/backlog.md, ajuste les priorités, et ajoute toute tâche manquante identifiée en lisant le code (TODOs, zones sans tests, doc obsolète).
+- Branche/push: main (direct)
+- Coût estimé: 0.5830726 USD
