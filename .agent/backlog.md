@@ -45,6 +45,21 @@ avec carburant épuisé, voir la note "Fait le 2026-08-11" sous l'item
 correspondant). `npm test` (247 tests), `npm run lint` et `npx tsc
 --noEmit` sont propres.
 
+Revue du 2026-08-11 (5e passe) : `npm test` (247 tests), `npm run lint`
+et `npx tsc --noEmit` sont toujours propres, aucun `TODO`/`FIXME`, et
+chaque fichier de `src/simulation`/`src/rendering` a un fichier de test
+dédié — aucun bug ni trou de couverture de tests supplémentaire trouvé
+cette fois-ci. Deux items plus mineurs ont été identifiés en lisant
+`MissionSetup.tsx` et en comparant `README.md` aux écrans réellement
+implémentés dans `src/app`/`src/ui` (voir "Features à ajouter" et
+"Documentation" ci-dessous) : l'un est un défaut d'affichage (label de
+difficulté non formaté dans le sélecteur de mission), l'autre une
+lacune de documentation (le `README.md` ne décrit toujours que le
+squelette V0 — menu, préparation, simulation — sans mentionner le
+compte à rebours, la sélection de fusée/profil de mission, la
+sauvegarde/`Continuer`, l'écran de résultat ou le suivi de
+progression, qui sont pourtant tous fonctionnels).
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
@@ -645,6 +660,30 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   ✓/🔒) et `tests/ui/SimulationScreen.test.tsx` (enregistrement au
   succès de la mission).
 
+- [ ] Le sélecteur "Mission profile" de `MissionSetup` affiche la
+  difficulté brute (`easy`/`medium`/`hard`) au lieu d'un libellé lisible
+
+  `src/ui/MissionSetup.tsx:82-87` construit le texte de chaque `<option>`
+  avec `{profile.name} — {profile.destinationName} ({profile.difficulty})`,
+  où `profile.difficulty` est directement la valeur de l'union
+  `MissionDifficulty` (`'easy' | 'medium' | 'hard'`,
+  `src/simulation/missions/mission-configuration.ts:16`). Le sélecteur
+  affiche donc littéralement "Mission 02 — High orbit (medium)" en
+  minuscules, alors que le reste de l'UI (HUD, panneaux, écran de
+  résultat) utilise des libellés capitalisés/majuscules — aucun
+  `text-transform` CSS ne s'applique aux `<option>` de `.mission-setup__field
+  select` (vérifié dans `src/app/styles.css`), donc rien ne corrige
+  l'affichage au rendu.
+
+  Ajouter un petit helper (ex. une fonction `formatDifficulty` ou une
+  map `MISSION_DIFFICULTY_LABELS: Record<MissionDifficulty, string>`
+  dans `mission-configuration.ts`, à côté du type `MissionDifficulty`)
+  qui associe à chaque valeur un libellé capitalisé ("Easy" / "Medium" /
+  "Hard"), et l'utiliser dans `MissionSetup.tsx` à la place de
+  `profile.difficulty` brut. Adapter `tests/ui/MissionSetup.test.tsx`
+  pour vérifier que le texte des options contient le libellé capitalisé
+  et non la valeur brute de l'union.
+
 ## Tests manquants
 
 - [x] `src/app/SimulationScreen.tsx` n'a aucun test dédié
@@ -674,6 +713,38 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   machine à états (`src/app/app-state.ts`), `App.tsx` n'est plus qu'un
   routeur entre écrans et cette responsabilité vit dans
   `src/app/SimulationScreen.tsx`. Corrigé.
+
+- [ ] `README.md` ne décrit pas le déroulé de jeu réellement implémenté
+
+  Le `README.md` actuel s'arrête à : installation, dev, tests, lint,
+  table de contrôles, et une section "Architecture" qui ne couvre que
+  le découpage `src/simulation`/`src/rendering`/`src/ui` et le routage
+  `App.tsx`/`SimulationScreen.tsx`. Depuis la feuille de route initiale
+  (entièrement terminée, voir les items cochés de ce fichier), le jeu a
+  pourtant gagné plusieurs écrans et mécaniques qu'un lecteur du README
+  ne peut pas deviner à partir du texte actuel :
+
+  * un menu principal avec une liste de progression des missions
+    (`src/ui/MainMenu.tsx`, `src/simulation/progression/mission-progress.ts`) ;
+  * un écran de préparation de mission avec choix du profil de mission
+    et du modèle de fusée (`src/ui/MissionSetup.tsx`,
+    `src/simulation/missions/mission-configuration.ts`,
+    `src/simulation/spacecraft/rocket-models.ts`) ;
+  * une sauvegarde locale de la configuration et un bouton "Continuer"
+    (`src/simulation/persistence/mission-save.ts`) ;
+  * un compte à rebours avant le décollage
+    (`src/ui/CountdownOverlay.tsx`) ;
+  * des phases de vol distinctes (pré-lancement / lancement / vol /
+    mission terminée, `src/app/game-phase.ts`,
+    `src/simulation/flight-phase.ts`) ;
+  * un écran de résultat de mission (succès/échec, rejouer/menu,
+    `src/ui/MissionResult.tsx`).
+
+  Ajouter une courte section "Gameplay" au `README.md` (entre
+  "Controls" et "Architecture", par exemple) résumant cet enchaînement
+  d'écrans en quelques lignes, pour qu'un nouveau lecteur comprenne ce
+  que fait réellement l'application avant de lire le code. Item
+  documentation pure — aucun changement de code ni de test attendu.
 
 ## Divers / à clarifier
 

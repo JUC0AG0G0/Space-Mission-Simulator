@@ -1,5 +1,26 @@
 # Changelog agent
 
+## 2026-08-11T21-30-00-000Z — planning
+- Description: Le backlog ne contenait plus de tâche actionnable (bug/feature/test/doc) — regénération après analyse du repo
+- Détail : `npm test` (247 tests), `npm run lint` et `npx tsc --noEmit`
+  sont propres, aucun `TODO`/`FIXME`, et chaque fichier de
+  `src/simulation`/`src/rendering` a un fichier de test dédié. Aucun bug
+  ni trou de couverture supplémentaire trouvé après lecture de
+  `simulation-engine.ts`, `mission.ts`, `mission-result.ts`,
+  `flight-phase.ts`, `rocket-models.ts`, `mission-progress.ts`,
+  `MissionSetup.tsx`, `MainMenu.tsx`, `MissionPanel.tsx` et
+  `canvas-renderer.ts`. Deux items actionnables identifiés et ajoutés au
+  backlog : (1) `MissionSetup.tsx` affiche la difficulté de mission
+  brute (`easy`/`medium`/`hard`) au lieu d'un libellé capitalisé dans le
+  sélecteur de profil ; (2) `README.md` ne décrit toujours que le
+  squelette V0 (menu/préparation/simulation) sans mentionner le compte à
+  rebours, la sélection de fusée/profil, la sauvegarde/`Continuer`,
+  l'écran de résultat ou le suivi de progression, tous fonctionnels
+  depuis les runs précédents. `.agent/backlog.md` mis à jour avec une
+  nouvelle note de revue (5e passe) et ces deux items dans les sections
+  "Features à ajouter" et "Documentation".
+- Branche/push: main (direct)
+
 ## 2026-08-11T21-15-00-000Z — bugfix
 - Description: Une mission peut rester bloquée en statut `active` indéfiniment (orbite stable hors bande, carburant épuisé)
 - Détail : Nouveau module `src/simulation/physics/orbit.ts` exposant
