@@ -1863,3 +1863,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: La branche "trajectoire non liée" d'`isStrandedOutsideTargetBand`
 - Branche/push: main (direct)
 - Coût estimé: 0.7163230000000002 USD
+
+## 2026-08-11T21-54-20-083Z — planning
+- Description: Revue périodique planifiée : relis .agent/backlog.md, ajuste les priorités, et ajoute toute tâche manquante identifiée en lisant le code (TODOs, zones sans tests, doc obsolète).
+- Branche/push: main (direct)
+- Coût estimé: 1.0658939 USD
