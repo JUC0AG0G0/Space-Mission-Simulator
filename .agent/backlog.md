@@ -298,7 +298,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Bugs connus
 
-- [ ] Un nom de mission/fusée anormalement long peut déborder du panneau
+- [x] Un nom de mission/fusée anormalement long peut déborder du panneau
   HUD et recouvrir la zone de jeu
 
   Les champs "Mission name" et "Spacecraft name" de `MissionSetup`
@@ -325,6 +325,28 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   pour toute donnée déjà en `localStorage` avant ce correctif. Ajouter
   un test dans `tests/ui/MissionSetup.test.tsx` vérifiant l'attribut
   `maxLength` sur les deux champs.
+
+  Fait le 2026-08-12 : nouvelle constante exportée
+  `MISSION_NAME_MAX_LENGTH = 40`
+  (`src/simulation/missions/mission-configuration.ts`), appliquée comme
+  attribut `maxLength` sur les deux `<input>` "Mission name" et
+  "Spacecraft name" de `MissionSetup.tsx` — un nom ne peut donc plus
+  être *saisi* au-delà de 40 caractères dans l'UI. En filet de sécurité
+  pour toute configuration déjà présente en `localStorage` avant ce
+  correctif (sauvegardée par une version antérieure du jeu, sans cette
+  borne), `src/app/styles.css` ajoute `max-width: 320px` à `.hud` et
+  `overflow: hidden; text-overflow: ellipsis; white-space: nowrap;` à
+  `.hud__mission`, `.mission-setup__summary dd` et
+  `.mission-result__summary dd` : un nom anormalement long est tronqué
+  avec une ellipse au lieu d'élargir le panneau et de recouvrir la zone
+  de jeu. `isValidMissionConfiguration` n'a pas été modifiée (elle
+  continue de n'exiger qu'un nom non blanc) : le `maxLength` HTML suffit
+  pour la saisie normale, et l'ellipse CSS couvre le cas résiduel d'une
+  donnée déjà sauvegardée. Test ajouté dans
+  `tests/ui/MissionSetup.test.tsx` ("caps the mission name and
+  spacecraft name inputs to a reasonable length") vérifiant l'attribut
+  `maxLength` sur les deux champs. `npm test` (267 tests), `npm run
+  lint` et `npx tsc --noEmit` restent propres.
 
 - [x] `describeFailureCause` affiche une cause d'échec trompeuse quand
   un vaisseau à court de carburant s'écrase au sol

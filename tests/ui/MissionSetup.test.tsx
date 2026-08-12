@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MissionSetup } from '../../src/ui/MissionSetup';
+import { MISSION_NAME_MAX_LENGTH } from '../../src/simulation/missions/mission-configuration';
 
 describe('MissionSetup', () => {
   it('calls onBack when "Back" is clicked from the form', async () => {
@@ -22,6 +23,19 @@ describe('MissionSetup', () => {
     expect(screen.getByLabelText('Mission profile')).toHaveValue('earth-orbit');
     expect(screen.getByRole('button', { name: 'Select Explorer I' })).toHaveTextContent(
       'Selected',
+    );
+  });
+
+  it('caps the mission name and spacecraft name inputs to a reasonable length', () => {
+    render(<MissionSetup onBack={() => {}} onLaunch={() => {}} />);
+
+    expect(screen.getByLabelText('Mission name')).toHaveAttribute(
+      'maxLength',
+      String(MISSION_NAME_MAX_LENGTH),
+    );
+    expect(screen.getByLabelText('Spacecraft name')).toHaveAttribute(
+      'maxLength',
+      String(MISSION_NAME_MAX_LENGTH),
     );
   });
 

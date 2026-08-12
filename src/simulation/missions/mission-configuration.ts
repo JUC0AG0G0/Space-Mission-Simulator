@@ -13,6 +13,14 @@ export interface MissionConfiguration {
   rocketModelId: string;
 }
 
+/**
+ * Upper bound on `missionName`/`spacecraftName` length, enforced via the
+ * `maxLength` attribute on the `MissionSetup` inputs. Keeps these
+ * player-chosen names from overflowing the fixed-width panels that display
+ * them (HUD, mission summary, mission result).
+ */
+export const MISSION_NAME_MAX_LENGTH = 40;
+
 export type MissionDifficulty = 'easy' | 'medium' | 'hard';
 
 /**

@@ -90,6 +90,7 @@ body {
   border-radius: 4px;
   padding: 14px 18px;
   min-width: 220px;
+  max-width: 320px;
   backdrop-filter: blur(4px);
 }
 
@@ -98,6 +99,9 @@ body {
   letter-spacing: 0.14em;
   color: var(--color-text-dim);
   margin-bottom: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .hud__phase {
@@ -459,6 +463,9 @@ body {
   margin: 2px 0 0;
   font-size: 15px;
   color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .main-menu__actions,
@@ -598,6 +605,9 @@ body {
   margin: 2px 0 0;
   font-size: 15px;
   color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mission-result__objectives {

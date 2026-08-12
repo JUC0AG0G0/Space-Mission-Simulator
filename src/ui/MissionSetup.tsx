@@ -5,6 +5,7 @@ import {
   findMissionProfile,
   isValidMissionConfiguration,
   MISSION_DIFFICULTY_LABELS,
+  MISSION_NAME_MAX_LENGTH,
   type MissionConfiguration,
 } from '../simulation/missions/mission-configuration';
 import {
@@ -67,6 +68,7 @@ export function MissionSetup({ onBack, onLaunch }: MissionSetupProps) {
           <span>Mission name</span>
           <input
             type="text"
+            maxLength={MISSION_NAME_MAX_LENGTH}
             value={configuration.missionName}
             onChange={(event) => updateField('missionName', event.target.value)}
           />
@@ -75,6 +77,7 @@ export function MissionSetup({ onBack, onLaunch }: MissionSetupProps) {
           <span>Spacecraft name</span>
           <input
             type="text"
+            maxLength={MISSION_NAME_MAX_LENGTH}
             value={configuration.spacecraftName}
             onChange={(event) => updateField('spacecraftName', event.target.value)}
           />
