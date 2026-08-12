@@ -353,7 +353,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Bugs connus
 
-- [ ] Le canvas de simulation ne tient pas compte de `devicePixelRatio` :
+- [x] Le canvas de simulation ne tient pas compte de `devicePixelRatio` :
   rendu flou sur les écrans Retina/haute densité
 
   La boucle de rendu de `SimulationScreen.tsx` (lignes 139-151)
@@ -401,6 +401,35 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   renvoyant `{ width, height }`) dans un module testable séparément,
   pour au moins couvrir la logique de mise à l'échelle par un test
   unitaire classique plutôt que de laisser tout le correctif sans test.
+
+  Fait le 2026-08-12 : nouvelle fonction pure exportée
+  `computeCanvasBufferSize(clientWidth, clientHeight, devicePixelRatio)`
+  (`src/rendering/canvas/canvas-buffer-size.ts`), qui multiplie les
+  dimensions CSS par le ratio de pixels et arrondit au pixel entier.
+  `SimulationScreen.tsx` calcule désormais `const devicePixelRatio =
+  window.devicePixelRatio || 1;` à chaque frame, l'utilise via cette
+  fonction pour dimensionner `canvas.width`/`canvas.height` (au lieu de
+  `clientWidth`/`clientHeight` bruts), puis appelle
+  `ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0)`
+  avant `renderScene` — préféré à `ctx.scale(dpr, dpr)` (suggestion
+  initiale de la piste) car `setTransform` fixe une échelle absolue à
+  chaque frame plutôt que de composer avec la précédente, évitant tout
+  risque de sur-échelle si le buffer n'est pas redimensionné à une frame
+  donnée (taille inchangée). `renderScene` reçoit toujours
+  `clientWidth`/`clientHeight` (pixels CSS non multipliés), donc
+  `buildCamera`/`renderPlanet`/`renderSpacecraft`/`renderTrajectory`
+  n'ont pas été modifiés. Comme prévu par la piste, ce correctif n'est
+  pas vérifiable par un test de rendu visuel (jsdom n'implémente pas
+  `HTMLCanvasElement.getContext('2d')`) ; la logique de dimensionnement
+  est en revanche couverte par un test unitaire classique dans
+  `tests/rendering/canvas-buffer-size.test.ts` (ratio 1 inchangé, ratio
+  2 doublé, ratio fractionnaire 1.5 arrondi). `npm test` (270 tests),
+  `npm run lint`, `npx tsc --noEmit` et `npm run coverage` (97.9 % de
+  lignes / 97.83 % de branches globales, `canvas-buffer-size.ts` à
+  100 %) restent propres ; les lignes non couvertes du bloc canvas de
+  `SimulationScreen.tsx` (désormais 144-160, contre 143-150
+  auparavant) restent la même limitation jsdom déjà documentée comme
+  marginale, pas une régression de couverture.
 
 - [x] Un nom de mission/fusée anormalement long peut déborder du panneau
   HUD et recouvrir la zone de jeu

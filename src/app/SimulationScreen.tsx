@@ -6,6 +6,7 @@ import { buildMissionResultStats } from '../simulation/missions/mission-result';
 import { markMissionCompleted } from '../simulation/progression/mission-progress';
 import { determineGamePhase } from './game-phase';
 import { renderScene } from '../rendering/canvas-renderer';
+import { computeCanvasBufferSize } from '../rendering/canvas/canvas-buffer-size';
 import { Hud } from '../ui/Hud';
 import { CountdownOverlay } from '../ui/CountdownOverlay';
 import { MissionResult } from '../ui/MissionResult';
@@ -140,13 +141,22 @@ export function SimulationScreen({ missionConfiguration, onExit }: SimulationScr
       if (canvas) {
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          const width = canvas.clientWidth;
-          const height = canvas.clientHeight;
+          const clientWidth = canvas.clientWidth;
+          const clientHeight = canvas.clientHeight;
+          const devicePixelRatio = window.devicePixelRatio || 1;
+          const { width, height } = computeCanvasBufferSize(
+            clientWidth,
+            clientHeight,
+            devicePixelRatio,
+          );
           if (canvas.width !== width || canvas.height !== height) {
             canvas.width = width;
             canvas.height = height;
           }
-          renderScene(ctx, nextState, { width: canvas.width, height: canvas.height });
+          // The buffer is sized in device pixels; scale the context so the
+          // rest of the render pipeline keeps reasoning in CSS pixels.
+          ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+          renderScene(ctx, nextState, { width: clientWidth, height: clientHeight });
         }
       }
 
