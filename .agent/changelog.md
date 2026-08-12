@@ -2039,3 +2039,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: `SimulationScreen.onKeyUp` (relâchement des touches continues
 - Branche/push: main (direct)
 - Coût estimé: 0.7441950999999999 USD
+
+## 2026-08-12T05-46-05-572Z — planning
+- Description: Revue périodique planifiée : relis .agent/backlog.md, ajuste les priorités, et ajoute toute tâche manquante identifiée en lisant le code (TODOs, zones sans tests, doc obsolète).
+- Branche/push: main (direct)
+- Coût estimé: 0.9354337000000001 USD
