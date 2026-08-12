@@ -2049,3 +2049,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: `isMissionConfigurationShape` n'est jamais testée avec une valeur JSON valide mais structurellement non-objet
 - Détail: nouveau test paramétré (`it.each`) "ignores valid JSON that is not an object" dans `tests/persistence/mission-save.test.ts`, couvrant `42`, `'a string'`, `null`, `[]` et `true` écrits bruts sous la clé de sauvegarde — vérifie que `loadSavedMission()` renvoie `null` sans lever. `src/simulation/persistence/mission-save.ts` passe à 100 % de couverture (lignes/branches/fonctions). `npm test` (266 tests), `npm run lint` et `npx tsc --noEmit` restent propres. Item correspondant coché dans `.agent/backlog.md`.
 - Branche/push: main (non commité par l'agent)
+
+## 2026-08-12T20-55-20-875Z — test
+- Description: `isMissionConfigurationShape` n'est jamais testée avec une valeur
+- Branche/push: main (direct)
+- Coût estimé: 0.5898364 USD
