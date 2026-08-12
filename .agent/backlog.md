@@ -318,11 +318,89 @@ ajouter" ci-dessous. `npm outdated` ne montre rien de nouveau par
 rapport à la 13e passe (mêmes majeures disponibles, toujours hors
 périmètre). Le `README.md` reste cohérent avec `src/app`/`src/ui`.
 
+Revue du 2026-08-12 (15e passe, planification périodique) : `npm test`
+(267 tests), `npm run lint` et `npx tsc --noEmit` sont propres, aucun
+`TODO`/`FIXME`/`XXX` dans `src/`/`tests/`. `npm run coverage` confirme
+98.36 % de lignes / 97.82 % de branches, inchangé depuis la 14e passe
+(les seules lignes non couvertes restent `App.tsx:55,57`,
+`SimulationScreen.tsx:143-150`, `Hud.tsx:47`, déjà jugées trop
+marginales lors de passes précédentes). En relisant en détail la boucle
+de rendu de `SimulationScreen.tsx` (lignes 139-151) avec
+`src/app/styles.css` (`.app__canvas { width: 100%; height: 100%; }`) et
+`src/rendering/canvas-renderer.ts`, un vrai défaut visuel a été
+identifié plutôt qu'un simple trou de couverture : le buffer du canvas
+(`canvas.width`/`canvas.height`) est dimensionné directement à partir
+de `canvas.clientWidth`/`clientHeight` (des pixels CSS), sans tenir
+compte de `window.devicePixelRatio` — sur un écran Retina/haute
+densité (`devicePixelRatio` 2 ou 3), le navigateur doit donc
+suréchantillonner un buffer sous-dimensionné pour remplir la boîte CSS,
+ce qui rend tout le rendu (planète, vaisseau, trajectoire) visiblement
+flou par rapport à un rendu natif. Aucune recherche de
+`devicePixelRatio` dans `src/`/`tests/` ne remonte de résultat, donc ce
+n'est pas un compromis déjà tranché. Voir le nouvel item sous "Bugs
+connus" ci-dessous. `npm outdated` ne montre rien de nouveau
+d'actionnable par rapport à la 13e/14e passe (mêmes majeures hors
+périmètre, plus un bump mineur `typescript-eslint` 8.66.0 → 8.67.0 sans
+intérêt propre à documenter). Aucun autre bug, trou de couverture
+actionnable ou doc obsolète trouvé cette fois-ci — le `README.md` reste
+cohérent avec `src/app`/`src/ui`. Le point sous "Divers / à clarifier"
+(idées de missions futures non scopées) reste une décision en attente,
+pas une tâche actionnable en l'état.
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Bugs connus
+
+- [ ] Le canvas de simulation ne tient pas compte de `devicePixelRatio` :
+  rendu flou sur les écrans Retina/haute densité
+
+  La boucle de rendu de `SimulationScreen.tsx` (lignes 139-151)
+  redimensionne le buffer du canvas ainsi :
+
+  ```ts
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
+  }
+  renderScene(ctx, nextState, { width: canvas.width, height: canvas.height });
+  ```
+
+  `clientWidth`/`clientHeight` sont exprimés en pixels CSS, et
+  `.app__canvas` (`src/app/styles.css:43-49`) est simplement dimensionné
+  à `width: 100%; height: 100%;` de son conteneur — rien ne multiplie
+  ces dimensions par `window.devicePixelRatio` avant de les affecter au
+  buffer du canvas (`canvas.width`/`canvas.height`, qui contrôlent la
+  résolution réelle du buffer de pixels, indépendamment de la taille
+  d'affichage CSS). Sur un écran standard (`devicePixelRatio === 1`)
+  cela ne se voit pas, mais sur un écran Retina/haute densité
+  (`devicePixelRatio` 2 ou 3, très courant sur les Mac et les mobiles
+  récents), le navigateur doit suréchantillonner un buffer deux à trois
+  fois plus petit que nécessaire pour remplir la boîte CSS affichée : la
+  planète, le vaisseau et la trajectoire (`renderPlanet`/
+  `renderSpacecraft`/`renderTrajectory`, `src/rendering/`) sont donc
+  rendus visiblement flous par rapport à un rendu natif, alors que nulle
+  part dans `src/` ni `tests/` `devicePixelRatio` n'est pris en compte
+  ni ce compromis documenté comme volontaire.
+
+  Piste : dans `SimulationScreen.tsx`, calculer `const dpr =
+  window.devicePixelRatio || 1;`, dimensionner le buffer du canvas à
+  `width * dpr` / `height * dpr` plutôt qu'à `width`/`height` bruts, et
+  appeler `ctx.scale(dpr, dpr)` juste avant `renderScene` pour que le
+  reste du pipeline de rendu (`buildCamera`, `renderPlanet`, etc.)
+  continue de raisonner en pixels CSS (`width`/`height` non multipliés)
+  sans aucune modification. Comme jsdom ne implémente pas réellement
+  `HTMLCanvasElement.getContext('2d')` (avertissement `Not implemented`
+  déjà visible dans la sortie de `npm test`), ce correctif n'est pas
+  vérifiable par un test de rendu visuel ; envisager d'extraire le
+  calcul de dimensionnement (ex. une fonction pure
+  `computeCanvasBufferSize(clientWidth, clientHeight, devicePixelRatio)`
+  renvoyant `{ width, height }`) dans un module testable séparément,
+  pour au moins couvrir la logique de mise à l'échelle par un test
+  unitaire classique plutôt que de laisser tout le correctif sans test.
 
 - [x] Un nom de mission/fusée anormalement long peut déborder du panneau
   HUD et recouvrir la zone de jeu

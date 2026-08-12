@@ -1,5 +1,10 @@
 # Changelog agent
 
+## 2026-08-12T23-30-00-000Z — planning
+- Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
+- Détail: `npm test` (267 tests), `npm run lint`, `npx tsc --noEmit` et `npm run coverage` (98.36 % lignes / 97.82 % branches) confirmés propres, inchangés depuis la 14e passe ; aucun `TODO`/`FIXME`/`XXX` dans `src/`/`tests/`. En relisant en détail la boucle de rendu de `SimulationScreen.tsx` (redimensionnement du canvas, lignes 139-151) avec `src/app/styles.css` et `src/rendering/canvas-renderer.ts`, un vrai défaut visuel a été identifié (pas un simple trou de couverture, déjà classé "marginal" sur ce bloc de code lors de passes précédentes) : le buffer du canvas (`canvas.width`/`canvas.height`) est dimensionné à partir de `canvas.clientWidth`/`clientHeight` (pixels CSS) sans tenir compte de `window.devicePixelRatio`, ce qui produit un rendu flou sur les écrans Retina/haute densité. Nouvel item actionnable ajouté sous "Bugs connus" dans `.agent/backlog.md`, avec une piste de correctif (mise à l'échelle du buffer + `ctx.scale`) et une suggestion pour le rendre partiellement testable (extraire le calcul de dimensionnement dans une fonction pure). `npm outdated` ne montre rien de nouveau d'actionnable par rapport aux passes précédentes. Aucun autre bug, trou de couverture ou doc obsolète trouvé. Aucun changement de code — item de planification pure.
+- Branche/push: main (non commité par l'agent)
+
 ## 2026-08-12T23-40-00-000Z — feature
 - Description: Supprimer la garde interne redondante d'`advanceCountdown`
 - Détail: `advanceCountdown` (`src/simulation/simulation-engine.ts`) avait
