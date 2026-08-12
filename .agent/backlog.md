@@ -347,6 +347,43 @@ cohérent avec `src/app`/`src/ui`. Le point sous "Divers / à clarifier"
 (idées de missions futures non scopées) reste une décision en attente,
 pas une tâche actionnable en l'état.
 
+Revue du 2026-08-12 (16e passe, planification périodique) : le bug de
+canvas flou sur écran Retina, identifié lors de la 15e passe, est
+désormais corrigé (voir l'entrée cochée correspondante et
+`.agent/changelog.md`). Au moment de cette revue, les quatre sections
+actionnables du backlog (Bugs connus, Features à ajouter, Tests
+manquants, Documentation) n'avaient plus aucune entrée non cochée. `npm
+test` (270 tests), `npm run lint` et `npx tsc --noEmit` sont propres,
+aucun `TODO`/`FIXME`/`XXX` dans `src/`/`tests/`. `npm run coverage`
+confirme 97.9 % de lignes / 97.83 % de branches (légère baisse relative
+depuis la 15e passe, mais aucune ligne nouvellement non couverte : le
+pourcentage bouge simplement parce que `canvas-buffer-size.ts`, ajouté
+lors du correctif Retina, est déjà à 100 % et fait légèrement grossir le
+dénominateur) ; les seules lignes non couvertes restent `App.tsx:55,57`,
+`SimulationScreen.tsx:144-160` et `Hud.tsx:47`, toutes trois déjà jugées
+trop marginales lors de passes précédentes (repli défensif déjà
+exhaustif, boucle `requestAnimationFrame`/redimensionnement du canvas,
+repli `fuelPercent = 0` inatteignable avec les modèles de fusée
+actuels). Une relecture ciblée de `SimulationScreen.tsx`,
+`simulation-engine.ts`, `Hud.tsx`, `MissionPanel.tsx`,
+`ControlsPanel.tsx`, `CountdownOverlay.tsx`, `mission-configuration.ts`,
+`rocket-models.ts`, `canvas-renderer.ts` et `celestial-body.ts` (y
+compris une vérification numérique du ratio poussée/poids au sol des
+trois modèles de fusée avec le `g` réel du corps céleste simulé,
+`GM/r² ≈ 11.07 m/s²` — chacun reste bien au-dessus de 1, conformément
+au commentaire de `createInitialSpacecraft`) n'a fait remonter aucun bug
+ni trou de couverture supplémentaire. Nouveauté par rapport aux passes
+précédentes : `npm audit` (jamais exécuté explicitement jusqu'ici, seul
+`npm outdated` l'avait été) signale 6 vulnérabilités (3 modérées, 1
+haute, 2 critiques) dans la chaîne `esbuild`/`vite`/`vitest`/
+`@vitest/coverage-v8`, dépendances de développement uniquement (le
+correctif nécessite un saut de version majeure de `vite` 5→8 et
+`vitest` 2→4, donc hors périmètre "petit diff" de ce backlog, comme les
+autres majeures déjà notées via `npm outdated`) — voir le nouvel item
+sous "Divers / à clarifier". Aucun autre bug, trou de couverture
+actionnable ou doc obsolète trouvé cette fois-ci — le `README.md` reste
+cohérent avec `src/app`/`src/ui`.
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
@@ -1780,6 +1817,36 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   appelant réel ; `screenToWorld` reste documentée comme utilitaire en
   attente d'une future interaction souris sur le canvas, sans action
   requise dessus pour l'instant).
+
+- [ ] `npm audit` signale 6 vulnérabilités dans la chaîne de
+  dépendances de développement `esbuild`/`vite`/`vitest`
+
+  `npm audit` (16e passe, jamais lancé explicitement lors des passes
+  précédentes — seul `npm outdated` l'avait été) signale 3 vulnérabilités
+  modérées, 1 haute et 2 critiques, toutes dans `esbuild <=0.24.2`
+  (utilisé par `vite <=6.4.2`, lui-même une dépendance de `vitest
+  <=3.2.5`, `@vitest/mocker`, `vite-node` et `@vitest/coverage-v8`) :
+  "esbuild enables any website to send any requests to the development
+  server and read the response"
+  (https://github.com/advisories/GHSA-67mh-4wv8-2f99). Ce sont des
+  dépendances de développement uniquement (serveur `npm run dev`,
+  suite de tests) — rien de ceci n'est présent dans le bundle produit
+  par `npm run build`, et le risque réel pour ce projet local est faible.
+  `npm audit fix --force` propose d'installer `vite@8.2.1`, un saut de
+  version majeure (`vite` 5→8, `vitest` 2→4, `@vitest/coverage-v8` 2→4)
+  qui dépasse largement le périmètre "petit diff, comportement
+  inchangé" visé par ce backlog — cohérent avec le traitement déjà
+  réservé aux autres majeures disponibles (`npm outdated`, notées hors
+  périmètre depuis la 13e passe).
+
+  À trancher avant d'agir : soit accepter le risque tel quel (dev-only,
+  faible surface d'exposition pour un projet joué localement) et
+  documenter ce choix, soit planifier une tâche dédiée de montée de
+  version majeure de `vite`/`vitest` (probablement plus grosse qu'un
+  run habituel de ce backlog, à subdiviser si besoin — mise à jour de
+  `package.json`, vérification de `vite.config.ts`, re-run complet de
+  `npm test`/`npm run lint`/`npx tsc --noEmit`/`npm run coverage` pour
+  détecter toute régression de compatibilité).
 
 - [ ] Idées identifiées pour plus tard (non scopées, à détailler avant
   toute exécution)
