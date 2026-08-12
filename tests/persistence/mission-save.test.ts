@@ -50,6 +50,15 @@ describe('mission-save', () => {
     expect(loadSavedMission()).toBeNull();
   });
 
+  it.each([42, 'a string', null, [], true])(
+    'ignores valid JSON that is not an object (%j)',
+    (value) => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+
+      expect(loadSavedMission()).toBeNull();
+    },
+  );
+
   it('ignores a stored configuration that is no longer valid', () => {
     const configuration = {
       ...createDefaultMissionConfiguration(),

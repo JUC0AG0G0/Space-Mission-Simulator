@@ -1347,7 +1347,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   Vite non exécuté par les tests). `npm test`, `npm run lint` et `npx
   tsc --noEmit` restent propres.
 
-- [ ] `isMissionConfigurationShape` n'est jamais testée avec une valeur
+- [x] `isMissionConfigurationShape` n'est jamais testée avec une valeur
   JSON valide mais structurellement non-objet
 
   `isMissionConfigurationShape` (`src/simulation/persistence/
@@ -1371,6 +1371,17 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   ou `'[]'`), puis vérifier que `loadSavedMission()` renvoie `null` sans
   lever d'exception — même schéma que le test existant "returns null for
   corrupted JSON in storage".
+
+  Fait le 2026-08-12 : nouveau test paramétré (`it.each`) "ignores valid
+  JSON that is not an object" dans `tests/persistence/
+  mission-save.test.ts`, couvrant cinq valeurs JSON valides mais
+  structurellement non conformes (`42`, `'a string'`, `null`, `[]`,
+  `true`) écrites brutes sous `STORAGE_KEY` — vérifie que
+  `loadSavedMission()` renvoie `null` sans lever, pour chacune. `npm run
+  coverage` confirme que `src/simulation/persistence/mission-save.ts`
+  est désormais à 100 % de couverture (lignes/branches/fonctions),
+  fermant le dernier trou de couverture connu de ce fichier. `npm test`
+  (266 tests), `npm run lint` et `npx tsc --noEmit` restent propres.
 
 ## Documentation
 
