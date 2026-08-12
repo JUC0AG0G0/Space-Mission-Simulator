@@ -1,5 +1,24 @@
 # Changelog agent
 
+## 2026-08-12T23-40-00-000Z — feature
+- Description: Supprimer la garde interne redondante d'`advanceCountdown`
+- Détail: `advanceCountdown` (`src/simulation/simulation-engine.ts`) avait
+  une garde `if (!countdown) { return false; }` inatteignable en pratique
+  — son seul appelant, dans `step`, est
+  `if (this.state.countdown && this.advanceCountdown(deltaTime))`, dont le
+  court-circuit du `&&` garantit déjà que la méthode n'est jamais invoquée
+  avec `countdown === null`. La garde est supprimée ; `advanceCountdown`
+  lit désormais `const countdown = this.state.countdown!;`, avec un
+  commentaire rappelant que l'invariant est porté par l'appelant unique
+  dans `step`. Comportement observable inchangé, aucun test modifié ou
+  ajouté. `npm test` (267 tests), `npm run lint` et `npx tsc --noEmit`
+  restent propres ; `npm run coverage` confirme que
+  `src/simulation/simulation-engine.ts` est désormais à 100 % de lignes/
+  branches/fonctions (couverture globale 98.36 %, en légère hausse).
+  Items correspondants cochés dans `.agent/backlog.md` (sous "Features à
+  ajouter" et sous "Divers / à clarifier").
+- Branche/push: main (non commité par l'agent)
+
 ## 2026-08-12T07-46-00-000Z — planning
 - Description: Revue périodique planifiée : relis .agent/backlog.md, ajuste les priorités, et ajoute toute tâche manquante identifiée en lisant le code (TODOs, zones sans tests, doc obsolète).
 - Détail : traité la priorité identifiée lors de la revue précédente

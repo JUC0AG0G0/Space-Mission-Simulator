@@ -169,12 +169,12 @@ export class SimulationEngine {
    * countdown is still holding the simulation back (including the LIFTOFF
    * frame, where `remainingSeconds` reaches exactly 0), false once it has
    * cleared and flight physics should run for this same tick.
+   *
+   * Only called from `step` while `this.state.countdown` is non-null (see
+   * its call site below), so no null guard is needed here.
    */
   private advanceCountdown(deltaTime: number): boolean {
-    const countdown = this.state.countdown;
-    if (!countdown) {
-      return false;
-    }
+    const countdown = this.state.countdown!;
 
     if (countdown.remainingSeconds <= 0) {
       this.state = { ...this.state, countdown: null };

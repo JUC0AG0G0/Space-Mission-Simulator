@@ -1180,7 +1180,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   complet des trois `<option>` ("Mission 01 — Earth orbit (Easy)",
   etc.), donc casserait si `profile.difficulty` brut était réintroduit.
 
-- [ ] Supprimer la garde interne redondante d'`advanceCountdown`
+- [x] Supprimer la garde interne redondante d'`advanceCountdown`
 
   Décidé sous "Divers / à clarifier" (14e passe) : `advanceCountdown`
   (`src/simulation/simulation-engine.ts:173-187`) a une garde
@@ -1202,6 +1202,19 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   `tests/simulation-engine.test.ts`. Vérifier avec `npm run coverage`
   que `simulation-engine.ts` passe à 100 % de lignes une fois la garde
   retirée.
+
+  Fait le 2026-08-12 : la garde `if (!countdown) { return false; }`
+  (`src/simulation/simulation-engine.ts:175-177`) est supprimée ;
+  `advanceCountdown` lit désormais directement
+  `const countdown = this.state.countdown!;`, avec un commentaire sur la
+  méthode rappelant que l'invariant "appelée seulement si `countdown` est
+  non nul" est garanti par son unique appelant dans `step`
+  (`if (this.state.countdown && this.advanceCountdown(deltaTime))`).
+  Comportement observable inchangé : aucun test modifié ou ajouté. `npm
+  test` (267 tests), `npm run lint` et `npx tsc --noEmit` restent
+  propres, et `npm run coverage` confirme que
+  `src/simulation/simulation-engine.ts` est désormais à 100 % de lignes/
+  branches/fonctions (`98.36 %` de couverture globale, en légère hausse).
 
 ## Tests manquants
 
@@ -1588,7 +1601,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Divers / à clarifier
 
-- [ ] La garde `if (!countdown) { return false; }` dans
+- [x] La garde `if (!countdown) { return false; }` dans
   `SimulationEngine.advanceCountdown` est inatteignable depuis son seul
   appelant actuel
 
@@ -1620,9 +1633,12 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   produire, faire confiance aux garanties internes du code") et
   s'applique ici telle quelle : `advanceCountdown` est privée, son seul
   appelant (`step`) garantit déjà l'invariant via le court-circuit
-  `this.state.countdown && this.advanceCountdown(...)`. Voir le nouvel
-  item sous "Features à ajouter" ci-dessous pour la tâche de
+  `this.state.countdown && this.advanceCountdown(...)`. Voir l'item
+  correspondant sous "Features à ajouter" ci-dessus pour la tâche de
   simplification elle-même.
+
+  Fait le 2026-08-12 : garde supprimée, voir l'item coché correspondant
+  sous "Features à ajouter" ci-dessus pour le détail de l'implémentation.
 
 - [x] Deux fonctions exportées (`screenToWorld`, `createEngine`) ont
   chacune un test dédié mais ne sont appelées nulle part dans `src/`
