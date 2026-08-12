@@ -2133,3 +2133,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Le canvas de simulation ne tient pas compte de `devicePixelRatio` :
 - Branche/push: main (direct)
 - Coût estimé: 1.3801478999999996 USD
+
+## 2026-08-12T21-25-13-471Z — planning
+- Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
+- Branche/push: main (direct)
+- Coût estimé: 1.4408847999999994 USD
