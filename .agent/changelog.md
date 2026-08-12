@@ -2103,3 +2103,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
 - Branche/push: main (direct)
 - Coût estimé: 1.7844745000000004 USD
+
+## 2026-08-12T21-07-50-454Z — feature
+- Description: Supprimer la garde interne redondante d'`advanceCountdown`
+- Branche/push: main (direct)
+- Coût estimé: 0.9896234999999999 USD
