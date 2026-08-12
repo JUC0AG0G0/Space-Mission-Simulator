@@ -247,11 +247,84 @@ sous "Divers / à clarifier" (garde redondante dans `advanceCountdown`,
 idées de missions futures non scopées) restent des décisions en
 attente, pas des tâches actionnables en l'état.
 
+Revue du 2026-08-12 (13e passe, planification périodique) : le backlog
+ne contenait plus d'item actionnable non coché (les trois sections
+"Bugs connus", "Features à ajouter" et "Tests manquants" n'avaient que
+des entrées déjà cochées, cf. 12e passe). `npm test` (266 tests), `npm
+run lint` et `npx tsc --noEmit` sont propres, aucun `TODO`/`FIXME`/`XXX`
+dans `src/`/`tests/`. L'item "Tests manquants" sur
+`isMissionConfigurationShape` noté comme dernière priorité lors de la
+12e passe est désormais traité (voir l'entrée correspondante, cochée
+ci-dessus, et `.agent/changelog.md`) — `npm run coverage` confirme
+98.22 % de lignes / 97.56 % de branches, et plus aucun fichier de
+`src/simulation`/`src/rendering` n'a de ligne non couverte ; les seules
+lignes restantes hors 100 % (`App.tsx:55,57`,
+`SimulationScreen.tsx:143-150`, `simulation-engine.ts:176-177`,
+`Hud.tsx:47`) recoupent toutes des branches déjà jugées trop marginales
+lors de passes précédentes (repli défensif déjà exhaustif, boucle
+`requestAnimationFrame`/redimensionnement du canvas, garde interne déjà
+garantie par l'unique appelant, repli `fuelPercent = 0`
+inatteignable avec les modèles de fusée actuels). `npm outdated` montre
+plusieurs dépendances avec des majeures disponibles (React 19, Vite 8,
+ESLint 10, Vitest 4, `typescript` 7) mais aucune n'est une action de
+backlog de ce projet (montées de version majeures hors du périmètre
+"petit diff, comportement inchangé" visé ici).
+
+Un bug concret a été identifié en lisant `MissionSetup.tsx` et les
+styles associés (`src/app/styles.css`) : les champs "Mission name" et
+"Spacecraft name" (`src/ui/MissionSetup.tsx:66-81`) n'ont aucune limite
+de longueur (`maxLength` absent des deux `<input>`), et aucun des
+conteneurs qui affichent ensuite ces noms — `.hud__mission`
+(`styles.css:96-101`, largeur du panneau HUD fixée par `min-width:
+220px` seul, sans `max-width`) sur l'écran de vol, `.mission-setup__summary
+dd` sur l'écran de résumé, ou `.mission-result__summary dd` sur l'écran
+de résultat — n'a de `overflow`/`text-overflow`/`word-break` pour
+absorber un texte anormalement long. Un nom collé ou saisi de plusieurs
+centaines de caractères (rien dans `isValidMissionConfiguration`,
+`src/simulation/missions/mission-configuration.ts:105-114`, ne borne la
+longueur, seul un `trim().length > 0` est vérifié) traverse donc
+`MissionSetup` → sauvegarde (`mission-save.ts`) → HUD/résumé/résultat
+sans jamais être tronqué, et peut élargir ou faire déborder le panneau
+HUD (positionné en `absolute` par-dessus le canvas) au point de
+recouvrir une partie de la zone de jeu. Voir le nouvel item sous "Bugs
+connus" ci-dessous. Aucun autre bug, trou de couverture actionnable ou
+doc obsolète trouvé cette fois-ci — le `README.md` reste cohérent avec
+`src/app`/`src/ui`. Les deux points sous "Divers / à clarifier" restent
+des décisions en attente, pas des tâches actionnables en l'état.
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Bugs connus
+
+- [ ] Un nom de mission/fusée anormalement long peut déborder du panneau
+  HUD et recouvrir la zone de jeu
+
+  Les champs "Mission name" et "Spacecraft name" de `MissionSetup`
+  (`src/ui/MissionSetup.tsx:66-81`) n'ont pas d'attribut `maxLength`, et
+  `isValidMissionConfiguration`
+  (`src/simulation/missions/mission-configuration.ts:105-114`) ne vérifie
+  que `trim().length > 0`, sans borne haute. Ces noms sont ensuite
+  affichés tels quels dans `.hud__mission` (`src/ui/Hud.tsx:54`,
+  panneau positionné en `absolute` par-dessus le canvas,
+  `src/app/styles.css:81-101` — `min-width: 220px` mais pas de
+  `max-width` ni d'`overflow`/`text-overflow`/`word-break`), dans le
+  résumé de `MissionSetup` (`.mission-setup__summary dd`) et dans
+  `MissionResult` (`.mission-result__summary dd`, aucun de ces deux
+  sélecteurs n'a non plus de troncature). Un nom collé ou saisi de
+  plusieurs centaines de caractères traverse donc la validation, la
+  sauvegarde (`mission-save.ts`) et l'affichage sans jamais être
+  tronqué, et peut élargir le panneau HUD au point de recouvrir une
+  partie de la zone de jeu pendant le vol.
+
+  Piste : ajouter un `maxLength` raisonnable (ex. 40 caractères) aux
+  deux `<input>` de `MissionSetup.tsx`, et/ou ajouter `overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;` (avec un `max-width`)
+  sur `.hud__mission` dans `src/app/styles.css` comme filet de sécurité
+  pour toute donnée déjà en `localStorage` avant ce correctif. Ajouter
+  un test dans `tests/ui/MissionSetup.test.tsx` vérifiant l'attribut
+  `maxLength` sur les deux champs.
 
 - [x] `describeFailureCause` affiche une cause d'échec trompeuse quand
   un vaisseau à court de carburant s'écrase au sol
