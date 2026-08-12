@@ -292,6 +292,32 @@ doc obsolète trouvé cette fois-ci — le `README.md` reste cohérent avec
 `src/app`/`src/ui`. Les deux points sous "Divers / à clarifier" restent
 des décisions en attente, pas des tâches actionnables en l'état.
 
+Revue du 2026-08-12 (14e passe, planification périodique) : le bug de
+nom anormalement long identifié lors de la 13e passe est désormais
+corrigé (voir l'entrée cochée correspondante et `.agent/changelog.md`).
+Au moment de cette revue, les quatre sections actionnables du backlog
+(Bugs connus, Features à ajouter, Tests manquants, Documentation)
+n'avaient plus aucune entrée non cochée. `npm test` (267 tests), `npm
+run lint` et `npx tsc --noEmit` sont propres, aucun `TODO`/`FIXME`/`XXX`
+dans `src/`/`tests/`. `npm run coverage` confirme 98.22 % de lignes /
+97.56 % de branches, inchangé depuis la 13e passe (aucune ligne
+nouvellement non couverte) ; chaque fichier de `src/` a toujours un
+fichier de test dédié dans `tests/` (`main.tsx` excepté, point d'entrée
+Vite non exécuté par les tests, déjà jugé hors périmètre lors de
+passes précédentes). Une relecture ciblée de `MissionSetup.tsx`,
+`App.tsx`, `MainMenu.tsx`, `MissionPanel.tsx`, `mission.ts`,
+`spacecraft.ts`, `simulation-engine.ts`, `flight-phase.ts` et
+`game-phase.ts` n'a fait remonter aucun bug ni trou de couverture
+supplémentaire. Le seul point resté en suspens était la décision sous
+"Divers / à clarifier" sur la garde redondante d'`advanceCountdown` — elle
+est maintenant tranchée (simplifier plutôt que garder un filet de
+sécurité spéculatif, conformément à la consigne du projet de ne pas
+ajouter de garde pour un scénario déjà garanti impossible par
+l'appelant unique), et déplacée en tâche actionnable sous "Features à
+ajouter" ci-dessous. `npm outdated` ne montre rien de nouveau par
+rapport à la 13e passe (mêmes majeures disponibles, toujours hors
+périmètre). Le `README.md` reste cohérent avec `src/app`/`src/ui`.
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
@@ -1154,6 +1180,29 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   complet des trois `<option>` ("Mission 01 — Earth orbit (Easy)",
   etc.), donc casserait si `profile.difficulty` brut était réintroduit.
 
+- [ ] Supprimer la garde interne redondante d'`advanceCountdown`
+
+  Décidé sous "Divers / à clarifier" (14e passe) : `advanceCountdown`
+  (`src/simulation/simulation-engine.ts:173-187`) a une garde
+  `if (!countdown) { return false; }` (lignes 175-177) qui est
+  inatteignable en pratique — son seul appelant, dans `step`
+  (`src/simulation/simulation-engine.ts:232`), est
+  `if (this.state.countdown && this.advanceCountdown(deltaTime)) { ... }`,
+  et le court-circuit du `&&` garantit déjà que la méthode n'est jamais
+  invoquée avec `this.state.countdown === null`.
+
+  Supprimer cette garde (elle devient
+  `const countdown = this.state.countdown!;` ou équivalent, avec un
+  commentaire rappelant que l'invariant "appelée seulement si
+  `countdown` est non nul" est porté par l'appelant unique dans `step`)
+  plutôt que de la garder comme filet de sécurité spéculatif pour un
+  appelant hypothétique qui n'existe pas. Comportement observable
+  inchangé (`step` produit exactement les mêmes résultats) : aucun
+  nouveau test requis au-delà de la couverture déjà existante de
+  `tests/simulation-engine.test.ts`. Vérifier avec `npm run coverage`
+  que `simulation-engine.ts` passe à 100 % de lignes une fois la garde
+  retirée.
+
 ## Tests manquants
 
 - [x] La branche "trajectoire non liée" d'`isStrandedOutsideTargetBand`
@@ -1564,6 +1613,16 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   n'est pas couverte par les tests. Ne pas toucher au comportement
   observable (`step` continue de fonctionner à l'identique dans les deux
   cas).
+
+  Décidé le 2026-08-12 (14e passe) : simplifier plutôt que garder un
+  filet de sécurité spéculatif — cette règle du projet est explicite
+  ("ne pas ajouter de garde pour un scénario qui ne peut pas se
+  produire, faire confiance aux garanties internes du code") et
+  s'applique ici telle quelle : `advanceCountdown` est privée, son seul
+  appelant (`step`) garantit déjà l'invariant via le court-circuit
+  `this.state.countdown && this.advanceCountdown(...)`. Voir le nouvel
+  item sous "Features à ajouter" ci-dessous pour la tâche de
+  simplification elle-même.
 
 - [x] Deux fonctions exportées (`screenToWorld`, `createEngine`) ont
   chacune un test dédié mais ne sont appelées nulle part dans `src/`
