@@ -230,6 +230,23 @@ différente sous la même clé) — voir le nouvel item sous "Tests
 manquants". Aucun bug, doc obsolète ou incohérence README supplémentaire
 trouvé cette fois-ci.
 
+Revue du 2026-08-12 (12e passe, planification périodique) : l'item
+"Tests manquants" sur l'`id` d'objectif inconnu dans `evaluateMission`,
+noté comme priorité lors de la 11e passe, est désormais traité (voir
+l'entrée correspondante, cochée ci-dessus, et `.agent/changelog.md`) —
+`mission.ts` est à 100 % de couverture. `npm test` (261 tests), `npm
+run lint` et `npx tsc --noEmit` sont propres, aucun `TODO`/`FIXME`/`XXX`
+dans `src/`/`tests/`. La seule priorité "Tests manquants" restant
+ouverte est `isMissionConfigurationShape` (garde `typeof value !==
+'object' || value === null` dans `mission-save.ts:17-18`, non couverte
+par un test JSON valide mais non-objet — voir l'item détaillé
+ci-dessous), identifiée lors de la 11e passe. Aucun bug, trou de
+couverture supplémentaire, ni doc obsolète trouvé cette fois-ci (le
+`README.md` reste cohérent avec `src/app`/`src/ui`). Les deux points
+sous "Divers / à clarifier" (garde redondante dans `advanceCountdown`,
+idées de missions futures non scopées) restent des décisions en
+attente, pas des tâches actionnables en l'état.
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
@@ -1232,7 +1249,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   couvertes). `npm test` (260 tests), `npm run lint` et `npx tsc
   --noEmit` restent propres.
 
-- [ ] La branche `id` d'objectif inconnu du `.map` d'`evaluateMission`
+- [x] La branche `id` d'objectif inconnu du `.map` d'`evaluateMission`
   n'est jamais exercée
 
   Dans `evaluateMission` (`src/simulation/missions/mission.ts`), le
@@ -1256,6 +1273,20 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   au tableau `objectives`) et vérifier que `evaluateMission` renvoie cet
   objectif tel quel (même `completed: false`) dans le résultat, sans
   lever ni affecter le statut des deux objectifs connus.
+
+  Fait le 2026-08-12 : nouveau test "leaves an objective with an
+  unrecognized id untouched" dans `tests/missions/mission.test.ts`
+  (`describe('evaluateMission', ...)`) — construit une `Mission` via
+  `createOrbitMission()` puis ajoute un objectif
+  `{ id: 'unknown-objective', description: 'Some future objective',
+  completed: false }` au tableau `objectives`, place le vaisseau dans la
+  bande cible (donc `reach-altitude` se complète), et vérifie que
+  l'objectif inconnu ressort de `evaluateMission` strictement inchangé
+  (`completed: false`), sans lever ni interférer avec le calcul de
+  complétion des deux objectifs connus. `npm run coverage` confirme que
+  `src/simulation/missions/mission.ts` est désormais à 100 % de
+  couverture (lignes/branches/fonctions). `npm test` (261 tests), `npm
+  run lint` et `npx tsc --noEmit` restent propres.
 
 - [x] `src/app/SimulationScreen.tsx` n'a aucun test dédié
 

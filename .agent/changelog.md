@@ -1,5 +1,26 @@
 # Changelog agent
 
+## 2026-08-12T07-46-00-000Z — planning
+- Description: Revue périodique planifiée : relis .agent/backlog.md, ajuste les priorités, et ajoute toute tâche manquante identifiée en lisant le code (TODOs, zones sans tests, doc obsolète).
+- Détail : traité la priorité identifiée lors de la revue précédente
+  (11e passe) : la branche `id` d'objectif inconnu du `.map` dans
+  `evaluateMission` (`src/simulation/missions/mission.ts:139-152`)
+  n'était exercée par aucun test. Nouveau test "leaves an objective with
+  an unrecognized id untouched" dans `tests/missions/mission.test.ts` —
+  construit une `Mission` avec un objectif `{ id: 'unknown-objective',
+  ... }` en plus des deux objectifs connus, et vérifie qu'il ressort
+  inchangé d'`evaluateMission` sans interférer avec le calcul de
+  complétion. `npm test` (261 tests), `npm run lint`, `npx tsc --noEmit`
+  et `npm run coverage` (`mission.ts` passe à 100 % de couverture)
+  confirmés propres. Item correspondant coché dans `.agent/backlog.md`,
+  avec note "Fait le 2026-08-12", et nouvelle synthèse de revue
+  (12e passe) ajoutée : la seule priorité "Tests manquants" restant
+  ouverte est `isMissionConfigurationShape`
+  (`src/simulation/persistence/mission-save.ts:17-18`). Aucun bug, doc
+  obsolète ni trou de couverture supplémentaire trouvé. Aucun `TODO`/
+  `FIXME`/`XXX` dans `src/`/`tests/`.
+- Branche/push: main (non commité par l'agent)
+
 ## 2026-08-12T02-30-00-000Z — test
 - Description: `SimulationScreen.onKeyUp` (relâchement des touches continues WASD/flèches) n'était exercé par aucun test
 - Détail : deux nouveaux tests dans `tests/ui/SimulationScreen.test.tsx`,

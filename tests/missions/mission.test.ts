@@ -295,6 +295,31 @@ describe('evaluateMission', () => {
     expect(updated.status).toBe('active');
   });
 
+  it('leaves an objective with an unrecognized id untouched', () => {
+    const base = createOrbitMission();
+    const mission = {
+      ...base,
+      objectives: [
+        ...base.objectives,
+        { id: 'unknown-objective', description: 'Some future objective', completed: false },
+      ],
+    };
+    const spacecraft = spacecraftAtAltitude((ORBIT_MIN_ALTITUDE + ORBIT_MAX_ALTITUDE) / 2);
+
+    const { mission: updated } = evaluateMission(
+      { mission, spacecraft, centralBody, secondsInOrbitRange: 0 },
+      1,
+    );
+
+    const unknown = updated.objectives.find((o) => o.id === 'unknown-objective');
+    expect(unknown).toEqual({
+      id: 'unknown-objective',
+      description: 'Some future objective',
+      completed: false,
+    });
+    expect(updated.objectives.find((o) => o.id === 'reach-altitude')?.completed).toBe(true);
+  });
+
   it('leaves a completed mission unchanged', () => {
     const mission = { ...createOrbitMission(), status: 'succeeded' as const };
     const spacecraft = spacecraftAtAltitude(0);
