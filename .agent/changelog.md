@@ -2069,3 +2069,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Un nom de mission/fusée anormalement long peut déborder du panneau HUD et recouvrir la zone de jeu
 - Détail: nouvelle constante exportée `MISSION_NAME_MAX_LENGTH = 40` (`src/simulation/missions/mission-configuration.ts`), appliquée comme attribut `maxLength` sur les deux `<input>` "Mission name"/"Spacecraft name" de `MissionSetup.tsx`. Filet de sécurité CSS pour toute donnée déjà en `localStorage` avant ce correctif : `max-width: 320px` sur `.hud`, et `overflow: hidden; text-overflow: ellipsis; white-space: nowrap;` sur `.hud__mission`, `.mission-setup__summary dd` et `.mission-result__summary dd` (`src/app/styles.css`). Test ajouté dans `tests/ui/MissionSetup.test.tsx` ("caps the mission name and spacecraft name inputs to a reasonable length") vérifiant l'attribut `maxLength` sur les deux champs. `npm test` (267 tests), `npm run lint` et `npx tsc --noEmit` restent propres. Item correspondant coché dans `.agent/backlog.md`.
 - Branche/push: main (non commité par l'agent)
+
+## 2026-08-12T21-02-08-219Z — bugfix
+- Description: Un nom de mission/fusée anormalement long peut déborder du panneau
+- Branche/push: main (direct)
+- Coût estimé: 1.1092016999999996 USD
