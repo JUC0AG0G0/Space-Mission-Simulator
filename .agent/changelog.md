@@ -2203,3 +2203,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: La section "Tests" du `README.md` ne mentionne pas le script de
 - Branche/push: main (direct)
 - Coût estimé: 0.6235619 USD
+
+## 2026-08-13T20-46-13-293Z — planning
+- Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
+- Branche/push: main (direct)
+- Coût estimé: 2.2194329 USD
