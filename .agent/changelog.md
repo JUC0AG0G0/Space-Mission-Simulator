@@ -2213,3 +2213,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
 - Branche/push: main (direct)
 - Coût estimé: 2.2194329 USD
+
+## 2026-08-13T21-06-09-675Z — feature
+- Description: Aucune commande de vol n'est accessible sur écran tactile : un
+- Branche/push: main (direct)
+- Coût estimé: 2.5827448499999996 USD
