@@ -523,11 +523,101 @@ cohérent avec `src/app`/`src/ui`. Les deux points sous "Divers /
 à clarifier" restent des décisions en attente, pas des tâches
 actionnables en l'état.
 
+Revue du 2026-08-13 (21e passe, planification périodique) : la feature
+tactile ajoutée lors de la 20e passe (`src/ui/TouchControls.tsx`) est
+désormais fonctionnelle. `npm test` (279 tests), `npm run lint` et `npx
+tsc --noEmit` sont propres, aucun `TODO`/`FIXME`/`XXX` dans
+`src/`/`tests/`. `npm run coverage` confirme 97.97 % de lignes / 97.89 %
+de branches ; les seules lignes non couvertes restent `App.tsx:55,57`,
+`SimulationScreen.tsx:148-164` et `Hud.tsx:47`, toutes trois déjà jugées
+trop marginales lors de passes précédentes. En relisant en détail
+`src/ui/TouchControls.tsx` (jamais spécifiquement audité depuis son
+ajout à la passe précédente) avec `src/app/styles.css`, un vrai défaut
+visuel a été identifié et confirmé dans un vrai navigateur (Playwright
+headless, émulation iPhone 13 — viewport 390×844, tactile) : le D-pad et
+le bouton "Engine" de `.touch-controls`
+(`src/app/styles.css:658-669`, `position: absolute; left: 16px; right:
+16px; bottom: 16px; z-index: 2;`, actif dès que le pointeur est
+`coarse`) se superposent directement au panneau latéral
+`.app__sidebar` une fois repositionné en bas d'écran par la règle
+`@media (max-width: 640px)` (`src/app/styles.css:731-736`, `top: auto;
+bottom: 16px;`, même largeur quasi pleine écran) — les deux règles
+s'appliquent simultanément sur un téléphone en portrait, le cas
+d'usage le plus courant pour cette fonctionnalité. La capture d'écran
+obtenue montre le D-pad et le bouton "Engine" peints par-dessus le
+texte du panneau `ControlsPanel` (légende des touches) et
+`SimulationControls`, les rendant illisibles à cet endroit ; sur un
+écran encore plus petit ou avec un panneau latéral plus haut, cela peut
+aussi rendre certains boutons du panneau (Pause/Restart) inatteignables
+au toucher puisque `.touch-controls__button` a `pointer-events: auto`
+et un `z-index` égal capté en priorité (ordre DOM : `TouchControls` est
+rendu après `.app__sidebar` dans `SimulationScreen.tsx:206-224`, donc
+peint par-dessus). Voir le nouvel item sous "Bugs connus" ci-dessous.
+Aucun autre bug, trou de couverture actionnable ou doc obsolète trouvé
+cette fois-ci — le `README.md` reste cohérent avec `src/app`/`src/ui`.
+Les deux points sous "Divers / à clarifier" restent des décisions en
+attente, pas des tâches actionnables en l'état.
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Bugs connus
+
+- [ ] Sur téléphone en portrait, les commandes tactiles (`TouchControls`)
+  se superposent au panneau latéral au lieu de coexister avec lui
+
+  Deux règles CSS indépendantes de `src/app/styles.css` peuvent
+  s'appliquer en même temps sur un téléphone tenu en portrait (tactile
+  ET largeur ≤ 640px, le profil le plus courant) :
+
+  * `@media (pointer: coarse) { .touch-controls { position: absolute;
+    left: 16px; right: 16px; bottom: 16px; z-index: 2; ... } }`
+    (`src/app/styles.css:658-669`) affiche le D-pad (haut/bas/gauche/
+    droite) et le bouton "Engine" ajoutés par `src/ui/TouchControls.tsx`
+    à la 20e passe de ce backlog ;
+  * `@media (max-width: 640px) { .app__sidebar { width: calc(100% -
+    32px); top: auto; bottom: 16px; } }` (`src/app/styles.css:731-736`)
+    repositionne le panneau latéral (`MissionPanel` + `SimulationControls`
+    + `ControlsPanel`, tous les trois dans `.app__sidebar`, elle-même à
+    `z-index: 2` en base, `src/app/styles.css:51-60`) en bas d'écran, sur
+    quasiment toute la largeur.
+
+  Aucune des deux règles ne tient compte de l'autre : les deux zones
+  finissent ancrées au même coin bas de l'écran, avec le même
+  `z-index`. Vérifié dans un vrai navigateur (Playwright, émulation
+  iPhone 13 — 390×844, tactile) en jouant jusqu'à l'écran de vol :
+  `.app__sidebar` mesure `{ x: 16, y: 234, width: 358, height: 414 }` et
+  `.touch-controls` `{ x: 16, y: 528, width: 358, height: 120 }`, soit un
+  recouvrement complet en largeur et de 120 px en hauteur (tout le bloc
+  `.touch-controls`). Comme `TouchControls` est rendu après
+  `.app__sidebar` dans le JSX (`src/app/SimulationScreen.tsx:206-224`),
+  il est peint par-dessus à égalité de `z-index` : le D-pad et le
+  bouton "Engine" recouvrent visuellement la fin du panneau
+  `ControlsPanel` (légende des touches) et le bas de
+  `SimulationControls`, rendant leur texte illisible à cet endroit — et
+  captent les taps qui atterriraient sinon sur ce qu'il y a en dessous
+  (`.touch-controls__button` a `pointer-events: auto`). Cette
+  superposition sape directement l'utilité de la fonctionnalité tactile
+  tout juste ajoutée : c'est précisément sur téléphone (petit écran +
+  tactile) qu'elle est censée servir.
+
+  Piste : introduire une règle combinée `@media (pointer: coarse) and
+  (max-width: 640px)` (ou équivalent) qui évite le chevauchement plutôt
+  que de laisser les deux règles indépendantes se cumuler — par exemple
+  réduire `.app__sidebar` (masquer `ControlsPanel`, moins utile une fois
+  les commandes tactiles visibles, et/ou réduire son `max-height` avec
+  défilement) ou remonter son ancrage (`bottom` calculé à partir de la
+  hauteur réelle de `.touch-controls`, ou repositionner `.app__sidebar`
+  en haut même sous 640px quand le pointeur est `coarse`) pour que les
+  deux zones ne se recouvrent plus. Comme pour le bug de flou Retina
+  déjà corrigé dans ce backlog, un layout CSS pur n'est pas vérifiable
+  par un test unitaire classique (jsdom ne fait pas de mise en page
+  réelle) : vérifier le correctif visuellement dans un vrai navigateur
+  avec un viewport étroit et `hasTouch`/`isMobile` activés (Chrome
+  DevTools device toolbar, ou Playwright avec `devices['iPhone 13']`
+  comme utilisé pour identifier ce bug), en confirmant par les
+  `boundingBox()` des deux éléments qu'ils ne se chevauchent plus.
 
 - [x] `SimulationScreen.onKeyDown` détourne toujours des raccourcis
   navigateur/OS pour les touches continues (WASD/flèches), contrairement
