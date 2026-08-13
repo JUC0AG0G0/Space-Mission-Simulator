@@ -160,6 +160,26 @@ describe('SimulationScreen', () => {
     expect(screen.getByRole('button', { name: 'Pause (P)' })).toBeInTheDocument();
   });
 
+  it('does not hijack Ctrl/Cmd+A, +S, or +D, leaving the browser shortcuts alone', () => {
+    const frame = renderScreen();
+    clearCountdown(frame);
+
+    const applyCommandSpy = vi.spyOn(SimulationEngine.prototype, 'applyCommand');
+    applyCommandSpy.mockClear();
+
+    fireEvent.keyDown(window, { key: 'a', ctrlKey: true });
+    fireEvent.keyDown(window, { key: 's', metaKey: true });
+    fireEvent.keyDown(window, { key: 'd', metaKey: true });
+    frame.advance(16);
+
+    expect(applyCommandSpy).toHaveBeenCalledTimes(1);
+    const [command] = applyCommandSpy.mock.calls[0];
+    expect(command.throttleDelta).toBe(0);
+    expect(command.turnDelta).toBe(0);
+
+    applyCommandSpy.mockRestore();
+  });
+
   it('ignores OS key-repeat on SPACE, toggling the engine only once per physical press', () => {
     const frame = renderScreen();
     clearCountdown(frame);

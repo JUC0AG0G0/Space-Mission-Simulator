@@ -452,7 +452,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Bugs connus
 
-- [ ] `SimulationScreen.onKeyDown` détourne toujours des raccourcis
+- [x] `SimulationScreen.onKeyDown` détourne toujours des raccourcis
   navigateur/OS pour les touches continues (WASD/flèches), contrairement
   aux touches discrètes déjà corrigées
 
@@ -510,6 +510,29 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   par les tests voisins de `onKeyUp`) que la commande appliquée a
   `turnDelta: 0`/`throttleDelta: 0` — pas la valeur non nulle qu'on
   observerait pour un appui normal sur la même touche sans modificateur.
+
+  Fait le 2026-08-13 : la garde `if (event.ctrlKey || event.metaKey ||
+  event.altKey) { return; }` est désormais évaluée en tout début
+  d'`onKeyDown` (`src/app/SimulationScreen.tsx`), avant la vérification
+  `CONTINUOUS_KEYS.has(key)`, exactement comme suggéré par la piste —
+  elle couvre donc d'un coup la branche des touches continues (WASD/
+  flèches) et celle des touches discrètes (`' '`/`'p'`/`'r'`), dont la
+  garde locale équivalente (dupliquée) a été retirée. Comportement
+  inchangé pour les touches fléchées (`ArrowUp`/`ArrowDown`/`ArrowLeft`/
+  `ArrowRight`, qui n'ont pas de raccourci navigateur usuel avec Ctrl/
+  Cmd/Alt) et pour les touches discrètes déjà couvertes par les tests
+  existants ("does not hijack Ctrl/Cmd+R"/"does not hijack Ctrl/Cmd+P").
+  Test ajouté dans `tests/ui/SimulationScreen.test.tsx` ("does not
+  hijack Ctrl/Cmd+A, +S, or +D, leaving the browser shortcuts alone") :
+  `keydown` sur `'a'` avec `ctrlKey: true`, `'s'` et `'d'` avec
+  `metaKey: true`, suivi d'une frame — vérifie via l'espion sur
+  `SimulationEngine.prototype.applyCommand` que la commande appliquée a
+  `throttleDelta: 0`/`turnDelta: 0` (pas les valeurs non nulles qu'on
+  observerait pour un appui normal sur ces mêmes touches). `npm test`
+  (272 tests), `npm run lint`, `npx tsc --noEmit` et `npm run coverage`
+  (97.9 % de lignes / 97.84 % de branches, inchangé — la garde était
+  déjà exercée par les tests Ctrl/Cmd+R/+P existants, seule sa portée a
+  changé) restent propres.
 
 - [x] La liste de progression des missions du menu principal n'indique
   aucun statut terminé/verrouillé aux lecteurs d'écran

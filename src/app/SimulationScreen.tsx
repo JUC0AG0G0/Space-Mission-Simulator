@@ -69,6 +69,15 @@ export function SimulationScreen({ missionConfiguration, onExit }: SimulationScr
     function onKeyDown(event: KeyboardEvent) {
       const key = event.key.toLowerCase();
 
+      // Don't hijack browser/OS shortcuts that happen to share these keys
+      // (Ctrl/Cmd+A select-all, Ctrl/Cmd+S save, Ctrl/Cmd+D bookmark,
+      // Ctrl/Cmd+R refresh, Ctrl/Cmd+P print, Alt combos, etc.). Checked
+      // first so it covers both the continuous and discrete key branches
+      // below without duplicating the guard.
+      if (event.ctrlKey || event.metaKey || event.altKey) {
+        return;
+      }
+
       if (CONTINUOUS_KEYS.has(key)) {
         heldKeysRef.current.add(key);
         event.preventDefault();
@@ -76,12 +85,6 @@ export function SimulationScreen({ missionConfiguration, onExit }: SimulationScr
       }
 
       if (key === ' ' || key === 'p' || key === 'r') {
-        // Don't hijack browser/OS shortcuts that happen to share these keys
-        // (Ctrl/Cmd+R refresh, Ctrl/Cmd+P print, Alt combos, etc.).
-        if (event.ctrlKey || event.metaKey || event.altKey) {
-          return;
-        }
-
         // Ignore OS key-repeat: holding the key down should fire the
         // action once, not once per repeat event.
         if (event.repeat) {
