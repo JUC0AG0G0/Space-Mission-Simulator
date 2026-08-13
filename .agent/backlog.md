@@ -657,7 +657,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Bugs connus
 
-- [ ] Sur un viewport très étroit (< 320px CSS, ex. Galaxy Fold replié
+- [x] Sur un viewport très étroit (< 320px CSS, ex. Galaxy Fold replié
   ~280px), l'écran `MissionSetup` (et potentiellement `MissionResult`/
   `MainMenu`) déborde horizontalement et tronque du texte
 
@@ -710,6 +710,29 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   viewport étroit (ex. 280px de large, ou la device toolbar Chrome
   DevTools en mode responsive réduit sous 320px), en confirmant que
   `document.documentElement.scrollWidth` ne dépasse plus `clientWidth`.
+
+  Fait le 2026-08-14 : les six blocs identifiés par la piste ont chacun
+  leur `width: 320px`/`width: 240px` fixe remplacé par `width: 100%;
+  max-width: 320px;` (ou `240px`) dans `src/app/styles.css` —
+  `.mission-setup__form`, `.mission-setup__summary`,
+  `.mission-result__summary`, `.mission-result__objectives`,
+  `.main-menu__actions`, `.main-menu__progress`. Chacun de ces
+  conteneurs vit dans un parent flex column centré avec `padding: 24px`
+  (`.mission-setup`, `.mission-result`, `.main-menu`), donc `width:
+  100%` reste borné par ce parent sans introduire de nouveau
+  débordement. Vérifié dans un vrai navigateur (Playwright headless,
+  installé temporairement via `npm install --no-save`, jamais ajouté à
+  `package.json`) sur cinq largeurs de viewport (320, 300, 280, 260,
+  240px) : `document.documentElement.scrollWidth === clientWidth` dans
+  tous les cas, sur l'écran `MissionSetup` (formulaire *et* résumé) et
+  sur `MainMenu` — capture d'écran à 280px confirmant que "Mission
+  name"/"Spacecraft name"/"Mission profile" et les cartes de fusée
+  s'affichent désormais intégralement, sans troncature ni défilement
+  horizontal. Comme pour les bugs de superposition tactile déjà
+  corrigés dans ce backlog, changement CSS pur non vérifiable par un
+  test unitaire classique (jsdom ne fait pas de mise en page réelle) :
+  aucun test ajouté/modifié. `npm test` (279 tests), `npm run lint` et
+  `npx tsc --noEmit` restent propres.
 
 - [x] Sur téléphone en **paysage**, les commandes tactiles
   (`TouchControls`) se superposent toujours au panneau latéral — le
