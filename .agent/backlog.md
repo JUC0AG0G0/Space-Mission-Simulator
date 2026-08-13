@@ -1983,7 +1983,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   (247 tests), `npm run lint` et `npx tsc --noEmit` restent propres
   (aucun fichier source touché).
 
-- [ ] La section "Tests" du `README.md` ne mentionne pas le script de
+- [x] La section "Tests" du `README.md` ne mentionne pas le script de
   couverture
 
   `package.json` expose un script `"coverage": "vitest run --coverage"`
@@ -2000,6 +2000,13 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   même modèle que la section "## Lint" juste en dessous) mentionnant
   `npm run coverage` dans la section "## Tests" du `README.md`. Item
   documentation pure — aucun changement de code ni de test attendu.
+
+  Fait le 2026-08-13 : ajout d'une phrase ("To generate a coverage
+  report:") suivie d'un bloc `bash` avec `npm run coverage`, juste après
+  l'exemple `npm test` existant dans la section "## Tests" du
+  `README.md`, sur le même modèle que la section "## Lint" juste en
+  dessous. Item documentation pure — aucun fichier de code ni de test
+  modifié.
 
 ## Divers / à clarifier
 

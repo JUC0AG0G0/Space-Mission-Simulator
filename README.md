@@ -27,6 +27,12 @@ Then open the printed local URL in your browser.
 npm test
 ```
 
+To generate a coverage report:
+
+```bash
+npm run coverage
+```
+
 ## Lint
 
 ```bash
