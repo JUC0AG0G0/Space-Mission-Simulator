@@ -416,11 +416,100 @@ obsolète trouvé cette fois-ci — le `README.md` reste cohérent avec
 `src/app`/`src/ui`. Les deux points sous "Divers / à clarifier" restent
 des décisions en attente, pas des tâches actionnables en l'état.
 
+Revue du 2026-08-13 (18e passe, planification périodique) : le bug
+d'accessibilité de `MainMenu.tsx` identifié lors de la 17e passe est
+désormais corrigé (voir l'entrée cochée correspondante et
+`.agent/changelog.md`). Au moment de cette revue, les quatre sections
+actionnables du backlog (Bugs connus, Features à ajouter, Tests
+manquants, Documentation) n'avaient plus aucune entrée non cochée. `npm
+test` (271 tests), `npm run lint` et `npx tsc --noEmit` sont propres,
+aucun `TODO`/`FIXME`/`XXX` dans `src/`/`tests/`. `npm run coverage`
+confirme 97.9 % de lignes / 97.84 % de branches ; les seules lignes non
+couvertes restent `App.tsx:55,57`, `SimulationScreen.tsx:144-160` et
+`Hud.tsx:47`, toutes trois déjà jugées trop marginales lors de passes
+précédentes. En relisant `SimulationScreen.tsx` en détail sous l'angle
+"quelles touches déclenchent `preventDefault()` sans vérifier les
+touches de modification" — l'angle qui avait déjà permis de trouver,
+lors d'une passe antérieure, que `onKeyDown` détournait Ctrl/Cmd+R et
+Ctrl/Cmd+P — un bug concret de la même famille, resté non couvert par
+ce correctif précédent, a été identifié : la branche des touches
+continues (WASD/flèches, `onKeyDown` lignes 72-76) ajoute la touche à
+`heldKeysRef` et appelle `event.preventDefault()` sans jamais vérifier
+`event.ctrlKey`/`metaKey`/`altKey`, contrairement à la branche des
+touches discrètes (`' '`/`'p'`/`'r'`, lignes 78-99) juste en dessous,
+qui a bien cette garde depuis le correctif précédent. Voir le nouvel
+item sous "Bugs connus" ci-dessous pour le détail et l'impact (pas
+seulement un `preventDefault()` superflu : la touche reste aussi
+"tenue" et pilote réellement le vaisseau tant que le raccourci est
+maintenu). Aucun autre bug, trou de couverture actionnable ou doc
+obsolète trouvé cette fois-ci — le `README.md` reste cohérent avec
+`src/app`/`src/ui`. Les deux points sous "Divers / à clarifier" restent
+des décisions en attente, pas des tâches actionnables en l'état.
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Bugs connus
+
+- [ ] `SimulationScreen.onKeyDown` détourne toujours des raccourcis
+  navigateur/OS pour les touches continues (WASD/flèches), contrairement
+  aux touches discrètes déjà corrigées
+
+  `onKeyDown` (`src/app/SimulationScreen.tsx:69-99`) a deux branches.
+  La branche des touches discrètes (`' '`, `'p'`, `'r'`, lignes 78-99)
+  vérifie explicitement `event.ctrlKey || event.metaKey || event.altKey`
+  et laisse le navigateur gérer nativement Ctrl/Cmd+R (rafraîchir) et
+  Ctrl/Cmd+P (imprimer) — un bug corrigé lors d'une passe antérieure de
+  ce backlog (voir l'item coché "`SimulationScreen.onKeyDown` détourne
+  des raccourcis navigateur..." plus bas dans cette section). Mais la
+  branche des touches continues, juste au-dessus (lignes 72-76) :
+
+  ```ts
+  if (CONTINUOUS_KEYS.has(key)) {
+    heldKeysRef.current.add(key);
+    event.preventDefault();
+    return;
+  }
+  ```
+
+  n'a pas cette garde. `CONTINUOUS_KEYS` contient `'a'`, `'s'`, `'d'`
+  (`src/app/SimulationScreen.tsx:21-30`), qui correspondent à des
+  raccourcis navigateur/OS très courants : Ctrl/Cmd+A (tout sélectionner),
+  Ctrl/Cmd+S (enregistrer la page), Ctrl/Cmd+D (ajouter aux favoris). En
+  vol, appuyer sur l'un de ces raccourcis pendant que le canvas a le
+  focus clavier (`window`, pas un élément spécifique — le cas normal
+  puisque le jeu écoute sur `window`) :
+
+  1. bloque le raccourci navigateur (`preventDefault()` inconditionnel) ;
+  2. **et** ajoute la touche à `heldKeysRef`, donc `buildCommandFromKeys`
+     (lignes 32-42) continue de piloter le throttle/le cap du vaisseau
+     tant que le raccourci est maintenu enfoncé, exactement comme si le
+     joueur avait appuyé sur la touche seule — ce n'est donc pas qu'un
+     `preventDefault()` superflu, mais une vraie entrée de jeu non
+     désirée déclenchée par une combinaison de touches système.
+
+  `onKeyUp` (lignes 102-107) retire bien la touche du set au relâchement
+  indépendamment des modificateurs, donc l'effet s'arrête dès que le
+  raccourci est relâché, mais l'action aura déjà été appliquée entre
+  temps.
+
+  Piste : appliquer la même garde que la branche des touches discrètes
+  au début de `onKeyDown`, avant la vérification `CONTINUOUS_KEYS.has(key)`
+  — par exemple `if (event.ctrlKey || event.metaKey || event.altKey) {
+  return; }` en tout début de fonction, ce qui couvre les deux branches
+  d'un coup plutôt que de dupliquer la garde. Vérifier que cela ne casse
+  pas les touches fléchées (`ArrowUp`/`ArrowDown`/`ArrowLeft`/`ArrowRight`,
+  qui n'ont pas de raccourci navigateur usuel avec Ctrl/Cmd/Alt) ni les
+  touches discrètes déjà gérées. Ajouter des tests dans
+  `tests/ui/SimulationScreen.test.tsx`, sur le même modèle que les tests
+  existants "does not hijack Ctrl/Cmd+R"/"does not hijack Ctrl/Cmd+P" :
+  `fireEvent.keyDown(window, { key: 'a', ctrlKey: true })` (et `'s'`/
+  `'d'` avec `metaKey: true`) suivi d'une frame, puis vérifier via
+  l'espion sur `SimulationEngine.prototype.applyCommand` (déjà utilisé
+  par les tests voisins de `onKeyUp`) que la commande appliquée a
+  `turnDelta: 0`/`throttleDelta: 0` — pas la valeur non nulle qu'on
+  observerait pour un appui normal sur la même touche sans modificateur.
 
 - [x] La liste de progression des missions du menu principal n'indique
   aucun statut terminé/verrouillé aux lecteurs d'écran
