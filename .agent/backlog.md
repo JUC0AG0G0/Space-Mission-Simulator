@@ -651,6 +651,49 @@ cette fois-ci — le `README.md` reste cohérent avec `src/app`/`src/ui`.
 Les deux points sous "Divers / à clarifier" restent des décisions en
 attente, pas des tâches actionnables en l'état.
 
+Revue du 2026-08-14 (24e passe, planification périodique) : le bug de
+débordement horizontal sur viewport très étroit, identifié lors de la
+23e passe, est désormais corrigé (voir l'entrée cochée correspondante
+et `.agent/changelog.md`). Au moment de cette revue, les quatre
+sections actionnables du backlog n'avaient plus aucune entrée non
+cochée. `npm test` (279 tests), `npm run lint` et `npx tsc --noEmit`
+sont propres, aucun `TODO`/`FIXME`/`XXX` dans `src/`/`tests/`. `npm run
+coverage` confirme 97.97 % de lignes / 97.89 % de branches, inchangé
+depuis la 21e/22e/23e passe ; les seules lignes non couvertes restent
+`App.tsx:55,57`, `SimulationScreen.tsx:148-164` et `Hud.tsx:47`, toutes
+trois déjà jugées trop marginales lors de passes précédentes. `npm
+outdated`/`npm audit` ne montrent rien de nouveau par rapport à la 16e
+passe (mêmes majeures et mêmes 6 vulnérabilités dev-only déjà
+documentées sous "Divers / à clarifier"). Une relecture ciblée de
+`orbit.ts`, `mission.ts`, `mission-result.ts`, `Hud.tsx`,
+`MissionResult.tsx`, `rocket-models.ts`, `App.tsx` et
+`SimulationScreen.tsx` (recherche spécifique de bugs de logique
+numérique — division par zéro, bornes d'orbite dégénérées, ordre des
+opérations fuel/poussée) n'a fait remonter aucun bug ni trou de
+couverture supplémentaire. Une vraie lacune de documentation a en
+revanche été trouvée en comparant `README.md` au code réellement
+livré : `src/ui/TouchControls.tsx` (le D-pad + bouton "Engine" affiché
+sur écran tactile, ajouté et corrigé au fil de plusieurs passes
+précédentes — voir les items cochés "Aucune commande de vol n'est
+accessible sur écran tactile" et les deux bugs de superposition
+tactile déjà résolus) n'est mentionné nulle part dans `README.md` —
+`grep -i "touch\|pointer" README.md` ne renvoie aucun résultat ; la
+section "## Controls" et le paragraphe "Launch / Flight" de "##
+Gameplay" ne décrivent que le clavier (WASD/flèches/SPACE), laissant
+croire que le jeu est uniquement pilotable au clavier alors qu'il
+fonctionne déjà tout aussi bien au toucher sur mobile/tablette — voir
+le nouvel item sous "Documentation" ci-dessous. En creusant la boucle
+de rendu de `SimulationScreen.tsx` (lignes 122-172) pour vérifier une
+suspicion de fuite de performance, un point réel mais non tranché a
+aussi été identifié : la boucle `requestAnimationFrame` ne s'arrête
+jamais une fois la mission terminée (`isMissionOver`), y compris quand
+le joueur reste inactif sur l'écran `MissionResult` — voir le nouvel
+item sous "Divers / à clarifier" ci-dessous, qui documente pourquoi ce
+n'est pas encore tranché comme un bug actionnable (impact réel
+probablement négligeable, correctif non trivial sans risquer de
+régresser le bouton "Replay"). Aucun autre bug, trou de couverture
+actionnable ou doc obsolète trouvé cette fois-ci.
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
@@ -2524,6 +2567,41 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   dessous. Item documentation pure — aucun fichier de code ni de test
   modifié.
 
+- [ ] `README.md` ne mentionne nulle part les commandes tactiles
+  (`TouchControls`), déjà fonctionnelles depuis plusieurs passes
+
+  `src/ui/TouchControls.tsx` (D-pad tactile Turn left/Throttle up/
+  Throttle down/Turn right + bouton "Engine", affiché automatiquement
+  sur les appareils à pointeur tactile via la media query `pointer:
+  coarse` de `src/app/styles.css`) est une fonctionnalité complète et
+  déjà stabilisée : ajoutée lors d'une passe antérieure (voir l'item
+  coché "Aucune commande de vol n'est accessible sur écran tactile"
+  sous "Features à ajouter" ci-dessus), puis deux bugs de superposition
+  avec le panneau latéral (portrait, puis paysage) ont été corrigés
+  dans des passes suivantes (voir les deux items cochés correspondants
+  sous "Bugs connus" ci-dessus). Pourtant `grep -i "touch\|pointer"
+  README.md` ne renvoie aucun résultat : la section "## Controls"
+  (lignes 42-52) ne montre qu'un tableau clavier (`W`/`↑`, `S`/`↓`,
+  `A`/`←`, `D`/`→`) suivi d'une note renvoyant au panneau **Controls**
+  in-app comme source de vérité — panneau qui, lui non plus, ne
+  documente pas les commandes tactiles (`src/ui/ControlsPanel.tsx` ne
+  liste que les raccourcis clavier). Le paragraphe "Launch / Flight" de
+  la section "## Gameplay" (ligne 84-88) dit explicitement "Throttle
+  and heading are controlled with WASD/arrow keys", sans réserve — un
+  nouveau lecteur du README n'a donc aucun moyen de savoir que le jeu
+  est aussi jouable au doigt sur mobile/tablette, alors que c'est déjà
+  le cas et que la mise en page mobile a été spécifiquement travaillée
+  pour ça (portrait et paysage).
+
+  Piste : ajouter une ou deux phrases mentionnant les commandes
+  tactiles — par exemple une note sous le tableau "## Controls"
+  (symétrique à la note déjà présente sur le panneau in-app), et/ou
+  élargir la phrase "Launch / Flight" de "## Gameplay" pour mentionner
+  l'alternative tactile (D-pad + bouton Engine affichés automatiquement
+  sur les appareils à pointeur tactile). Item documentation pure —
+  aucun changement de code ni de test attendu, sur le même modèle que
+  les deux items déjà cochés ci-dessus dans cette section.
+
 ## Divers / à clarifier
 
 - [x] La garde `if (!countdown) { return false; }` dans
@@ -2628,6 +2706,58 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   `package.json`, vérification de `vite.config.ts`, re-run complet de
   `npm test`/`npm run lint`/`npx tsc --noEmit`/`npm run coverage` pour
   détecter toute régression de compatibilité).
+
+- [ ] La boucle `requestAnimationFrame` de `SimulationScreen` continue
+  de tourner indéfiniment une fois la mission terminée, sans qu'il soit
+  évident que ça vaille la peine de la stopper
+
+  L'effet de boucle de jeu (`src/app/SimulationScreen.tsx:122-172`) est
+  monté une seule fois (dépendances `[]`) pour toute la durée de vie du
+  composant, et `tick` rappelle inconditionnellement
+  `requestAnimationFrame(tick)` à la fin de chaque frame (ligne 167),
+  sans jamais vérifier si la mission est terminée. Or `isMissionOver`
+  (calculé à partir de `determineGamePhase`, ligne 191-192) ne change
+  que le JSX renvoyé par le composant — il ne démonte ni ne nettoie cet
+  effet, qui reste sur la même instance de composant tant que le joueur
+  ne quitte pas l'écran (clic sur "Menu" ou "Replay" depuis
+  `MissionResult`). Concrètement : une fois `MISSION COMPLETE`/`MISSION
+  FAILED` affiché, tant que le joueur reste sur cet écran à lire ses
+  statistiques sans cliquer, le navigateur continue d'appeler `tick` à
+  chaque frame d'affichage (`engine.applyCommand`, `engine.step`,
+  `engine.getState`), indéfiniment — vérifié en instrumentant le mock
+  `requestAnimationFrame` déjà utilisé par `tests/ui/
+  SimulationScreen.test.tsx` (`vi.fn` sur `requestAnimationFrame`), qui
+  confirme que chaque frame re-planifie bien la suivante sans jamais
+  s'arrêter.
+
+  Cela dit, l'impact réel semble faible : une fois la mission inactive,
+  `applyCommand`/`step` (`src/simulation/simulation-engine.ts:191,228`)
+  retournent immédiatement (`!isMissionActive()`), `engine.getState()`
+  renvoie donc la même référence d'état qu'avant, et `setState` avec une
+  référence inchangée ne déclenche pas de nouveau rendu React — le
+  travail par frame se limite à quelques lectures de propriétés, sans
+  re-rendu ni accès au canvas (`canvasRef.current` est `null` puisque
+  `<canvas>` n'est plus monté sur l'écran `MissionResult`). Corriger
+  proprement demande par ailleurs plus qu'un simple arrêt de la
+  planification : le bouton "Replay"/la touche `R`
+  (`engineRef.current.reset(...)`, lignes 100 et 199-201) s'appuie
+  justement sur le fait que la boucle continue de tourner pour détecter
+  le changement d'état au tick suivant et re-basculer l'écran de
+  `MissionResult` vers le vol — arrêter la planification sans
+  redémarrer la boucle au moment du reset figerait l'écran sur
+  `MissionResult` après un clic sur "Replay".
+
+  À trancher avant d'agir : soit laisser tel quel (coût par frame jugé
+  négligeable, code plus simple, comportement de "Replay" déjà fiable),
+  soit accepter la complexité d'un correctif qui arrête la
+  planification quand `isMissionOver` est vrai *et* relit
+  explicitement `engine.getState()` dans les gestionnaires "Replay"/`R`
+  pour rafraîchir l'état et relancer la boucle au même moment plutôt
+  que d'attendre la frame suivante. Si tranché en faveur d'un
+  correctif, prévoir un test sur le mock `requestAnimationFrame`
+  existant vérifiant qu'aucune frame n'est re-planifiée une fois la
+  mission terminée, et qu'un cycle complet Replay fonctionne toujours
+  sans écran figé.
 
 - [ ] Idées identifiées pour plus tard (non scopées, à détailler avant
   toute exécution)
