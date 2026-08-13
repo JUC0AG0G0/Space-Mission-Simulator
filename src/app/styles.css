@@ -748,8 +748,16 @@ body {
  * sidebar up above the touch controls' footprint (120px tall + 16px margin
  * + 16px breathing room) and drop the keyboard-shortcut legend, which is
  * moot once on-screen touch controls are showing, to keep the remaining
- * panels short enough not to reach back down into that space. */
-@media (pointer: coarse) and (max-width: 640px) {
+ * panels short enough not to reach back down into that space.
+ *
+ * A phone held in landscape has the same overlap problem but is rarely
+ * narrower than 640px (e.g. an iPhone 13 is 750px wide in landscape), so
+ * the `max-width` condition alone misses it — what actually matters there
+ * is the viewport being short, not narrow. The `max-height` condition below
+ * catches that case with the same fix; the two are combined into one rule
+ * since both need the identical treatment. */
+@media (pointer: coarse) and (max-width: 640px),
+  (pointer: coarse) and (max-height: 500px) {
   .app__sidebar {
     bottom: 152px;
     max-height: calc(100vh - 152px - 16px);

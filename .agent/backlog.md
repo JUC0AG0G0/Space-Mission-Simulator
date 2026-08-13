@@ -602,13 +602,25 @@ doc obsolète trouvé cette fois-ci — le `README.md` reste cohérent avec
 `src/app`/`src/ui`. Les deux points sous "Divers / à clarifier" restent
 des décisions en attente, pas des tâches actionnables en l'état.
 
+Suivi du 2026-08-13 : le bug de superposition tactile en paysage,
+identifié lors de la 22e passe ci-dessus, est désormais corrigé (voir
+l'entrée cochée correspondante et `.agent/changelog.md`) — la règle
+combinée `@media (pointer: coarse) and (max-width: 640px)` du correctif
+portrait précédent gagne une deuxième condition alternative sur
+`max-height` dans `src/app/styles.css`, avec le même traitement pour
+les deux cas. Vérifié dans un vrai navigateur (Playwright, `devices[
+'iPhone 13 landscape']`, `devices['iPhone 13']` et un contexte desktop
+sans tactile) qu'aucun chevauchement ne subsiste en paysage et
+qu'aucune régression n'apparaît sur les cas déjà corrigés. `npm test`
+(279 tests), `npm run lint` et `npx tsc --noEmit` restent propres.
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Bugs connus
 
-- [ ] Sur téléphone en **paysage**, les commandes tactiles
+- [x] Sur téléphone en **paysage**, les commandes tactiles
   (`TouchControls`) se superposent toujours au panneau latéral — le
   correctif du bug équivalent en portrait ne couvre pas ce cas
 
@@ -672,6 +684,39 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   ne se chevauchent plus — et vérifier aussi qu'aucune régression
   n'apparaît sur les cas déjà corrigés (portrait tactile, et
   desktop/pointeur fin en paysage, qui doivent rester inchangés).
+
+  Fait le 2026-08-13 : la règle combinée `@media (pointer: coarse) and
+  (max-width: 640px)` ajoutée par le correctif portrait précédent est
+  étendue avec une deuxième condition alternative,
+  `(pointer: coarse) and (max-height: 500px)`, dans la même liste de
+  media queries séparée par une virgule (`src/app/styles.css`) — la
+  piste envisageait soit une règle `max-height`/`orientation:
+  landscape` séparée, soit une fusion des deux conditions dans une
+  seule règle "si les valeurs numériques choisies s'avèrent identiques
+  pour les deux orientations" ; c'est cette deuxième option qui a été
+  retenue, avec la même valeur de traitement (`bottom: 152px`,
+  `max-height: calc(100vh - 152px - 16px)`, `overflow-y: auto`,
+  `.controls-panel { display: none; }`) pour les deux cas, ce qui évite
+  de dupliquer les déclarations. Vérifié dans un vrai navigateur
+  (Playwright, émulation `devices['iPhone 13 landscape']` — 750×342 CSS
+  px, tactile) après correctif : `.app__sidebar` mesure `{ x: 474, y:
+  16, width: 260, height: 174 }` et `.touch-controls` `{ x: 16, y: 206,
+  width: 718, height: 120 }` — un espace de 16px les sépare (190 à
+  206), aucun chevauchement (calcul de recouvrement de boîtes sur les
+  deux `boundingBox()` : aire nulle), confirmé par une capture d'écran
+  (panneau `MISSION 01`/objectifs entièrement lisible au-dessus du
+  D-pad et du bouton Engine). Aucune régression sur les deux cas déjà
+  corrigés/inchangés, revérifiés dans la même session : portrait
+  tactile (`devices['iPhone 13']`, 390×844) reste identique au
+  correctif précédent (`.app__sidebar` `{ x: 16, y: 326, width: 358,
+  height: 186 }`, aucun chevauchement avec `.touch-controls`) ; desktop
+  sans tactile (1280×800, `hasTouch: false`) n'active aucune des deux
+  media queries `pointer: coarse` et garde `.controls-panel` visible
+  et `.app__sidebar` à sa taille pleine (`height: 469`). Changement CSS
+  pur, comme pour le correctif portrait : non vérifiable par un test
+  unitaire classique (jsdom ne fait pas de mise en page réelle), aucun
+  test ajouté/modifié. `npm test` (279 tests), `npm run lint` et `npx
+  tsc --noEmit` restent propres.
 
 - [x] Sur téléphone en portrait, les commandes tactiles (`TouchControls`)
   se superposent au panneau latéral au lieu de coexister avec lui
