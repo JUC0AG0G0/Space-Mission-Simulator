@@ -614,11 +614,102 @@ sans tactile) qu'aucun chevauchement ne subsiste en paysage et
 qu'aucune régression n'apparaît sur les cas déjà corrigés. `npm test`
 (279 tests), `npm run lint` et `npx tsc --noEmit` restent propres.
 
+Revue du 2026-08-14 (23e passe, planification périodique) : au moment
+de cette revue, les quatre sections actionnables du backlog (Bugs
+connus, Features à ajouter, Tests manquants, Documentation) n'avaient
+plus aucune entrée non cochée. `npm test` (279 tests), `npm run lint`,
+`npx tsc --noEmit` et `npm run build` (jamais vérifié explicitement
+lors des passes précédentes — `tsc && vite build` compile proprement,
+64 modules, aucun avertissement) sont tous propres, aucun `TODO`/
+`FIXME`/`XXX` dans `src/`/`tests/`. `npm run coverage` confirme
+97.97 % de lignes / 97.89 % de branches, inchangé depuis la 21e/22e
+passe ; les seules lignes non couvertes restent `App.tsx:55,57`,
+`SimulationScreen.tsx:148-164` et `Hud.tsx:47`, toutes trois déjà
+jugées trop marginales lors de passes précédentes. `npm outdated`/`npm
+audit` ne montrent rien de nouveau par rapport à la 16e passe (mêmes
+majeures et mêmes 6 vulnérabilités dev-only déjà documentées sous
+"Divers / à clarifier"). Une relecture de `TouchControls.tsx`,
+`SimulationScreen.tsx`, `MainMenu.tsx`, `MissionPanel.tsx`,
+`SimulationControls.tsx`, `ControlsPanel.tsx`, `Hud.tsx` et
+`MissionSetup.tsx` (accessibilité des boutons, garde `paused`/
+`countdown` déjà appliquée aux commandes tactiles via
+`SimulationEngine.applyCommand`, cartes de fusée déjà de vrais
+`<button>` clavier-accessibles) n'a fait remonter aucun bug de logique
+ni trou de couverture supplémentaire. En testant l'application dans un
+vrai navigateur (Playwright headless) sur plusieurs largeurs de
+viewport non essayées lors des passes précédentes (320px, 300px, 280px,
+260px, 240px — profils d'écrans très étroits : Galaxy Fold replié
+~280px, navigateur redimensionné en mode split-screen, etc.), un bug
+concret a été identifié : `document.documentElement.scrollWidth` dépasse
+`clientWidth` de 20 à 40px dès que le viewport passe sous 320px sur
+l'écran `MissionSetup` (formulaire *et* résumé), avec un débordement
+horizontal visible et du texte tronqué sur la gauche (capture d'écran à
+280px : "Mission 01" affiché "ission 01", "Spacecraft name" affiché
+"acecraft name") — voir le nouvel item sous "Bugs connus" ci-dessous.
+Aucun autre bug, trou de couverture actionnable ou doc obsolète trouvé
+cette fois-ci — le `README.md` reste cohérent avec `src/app`/`src/ui`.
+Les deux points sous "Divers / à clarifier" restent des décisions en
+attente, pas des tâches actionnables en l'état.
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Bugs connus
+
+- [ ] Sur un viewport très étroit (< 320px CSS, ex. Galaxy Fold replié
+  ~280px), l'écran `MissionSetup` (et potentiellement `MissionResult`/
+  `MainMenu`) déborde horizontalement et tronque du texte
+
+  `.mission-setup__form` et `.mission-setup__summary`
+  (`src/app/styles.css:331-337,446-453`) ont chacun une largeur fixe
+  `width: 320px;` — pas un `max-width`, donc aucune adaptation possible
+  en dessous de cette valeur. `.mission-result__summary`
+  (`src/app/styles.css:588-591`) et le bloc juste en dessous (objectifs,
+  `src/app/styles.css:~617`) utilisent le même `width: 320px;` fixe, et
+  `.main-menu__actions`/`.main-menu__progress`
+  (`src/app/styles.css:~474-476,509-511`) ont le même motif avec
+  `width: 240px;`. Aucun de ces conteneurs n'a de `max-width: 100%` ni
+  de mécanisme de repli pour un viewport plus étroit que sa largeur
+  fixe.
+
+  Vérifié dans un vrai navigateur (Playwright headless, plusieurs
+  largeurs de viewport) sur l'écran `MissionSetup` : à 320px de large,
+  `scrollWidth === clientWidth === 320` (aucun débordement) ; dès que le
+  viewport passe sous 320px, `.mission-setup__form` garde sa largeur de
+  320px alors que le viewport rétrécit, ce qui fait déborder
+  `document.documentElement.scrollWidth` au-delà de `clientWidth` — 310
+  à 300px de large, 300 à 280px, 290 à 260px, 280 à 240px (un
+  débordement de 20 à 40px selon le viewport). La capture d'écran prise
+  à 280px de large confirme visuellement l'effet : le formulaire, plus
+  large que l'écran, force un défilement horizontal et le focus initial
+  sur le premier champ fait défiler la page vers la droite, tronquant
+  le texte sur la gauche ("Mission 01" apparaît comme "ission 01",
+  "Spacecraft name" comme "acecraft name", "Mission profile" comme
+  "ission profile", etc.) — un vrai défaut d'affichage, pas seulement un
+  défilement superflu, puisque rien n'indique au joueur que le contenu
+  continue hors champ. Le menu principal (`MainMenu`, largeurs fixes de
+  240px) n'a montré aucun débordement dans la plage de viewports testée
+  (320px à 240px) mais partage le même motif de largeur fixe sans
+  `max-width`, donc reste vulnérable au même défaut en dessous de
+  ~240px + son padding.
+
+  Piste : remplacer chaque `width: 320px`/`width: 240px` fixe de ces
+  quatre blocs (`.mission-setup__form`, `.mission-setup__summary`,
+  `.mission-result__summary` et le bloc d'objectifs juste en dessous,
+  `.main-menu__actions`, `.main-menu__progress`) par `width: 100%;
+  max-width: 320px;` (ou `240px` selon le bloc), pour que le conteneur
+  se limite à sa largeur cible sur un écran large mais rétrécisse sur un
+  viewport plus étroit au lieu de forcer un débordement horizontal.
+  Vérifier qu'aucune régression n'apparaît sur les viewports déjà
+  utilisés par les tests visuels précédents (iPhone 13 portrait/
+  paysage, desktop). Comme pour les bugs de superposition tactile déjà
+  corrigés dans ce backlog, un layout CSS pur n'est pas vérifiable par
+  un test unitaire classique (jsdom ne fait pas de mise en page réelle) :
+  vérifier le correctif visuellement dans un vrai navigateur avec un
+  viewport étroit (ex. 280px de large, ou la device toolbar Chrome
+  DevTools en mode responsive réduit sous 320px), en confirmant que
+  `document.documentElement.scrollWidth` ne dépasse plus `clientWidth`.
 
 - [x] Sur téléphone en **paysage**, les commandes tactiles
   (`TouchControls`) se superposent toujours au panneau latéral — le
