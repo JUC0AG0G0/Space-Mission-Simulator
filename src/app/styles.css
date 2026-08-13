@@ -649,6 +649,85 @@ body {
   outline-offset: 2px;
 }
 
+/* --- Touch controls ------------------------------------------------------ */
+
+.touch-controls {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .touch-controls {
+    display: flex;
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    z-index: 2;
+    justify-content: space-between;
+    align-items: flex-end;
+    pointer-events: none;
+  }
+
+  .touch-controls__button {
+    pointer-events: auto;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    background: rgba(12, 18, 32, 0.85);
+    border: 1px solid var(--color-panel-border);
+    color: var(--color-text);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .touch-controls__button:active {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  .touch-controls__movement {
+    display: grid;
+    grid-template-columns: repeat(3, 56px);
+    grid-template-rows: repeat(2, 56px);
+    gap: 8px;
+  }
+
+  .touch-controls__movement .touch-controls__button {
+    border-radius: 50%;
+    font-size: 18px;
+  }
+
+  .touch-controls__button--left {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .touch-controls__button--up {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .touch-controls__button--down {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .touch-controls__button--right {
+    grid-column: 3;
+    grid-row: 2;
+  }
+
+  .touch-controls__button--engine {
+    width: 72px;
+    height: 56px;
+    border-radius: 3px;
+  }
+}
+
 @media (max-width: 640px) {
   .app__sidebar {
     width: calc(100% - 32px);

@@ -265,6 +265,40 @@ describe('SimulationScreen', () => {
     applyCommandSpy.mockRestore();
   });
 
+  it('toggles the engine when the on-screen touch Engine button is tapped', () => {
+    const frame = renderScreen();
+    clearCountdown(frame);
+    expect(screen.getByText('ENGINE OFFLINE')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Engine' }));
+    frame.advance(16);
+
+    expect(screen.getByText('ENGINE ONLINE')).toBeInTheDocument();
+  });
+
+  it('applies a continuous-movement command while a touch control button is held, and stops once released', () => {
+    const frame = renderScreen();
+    clearCountdown(frame);
+
+    const applyCommandSpy = vi.spyOn(SimulationEngine.prototype, 'applyCommand');
+    applyCommandSpy.mockClear();
+
+    const throttleUp = screen.getByRole('button', { name: 'Throttle up' });
+    fireEvent.pointerDown(throttleUp);
+    frame.advance(16);
+
+    expect(applyCommandSpy).toHaveBeenCalledTimes(1);
+    expect(applyCommandSpy.mock.calls[0][0].throttleDelta).toBe(1);
+
+    fireEvent.pointerUp(throttleUp);
+    frame.advance(16);
+
+    expect(applyCommandSpy).toHaveBeenCalledTimes(2);
+    expect(applyCommandSpy.mock.calls[1][0].throttleDelta).toBe(0);
+
+    applyCommandSpy.mockRestore();
+  });
+
   it('shows the mission result screen once the mission fails, and returns to the menu from it', async () => {
     const user = userEvent.setup();
     const onExit = vi.fn();

@@ -1051,7 +1051,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Features à ajouter
 
-- [ ] Aucune commande de vol n'est accessible sur écran tactile : un
+- [x] Aucune commande de vol n'est accessible sur écran tactile : un
   joueur sur mobile/tablette peut configurer et lancer une mission mais
   ne peut ensuite ni allumer le moteur, ni piloter le vaisseau
 
@@ -1098,6 +1098,42 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   `SimulationEngine.prototype.applyCommand` que la commande appliquée a
   bien `throttleDelta: 1` tant que le bouton est maintenu et `0` après
   relâchement — même schéma que les tests `onKeyUp` existants.
+
+  Fait le 2026-08-13 : nouveau composant `src/ui/TouchControls.tsx`,
+  affiché en permanence dans le DOM mais visible uniquement sous
+  `@media (pointer: coarse)` (`src/app/styles.css`, choisi plutôt que
+  `window.matchMedia` en JS pour rester purement déclaratif et simple à
+  tester) — quatre boutons ronds "Turn left"/"Throttle up"/"Throttle
+  down"/"Turn right" en croix (D-pad) plus un bouton rectangulaire
+  "Engine", tous avec `touch-action: none` pour éviter le scroll/zoom
+  du navigateur pendant un appui maintenu. Réutilise exactement le
+  mécanisme suggéré par la piste : les quatre boutons de mouvement
+  appellent `onHoldChange(key, true/false)` sur `pointerdown`/
+  `pointerup`/`pointercancel`/`pointerleave`, câblé dans
+  `SimulationScreen.tsx` sur le même `heldKeysRef` que le clavier (les
+  touches `'w'`/`'s'`/`'a'`/`'d'`), donc `buildCommandFromKeys` reste
+  l'unique source de vérité de la commande construite à chaque frame ;
+  le bouton "Engine" appelle directement
+  `engineRef.current.applyCommand({ toggleEngine: true }, 0)`, comme
+  `onKeyDown` pour `SPACE`. Aucune modification du moteur de
+  simulation : la garde `paused`/`countdown`/mission terminée déjà
+  présente dans `applyCommand` s'applique identiquement aux commandes
+  tactiles. Tests ajoutés dans `tests/ui/TouchControls.test.tsx`
+  (rendu des cinq boutons, clic Engine, pointerdown/pointerup,
+  pointercancel, pointerleave) et deux tests d'intégration dans
+  `tests/ui/SimulationScreen.test.tsx` ("toggles the engine when the
+  on-screen touch Engine button is tapped", "applies a
+  continuous-movement command while a touch control button is held,
+  and stops once released"). Vérifié dans un vrai navigateur headless
+  (Playwright, émulation iPhone 13 avec `hasTouch`/`isMobile`) : les
+  cinq boutons s'affichent et fonctionnent (bascule moteur, throttle qui
+  monte pendant l'appui puis s'arrête au relâchement), sans erreur
+  console ; en contexte desktop (pointeur fin), `.touch-controls` reste
+  présent dans le DOM mais invisible (media query), et le clavier
+  WASD continue de fonctionner sans régression. `npm test` (279 tests),
+  `npm run lint`, `npx tsc --noEmit` et `npm run coverage` (97.97 % de
+  lignes / 97.89 % de branches globales, `TouchControls.tsx` à 100 %)
+  restent propres.
 
 - [x] `createSpacecraft` construit son `Engine` inline au lieu d'appeler
   `createEngine`

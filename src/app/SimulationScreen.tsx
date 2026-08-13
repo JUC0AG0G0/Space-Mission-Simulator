@@ -13,6 +13,7 @@ import { MissionResult } from '../ui/MissionResult';
 import { ControlsPanel } from '../ui/ControlsPanel';
 import { MissionPanel } from '../ui/MissionPanel';
 import { SimulationControls } from '../ui/SimulationControls';
+import { TouchControls } from '../ui/TouchControls';
 
 /** Upper bound on a single simulation step, in seconds, to avoid huge
  * physics jumps if the browser tab was backgrounded or stalled. */
@@ -179,6 +180,14 @@ export function SimulationScreen({ missionConfiguration, onExit }: SimulationScr
     }
   }, [state.activeMission?.status, missionConfiguration.missionProfileId]);
 
+  function handleTouchHoldChange(key: 'w' | 's' | 'a' | 'd', active: boolean) {
+    if (active) {
+      heldKeysRef.current.add(key);
+    } else {
+      heldKeysRef.current.delete(key);
+    }
+  }
+
   const gamePhase = determineGamePhase('simulation', state);
   const isMissionOver = gamePhase === 'mission-complete' || gamePhase === 'mission-failed';
 
@@ -207,6 +216,10 @@ export function SimulationScreen({ missionConfiguration, onExit }: SimulationScr
         />
         <ControlsPanel />
       </div>
+      <TouchControls
+        onEngineToggle={() => engineRef.current.applyCommand({ toggleEngine: true }, 0)}
+        onHoldChange={handleTouchHoldChange}
+      />
     </div>
   );
 }
