@@ -384,11 +384,80 @@ sous "Divers / à clarifier". Aucun autre bug, trou de couverture
 actionnable ou doc obsolète trouvé cette fois-ci — le `README.md` reste
 cohérent avec `src/app`/`src/ui`.
 
+Revue du 2026-08-13 (17e passe, planification périodique) : au moment
+de cette revue, les quatre sections actionnables du backlog (Bugs
+connus, Features à ajouter, Tests manquants, Documentation) n'avaient
+plus aucune entrée non cochée. `npm test` (270 tests), `npm run lint`
+et `npx tsc --noEmit` sont propres, aucun `TODO`/`FIXME`/`XXX` dans
+`src/`/`tests/`. `npm run coverage` confirme 97.9 % de lignes / 97.83 %
+de branches, inchangé depuis la 16e passe ; les seules lignes non
+couvertes restent `App.tsx:55,57`, `SimulationScreen.tsx:144-160` et
+`Hud.tsx:47`, toutes trois déjà jugées trop marginales lors de passes
+précédentes. `npm outdated`/`npm audit` ne montrent rien de nouveau par
+rapport à la 16e passe (mêmes majeures et mêmes 6 vulnérabilités
+dev-only déjà documentées sous "Divers / à clarifier"). En relisant les
+composants `src/ui/*.tsx` sous l'angle accessibilité — jamais audité
+explicitement lors des 16 passes précédentes, qui portaient surtout sur
+la logique métier et le rendu canvas — un vrai défaut a été identifié
+dans `MainMenu.tsx` : le marqueur ✓/🔒 de la liste de progression des
+missions (lignes 44-46) est marqué `aria-hidden="true"`, et le `<li>`
+qui l'entoure n'affiche par ailleurs que `entry.destinationName` — un
+lecteur d'écran énonce donc uniquement le nom de la destination pour
+chaque mission, sans jamais indiquer si elle est terminée ou verrouillée,
+alors que cette information existe (`entry.completed`,
+`src/simulation/progression/mission-progress.ts:15`) et est bien rendue
+visuellement. `MissionPanel.tsx`/`MissionResult.tsx` ont un motif voisin
+(`✓`/`○` pour les objectifs) mais sans `aria-hidden`, donc le symbole y
+est au moins énoncé (imparfait mais pas une perte totale d'information
+comme dans `MainMenu`) ; ce n'est donc pas la même sévérité et n'est pas
+retenu comme item séparé. Voir le nouvel item sous "Bugs connus"
+ci-dessous. Aucun autre bug, trou de couverture actionnable ou doc
+obsolète trouvé cette fois-ci — le `README.md` reste cohérent avec
+`src/app`/`src/ui`. Les deux points sous "Divers / à clarifier" restent
+des décisions en attente, pas des tâches actionnables en l'état.
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Bugs connus
+
+- [ ] La liste de progression des missions du menu principal n'indique
+  aucun statut terminé/verrouillé aux lecteurs d'écran
+
+  `MainMenu.tsx:34-50` affiche une `<ul>` de missions, une par profil
+  disponible (`MissionProgressEntry`,
+  `src/simulation/progression/mission-progress.ts:11-16`). Chaque `<li>`
+  contient un `<span className="main-menu__progress-marker"
+  aria-hidden="true">{entry.completed ? '✓' : '🔒'}</span>` suivi du
+  texte `entry.destinationName`. Le marqueur — seul élément qui porte
+  l'information `entry.completed` — est explicitement retiré de l'arbre
+  d'accessibilité par `aria-hidden="true"`, et rien d'autre dans le
+  `<li>` ne restitue cette information sous forme de texte. Un lecteur
+  d'écran énonce donc simplement "Earth orbit", "High orbit", "Fast
+  orbit" pour les trois missions, sans jamais dire si elles sont déjà
+  réussies ou encore verrouillées — alors que visuellement (✓ vs 🔒 et
+  la classe `main-menu__progress-entry--completed`) cette distinction
+  est le seul contenu utile de toute la section "Missions" du menu
+  principal.
+
+  Piste : ajouter un texte accessible portant le statut à côté du
+  marqueur toujours `aria-hidden` — par exemple un `<span
+  className="sr-only">{entry.completed ? 'Completed' : 'Locked'}</span>`
+  (avec une classe utilitaire `sr-only` à ajouter dans
+  `src/app/styles.css`, motif standard : contenu visuellement masqué
+  mais lu par les lecteurs d'écran, `position: absolute; width: 1px;
+  height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space:
+  nowrap;`), ou plus simplement poser `aria-label={`${entry
+  .destinationName} — ${entry.completed ? 'Completed' : 'Locked'}`}` sur
+  le `<li>` avec le contenu visuel existant gardé `aria-hidden` en plus
+  du marqueur (pour éviter la double lecture destination+statut puis à
+  nouveau destination). Étendre `tests/ui/MainMenu.test.tsx` : rendre
+  `MainMenu` avec un `missionProgress` mêlant une entrée `completed:
+  true` et une `completed: false`, et vérifier que le texte accessible
+  de chaque élément de liste (`getByRole('listitem')` ou
+  `getByText`/`getByLabelText` selon l'implémentation choisie) distingue
+  bien les deux statuts, pas seulement leur classe CSS.
 
 - [x] Le canvas de simulation ne tient pas compte de `devicePixelRatio` :
   rendu flou sur les écrans Retina/haute densité
