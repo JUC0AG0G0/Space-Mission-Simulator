@@ -739,3 +739,24 @@ body {
     min-width: 0;
   }
 }
+
+/* On a touch device with a narrow (typically portrait phone) viewport, both
+ * of the rules above anchor to the same bottom corner: the sidebar because
+ * of the max-width rule just above, the D-pad/Engine button because of the
+ * `pointer: coarse` rule earlier in this file. Left uncombined, they overlap
+ * — see the "Bugs connus" entry in .agent/backlog.md this fixes. Push the
+ * sidebar up above the touch controls' footprint (120px tall + 16px margin
+ * + 16px breathing room) and drop the keyboard-shortcut legend, which is
+ * moot once on-screen touch controls are showing, to keep the remaining
+ * panels short enough not to reach back down into that space. */
+@media (pointer: coarse) and (max-width: 640px) {
+  .app__sidebar {
+    bottom: 152px;
+    max-height: calc(100vh - 152px - 16px);
+    overflow-y: auto;
+  }
+
+  .controls-panel {
+    display: none;
+  }
+}

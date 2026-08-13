@@ -564,7 +564,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Bugs connus
 
-- [ ] Sur téléphone en portrait, les commandes tactiles (`TouchControls`)
+- [x] Sur téléphone en portrait, les commandes tactiles (`TouchControls`)
   se superposent au panneau latéral au lieu de coexister avec lui
 
   Deux règles CSS indépendantes de `src/app/styles.css` peuvent
@@ -618,6 +618,38 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   DevTools device toolbar, ou Playwright avec `devices['iPhone 13']`
   comme utilisé pour identifier ce bug), en confirmant par les
   `boundingBox()` des deux éléments qu'ils ne se chevauchent plus.
+
+  Fait le 2026-08-13 : nouvelle règle combinée `@media (pointer: coarse)
+  and (max-width: 640px)` ajoutée dans `src/app/styles.css`, juste après
+  les deux règles indépendantes qui se cumulaient — approche "remonter
+  l'ancrage" + "masquer `ControlsPanel`" (les deux pistes suggérées,
+  combinées plutôt qu'une seule) : `.app__sidebar` passe de `bottom:
+  16px` à `bottom: 152px` (la hauteur du bloc `.touch-controls`, 120px,
+  plus sa marge de 16px, plus 16px de respiration) avec `max-height:
+  calc(100vh - 152px - 16px)` et `overflow-y: auto` en filet de sécurité
+  si le contenu du panneau dépasse malgré tout l'espace disponible ; et
+  `.controls-panel` (légende clavier, `ControlsPanel.tsx`) passe à
+  `display: none` dans ce même contexte, puisque les raccourcis clavier
+  qu'elle documente ne servent plus une fois les commandes tactiles
+  affichées, ce qui réduit d'autant la hauteur du panneau restant
+  (`MissionPanel` + `SimulationControls`). Aucune des deux règles
+  préexistantes n'est modifiée : sur un écran étroit sans tactile
+  (pointeur fin), le panneau reste positionné exactement comme avant
+  (`bottom: 16px`, `ControlsPanel` visible) — vérifié dans un vrai
+  navigateur (Playwright, viewport 390×844 avec un pointeur fin) :
+  `.app__sidebar` mesure toujours `{ x: 16, y: 414, width: 358, height:
+  414 }` et `.controls-panel` reste visible. Sur tactile + portrait
+  (Playwright, émulation iPhone 13 — 390×844, tactile), après ce
+  correctif : `.app__sidebar` mesure `{ x: 16, y: 326, width: 358,
+  height: 186 }` et `.touch-controls` `{ x: 16, y: 528, width: 358,
+  height: 120 }` — un espace de 16px les sépare (512 à 528), aucun
+  chevauchement, confirmé par un calcul de recouvrement de boîtes sur
+  les deux `boundingBox()` et par une capture d'écran (légende du panneau
+  et boutons Pause/Restart entièrement lisibles au-dessus du D-pad et du
+  bouton Engine). Changement CSS pur, comme prévu par la piste, non
+  vérifiable par un test unitaire classique (jsdom ne fait pas de mise
+  en page réelle) : aucun test ajouté/modifié. `npm test` (279 tests),
+  `npm run lint` et `npx tsc --noEmit` restent propres.
 
 - [x] `SimulationScreen.onKeyDown` détourne toujours des raccourcis
   navigateur/OS pour les touches continues (WASD/flèches), contrairement
