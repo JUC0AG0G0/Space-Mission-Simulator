@@ -114,4 +114,21 @@ describe('MainMenu', () => {
     expect(entry).toHaveTextContent('✓');
     expect(entry).toHaveClass('main-menu__progress-entry--completed');
   });
+
+  it('exposes completed/locked status to assistive technology, not just visually', () => {
+    render(
+      <MainMenu
+        hasSavedMission={false}
+        missionProgress={[
+          { id: 'earth-orbit', name: 'Mission 01', destinationName: 'Earth orbit', completed: true },
+          { id: 'high-orbit', name: 'Mission 02', destinationName: 'High orbit', completed: false },
+        ]}
+        onNewMission={() => {}}
+        onContinue={() => {}}
+      />,
+    );
+
+    expect(screen.getByRole('listitem', { name: 'Earth orbit — Completed' })).toBeInTheDocument();
+    expect(screen.getByRole('listitem', { name: 'High orbit — Locked' })).toBeInTheDocument();
+  });
 });

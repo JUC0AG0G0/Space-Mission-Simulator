@@ -422,7 +422,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Bugs connus
 
-- [ ] La liste de progression des missions du menu principal n'indique
+- [x] La liste de progression des missions du menu principal n'indique
   aucun statut terminé/verrouillé aux lecteurs d'écran
 
   `MainMenu.tsx:34-50` affiche une `<ul>` de missions, une par profil
@@ -458,6 +458,30 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   de chaque élément de liste (`getByRole('listitem')` ou
   `getByText`/`getByLabelText` selon l'implémentation choisie) distingue
   bien les deux statuts, pas seulement leur classe CSS.
+
+  Fait le 2026-08-13 : chaque `<li>` de `MainMenu.tsx` porte désormais
+  `aria-label={`${entry.destinationName} — ${entry.completed ?
+  'Completed' : 'Locked'}`}` (approche retenue plutôt que la classe
+  utilitaire `sr-only` proposée en alternative dans la piste, plus
+  simple ici puisque tout le contenu visuel du `<li>` peut être masqué
+  d'un coup) ; le texte visuel `entry.destinationName` est désormais
+  enveloppé dans son propre `<span aria-hidden="true">` (en plus du
+  marqueur ✓/🔒, déjà `aria-hidden`), pour que l'`aria-label` du `<li>`
+  soit la seule source lue par un lecteur d'écran et évite la double
+  lecture destination+statut puis à nouveau destination. Le rendu
+  visuel (texte + marqueur + classe `--completed`) est inchangé. Test
+  ajouté dans `tests/ui/MainMenu.test.tsx` ("exposes completed/locked
+  status to assistive technology, not just visually") : rend `MainMenu`
+  avec une entrée `completed: true` et une `completed: false`, et
+  vérifie via `screen.getByRole('listitem', { name: ... })` que le nom
+  accessible de chaque élément de liste contient bien "— Completed" /
+  "— Locked", pas seulement le nom de destination. Les tests existants
+  (`getByText('Earth orbit').closest('li')`) continuent de passer sans
+  modification : `getByText` ignore `aria-hidden`, seul le texte exposé
+  aux lecteurs d'écran change. `npm test` (271 tests), `npm run lint`,
+  `npx tsc --noEmit` et `npm run coverage` (97.9 % de lignes / 97.84 %
+  de branches globales, `MainMenu.tsx` désormais à 100 %) restent
+  propres.
 
 - [x] Le canvas de simulation ne tient pas compte de `devicePixelRatio` :
   rendu flou sur les écrans Retina/haute densité

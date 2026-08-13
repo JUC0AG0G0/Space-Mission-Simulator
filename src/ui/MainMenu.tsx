@@ -40,11 +40,12 @@ export function MainMenu({
                   ? 'main-menu__progress-entry main-menu__progress-entry--completed'
                   : 'main-menu__progress-entry'
               }
+              aria-label={`${entry.destinationName} — ${entry.completed ? 'Completed' : 'Locked'}`}
             >
               <span className="main-menu__progress-marker" aria-hidden="true">
                 {entry.completed ? '✓' : '🔒'}
               </span>
-              {entry.destinationName}
+              <span aria-hidden="true">{entry.destinationName}</span>
             </li>
           ))}
         </ul>
