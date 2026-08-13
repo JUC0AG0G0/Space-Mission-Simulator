@@ -481,6 +481,48 @@ bug, trou de couverture actionnable ou incohérence README trouvé cette
 fois-ci. Les deux points sous "Divers / à clarifier" restent des
 décisions en attente, pas des tâches actionnables en l'état.
 
+Revue du 2026-08-13 (20e passe, planification périodique) : le point de
+documentation identifié lors de la 19e passe (section "Tests" du
+`README.md` sans mention de `npm run coverage`) est désormais corrigé
+(voir l'entrée cochée correspondante et `.agent/changelog.md`). Au
+moment de cette revue, les quatre sections actionnables du backlog
+n'avaient plus aucune entrée non cochée. `npm test` (272 tests), `npm
+run lint` et `npx tsc --noEmit` sont propres, aucun `TODO`/`FIXME`/
+`XXX` dans `src/`/`tests/`. `npm run coverage` confirme 97.9 % de
+lignes / 97.84 % de branches, inchangé depuis la 19e passe ; les seules
+lignes non couvertes restent `App.tsx:55,57`,
+`SimulationScreen.tsx:147-163` et `Hud.tsx:47`, toutes trois déjà jugées
+trop marginales lors de passes précédentes. Une relecture complète de
+chaque fichier de `src/` (y compris ceux non revisités depuis
+plusieurs passes : `orbit.ts`, `canvas-renderer.ts`,
+`trajectory-renderer.ts`, `spacecraft-renderer.ts`, `world-to-screen.ts`,
+`celestial-body.ts`, `app-state.ts`, `mission-configuration.ts`,
+`spacecraft.ts`, `engine.ts`, `mission.ts`, `mission-result.ts`,
+`Hud.tsx`, `ControlsPanel.tsx`, `SimulationControls.tsx`,
+`MissionPanel.tsx`, `MissionResult.tsx`, `CountdownOverlay.tsx`,
+`MainMenu.tsx`, `MissionSetup.tsx`, `App.tsx`) n'a fait remonter aucun
+bug de logique ni trou de couverture supplémentaire — tout ce code pur
+reste à 100 % de couverture. Une lacune de gameplay concrète a en
+revanche été identifiée en croisant `index.html` (balise `<meta
+name="viewport">` déjà présente), la règle `@media (max-width: 640px)`
+de `src/app/styles.css:652-662` (qui repositionne déjà le panneau
+latéral pour petit écran) et `SimulationScreen.tsx`/`SimulationControls
+.tsx` : aucune des commandes de vol (accélération/décélération,
+rotation, allumage moteur) n'est accessible autrement qu'au clavier
+(`CONTINUOUS_KEYS`/`onKeyDown`/`onKeyUp`, `src/app/SimulationScreen.tsx
+:21-118`) — `grep -rn "Touch\|Pointer"` sur `src/`/`tests/` ne renvoie
+aucun résultat, et `SimulationControls.tsx` n'expose que Pause et
+Restart, pas de bouton d'allumage moteur. La mise en page mobile déjà
+présente laisse donc croire que le jeu est jouable sur écran tactile,
+alors qu'un joueur sur un tel appareil peut configurer et lancer une
+mission mais ne peut ensuite ni allumer le moteur, ni piloter le
+vaisseau une fois le compte à rebours terminé. Voir le nouvel item sous
+"Features à ajouter" ci-dessous. Aucun autre bug, trou de couverture
+actionnable ou doc obsolète trouvé cette fois-ci — le `README.md` reste
+cohérent avec `src/app`/`src/ui`. Les deux points sous "Divers /
+à clarifier" restent des décisions en attente, pas des tâches
+actionnables en l'état.
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
@@ -1008,6 +1050,54 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   fois (`ENGINE ONLINE`).
 
 ## Features à ajouter
+
+- [ ] Aucune commande de vol n'est accessible sur écran tactile : un
+  joueur sur mobile/tablette peut configurer et lancer une mission mais
+  ne peut ensuite ni allumer le moteur, ni piloter le vaisseau
+
+  Toutes les commandes de vol (allumage moteur, throttle, rotation)
+  passent exclusivement par le clavier physique : `CONTINUOUS_KEYS`/
+  `onKeyDown`/`onKeyUp`/`buildCommandFromKeys`
+  (`src/app/SimulationScreen.tsx:21-118`) écoutent `keydown`/`keyup` sur
+  `window`, et `SimulationControls.tsx` n'expose que deux boutons
+  (Pause, Restart) — aucun bouton pour allumer/éteindre le moteur ni
+  pour piloter le throttle/le cap. Un `grep -rn "Touch\|Pointer"` sur
+  `src/`/`tests/` ne renvoie aucun résultat : il n'existe ni gestionnaire
+  tactile, ni bouton de commande de vol sur l'écran. Pourtant l'app a
+  déjà une balise `<meta name="viewport" content="width=device-width,
+  initial-scale=1.0">` (`index.html`) et une règle `@media (max-width:
+  640px)` dédiée dans `src/app/styles.css:652-662` qui repositionne le
+  panneau latéral pour petit écran — la mise en page mobile a donc déjà
+  été pensée, mais pas les contrôles eux-mêmes. Un joueur sur
+  smartphone/tablette peut aujourd'hui traverser tout le menu, la
+  préparation de mission, le résumé et le compte à rebours, puis se
+  retrouve bloqué à `LIFTOFF` : il ne peut ni activer le moteur (touche
+  `SPACE`), ni orienter/accélérer le vaisseau (WASD/flèches), seuls
+  Pause et Restart restent utilisables.
+
+  Piste : ajouter un jeu de boutons tactiles (ex. un composant
+  `TouchControls`, affiché uniquement sous un point de rupture proche de
+  celui déjà utilisé par `@media (max-width: 640px)`, ou détecté via
+  `window.matchMedia('(pointer: coarse)')`) avec au minimum un bouton
+  "Engine on/off" et quatre boutons/zones pour throttle up/down et turn
+  left/right. Réutiliser le mécanisme déjà en place plutôt que d'en
+  inventer un nouveau : les boutons continus (throttle/turn) doivent
+  ajouter/retirer une entrée dans le même ensemble que `heldKeysRef`
+  (ou un état équivalent exposé par `SimulationScreen`) sur
+  `pointerdown`/`pointerup`/`pointercancel`, pour que
+  `buildCommandFromKeys` continue à être la seule source de vérité du
+  `SimulationCommand` construit à chaque frame ; le bouton moteur doit
+  appeler `engineRef.current.applyCommand({ toggleEngine: true }, 0)`,
+  comme le fait déjà `onKeyDown` pour `SPACE`. Attention à
+  `event.preventDefault()`/`touch-action: none` en CSS pour éviter le
+  scroll/zoom du navigateur pendant un appui maintenu. Ajouter des tests
+  dans `tests/ui/SimulationScreen.test.tsx` (ou un nouveau fichier de
+  test dédié si un composant séparé est créé) sur le même modèle que les
+  tests clavier existants : `fireEvent.pointerDown`/`fireEvent.pointerUp`
+  sur le bouton "throttle up", puis vérifier via l'espion sur
+  `SimulationEngine.prototype.applyCommand` que la commande appliquée a
+  bien `throttleDelta: 1` tant que le bouton est maintenu et `0` après
+  relâchement — même schéma que les tests `onKeyUp` existants.
 
 - [x] `createSpacecraft` construit son `Engine` inline au lieu d'appeler
   `createEngine`
