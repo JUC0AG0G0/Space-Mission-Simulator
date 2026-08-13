@@ -558,11 +558,120 @@ cette fois-ci — le `README.md` reste cohérent avec `src/app`/`src/ui`.
 Les deux points sous "Divers / à clarifier" restent des décisions en
 attente, pas des tâches actionnables en l'état.
 
+Revue du 2026-08-13 (22e passe, planification périodique) : le bug de
+superposition tactile/panneau latéral en portrait, identifié lors de la
+21e passe, est désormais corrigé (voir l'entrée cochée correspondante
+et `.agent/changelog.md`). Au moment de cette revue, les quatre
+sections actionnables du backlog n'avaient plus aucune entrée non
+cochée. `npm test` (279 tests), `npm run lint` et `npx tsc --noEmit`
+sont propres, aucun `TODO`/`FIXME`/`XXX` dans `src/`/`tests/`. `npm run
+coverage` confirme 97.97 % de lignes / 97.89 % de branches, inchangé
+depuis la 21e passe ; les seules lignes non couvertes restent
+`App.tsx:55,57`, `SimulationScreen.tsx:148-164` et `Hud.tsx:47`, toutes
+trois déjà jugées trop marginales lors de passes précédentes. Le
+correctif de la 21e passe n'ajoute qu'une règle `@media (pointer:
+coarse) and (max-width: 640px)` (`src/app/styles.css:752-762`) qui ne
+se déclenche que sous 640px de large — en la relisant avec la règle de
+base `.app__sidebar` (`top: 16px; right: 16px; width: 260px`,
+`src/app/styles.css:51-60`), un deuxième cas concret et non couvert par
+ce correctif a été identifié puis confirmé dans un vrai navigateur
+(Playwright headless, émulation `devices['iPhone 13 landscape']` —
+viewport 750×342 CSS px, tactile) : en **paysage**, la largeur d'un
+téléphone dépasse 640px (750px pour un iPhone 13), donc ni la règle
+`max-width: 640px` ni la règle combinée `pointer: coarse` + `max-width:
+640px` ne s'appliquent — le panneau latéral reste ancré tel quel en
+haut à droite (`top: 16px; right: 16px`), sans le repositionnement ni
+le `max-height`/`overflow-y: auto` qui limitent son encombrement en
+portrait. Or la hauteur totale du panneau (`MissionPanel` +
+`SimulationControls` + `ControlsPanel`, ce dernier resté visible
+puisque la règle qui le masque ne s'applique pas non plus) dépasse
+largement la hauteur disponible sur un téléphone en paysage :
+`.app__sidebar` mesure `{ x: 474, y: 16, width: 260, height: 469 }`
+quand le viewport ne fait que 342px de haut, et `.touch-controls`
+(ancré en bas via la règle `pointer: coarse` seule, qui elle s'applique
+bien) mesure `{ x: 16, y: 206, width: 718, height: 120 }` — un
+recouvrement de boîtes de 260×120px est mesuré entre les deux éléments.
+La capture d'écran confirme visuellement le D-pad peint directement
+par-dessus le panneau `CONTROLS` et le bouton "Engine" par-dessus la
+légende "Decrease throttle", strictement le même symptôme que le bug
+portrait déjà corrigé, mais déclenché par l'orientation plutôt que par
+une largeur CSS étroite — le correctif précédent, ciblé sur
+`max-width`, ne couvre donc pas ce cas. Voir le nouvel item sous "Bugs
+connus" ci-dessous. Aucun autre bug, trou de couverture actionnable ou
+doc obsolète trouvé cette fois-ci — le `README.md` reste cohérent avec
+`src/app`/`src/ui`. Les deux points sous "Divers / à clarifier" restent
+des décisions en attente, pas des tâches actionnables en l'état.
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Bugs connus
+
+- [ ] Sur téléphone en **paysage**, les commandes tactiles
+  (`TouchControls`) se superposent toujours au panneau latéral — le
+  correctif du bug équivalent en portrait ne couvre pas ce cas
+
+  Le correctif de la 21e passe de ce backlog (voir l'item coché "Sur
+  téléphone en portrait, les commandes tactiles..." ci-dessous) ajoute
+  une règle combinée `@media (pointer: coarse) and (max-width: 640px)`
+  (`src/app/styles.css:752-762`) qui repositionne `.app__sidebar`
+  au-dessus de `.touch-controls` et masque `.controls-panel` — mais
+  cette règle se déclenche uniquement sous 640px de large. Un téléphone
+  tenu en **paysage** dépasse cette largeur (ex. iPhone 13 : 750px CSS
+  en paysage, contre 390px en portrait), donc ni cette règle combinée
+  ni la règle `@media (max-width: 640px)` seule (`src/app/styles.css:
+  731-736`) ne s'appliquent : `.app__sidebar` reste ancré à sa position
+  de base (`top: 16px; right: 16px; width: 260px`,
+  `src/app/styles.css:51-60`), sans repositionnement ni `max-height`/
+  `overflow-y: auto`, et `.controls-panel` (légende clavier) reste
+  visible. Or `@media (pointer: coarse)` seule (`src/app/styles.css:
+  658-669`) s'applique bien dès que le pointeur est tactile,
+  indépendamment de l'orientation, donc `.touch-controls` s'affiche
+  toujours ancré en bas d'écran (`position: absolute; left: 16px;
+  right: 16px; bottom: 16px;`).
+
+  Vérifié dans un vrai navigateur (Playwright, émulation
+  `devices['iPhone 13 landscape']` — viewport 750×342 CSS px, tactile)
+  en jouant jusqu'à l'écran de vol : `.app__sidebar` mesure `{ x: 474,
+  y: 16, width: 260, height: 469 }` (sa hauteur, 469px, dépasse déjà à
+  elle seule la hauteur du viewport, 342px) et `.touch-controls` `{ x:
+  16, y: 206, width: 718, height: 120 }` — un recouvrement de boîtes de
+  260×120px est mesuré entre les deux éléments (calcul sur les deux
+  `boundingBox()`). La capture d'écran confirme visuellement le D-pad
+  peint par-dessus le panneau `CONTROLS` (légende des touches) et le
+  bouton "Engine" par-dessus la ligne "Decrease throttle", les rendant
+  illisibles à cet endroit — et, comme pour le bug portrait déjà
+  corrigé, `.touch-controls__button` a `pointer-events: auto` et est
+  rendu après `.app__sidebar` dans le JSX
+  (`src/app/SimulationScreen.tsx`), donc capté en priorité sur les taps
+  qui atterriraient sinon sur les boutons du panneau (Pause/Restart) à
+  cet endroit.
+
+  Piste : étendre la logique déjà en place plutôt que d'en réinventer
+  une — le correctif portrait raisonne uniquement sur `max-width`, alors
+  que le vrai problème est "le panneau latéral est-il assez haut et
+  assez proche du bas d'écran pour empiéter sur `.touch-controls` ancré
+  en bas ?", une question qui dépend de la hauteur du viewport
+  (`max-height`/`orientation: landscape`), pas de sa largeur. Envisager
+  une règle `@media (pointer: coarse) and (max-height: 500px)` (ou
+  `orientation: landscape`) à côté de celle déjà existante en
+  `max-width`, appliquant le même traitement (relever `.app__sidebar`
+  au-dessus de `.touch-controls`, masquer `.controls-panel`, contraindre
+  `max-height`/`overflow-y: auto`) — ou fusionner les deux conditions
+  avec une seule règle `@media (pointer: coarse) and (max-width: 640px),
+  (pointer: coarse) and (max-height: 500px)` si les valeurs numériques
+  choisies s'avèrent identiques pour les deux orientations. Comme pour
+  le bug portrait déjà corrigé, un layout CSS pur n'est pas vérifiable
+  par un test unitaire classique (jsdom ne fait pas de mise en page
+  réelle) : vérifier le correctif visuellement dans un vrai navigateur
+  avec un viewport de téléphone en paysage et `hasTouch`/`isMobile`
+  activés (Chrome DevTools device toolbar, ou Playwright avec
+  `devices['iPhone 13 landscape']` comme utilisé pour identifier ce
+  bug), en confirmant par les `boundingBox()` des deux éléments qu'ils
+  ne se chevauchent plus — et vérifier aussi qu'aucune régression
+  n'apparaît sur les cas déjà corrigés (portrait tactile, et
+  desktop/pointeur fin en paysage, qui doivent rester inchangés).
 
 - [x] Sur téléphone en portrait, les commandes tactiles (`TouchControls`)
   se superposent au panneau latéral au lieu de coexister avec lui
