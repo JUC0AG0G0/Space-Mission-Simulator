@@ -446,6 +446,41 @@ obsolète trouvé cette fois-ci — le `README.md` reste cohérent avec
 `src/app`/`src/ui`. Les deux points sous "Divers / à clarifier" restent
 des décisions en attente, pas des tâches actionnables en l'état.
 
+Revue du 2026-08-13 (19e passe, planification périodique) : le bug de
+`SimulationScreen.onKeyDown` sur les touches continues (Ctrl/Cmd+A/S/D),
+identifié lors de la 18e passe, est désormais corrigé (voir l'entrée
+cochée correspondante et `.agent/changelog.md`). Au moment de cette
+revue, les quatre sections actionnables du backlog n'avaient plus
+aucune entrée non cochée. `npm test` (272 tests), `npm run lint` et
+`npx tsc --noEmit` sont propres, aucun `TODO`/`FIXME`/`XXX` dans
+`src/`/`tests/`. `npm run coverage` confirme 97.9 % de lignes / 97.84 %
+de branches ; les seules lignes non couvertes restent `App.tsx:55,57`,
+`SimulationScreen.tsx:147-163` et `Hud.tsx:47`, toutes trois déjà jugées
+trop marginales lors de passes précédentes. `npm outdated`/`npm audit`
+ne montrent rien de nouveau par rapport à la 16e/17e passe (mêmes
+majeures et mêmes 6 vulnérabilités dev-only déjà documentées sous
+"Divers / à clarifier"). Une relecture complète de chaque fichier de
+`src/` non spécifiquement revisité lors des dernières passes
+(`ControlsPanel.tsx`, `Hud.tsx`, `MissionPanel.tsx`,
+`CountdownOverlay.tsx`, `MissionResult.tsx`, `mission-result.ts`,
+`rocket-models.ts`, `App.tsx`, `MainMenu.tsx`, `celestial-body.ts`,
+`canvas-renderer.ts`, `world-to-screen.ts`, `orbit.ts`,
+`simulation-engine.ts`, `spacecraft.ts`, `SimulationControls.tsx`,
+`MissionSetup.tsx`, `styles.css`, `package.json`), complétée par un
+parcours de bout en bout de l'application dans un vrai navigateur
+(Playwright headless : menu principal → préparation de mission
+`fast-orbit`/Javelin → résumé → compte à rebours → décollage manuel),
+n'a fait remonter aucun bug ni régression (aucune erreur ni
+avertissement dans la console du navigateur au long du parcours). Un
+point de documentation mineur a en revanche été identifié : la section
+"## Tests" du `README.md` ne mentionne que `npm test`, pas le script
+`npm run coverage` — pourtant déjà présent dans `package.json` et
+systématiquement utilisé par chaque revue de ce backlog depuis son
+ajout. Voir le nouvel item sous "Documentation" ci-dessous. Aucun autre
+bug, trou de couverture actionnable ou incohérence README trouvé cette
+fois-ci. Les deux points sous "Divers / à clarifier" restent des
+décisions en attente, pas des tâches actionnables en l'état.
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
@@ -1947,6 +1982,24 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   Item documentation pure : aucun changement de code, `npm test`
   (247 tests), `npm run lint` et `npx tsc --noEmit` restent propres
   (aucun fichier source touché).
+
+- [ ] La section "Tests" du `README.md` ne mentionne pas le script de
+  couverture
+
+  `package.json` expose un script `"coverage": "vitest run --coverage"`
+  (ajouté lors d'une passe antérieure de ce backlog, voir l'item coché
+  "Aucun outillage de couverture de tests n'est configuré" sous "Tests
+  manquants" ci-dessous) et systématiquement utilisé depuis par chaque
+  revue périodique de ce fichier pour cibler les trous de couverture.
+  Pourtant la section "## Tests" du `README.md` (lignes 24-28) ne montre
+  que `npm test` — un nouveau lecteur du README n'a aucun moyen de
+  savoir que `npm run coverage` existe, alors que c'est déjà un script
+  `npm` de premier niveau au même titre que `dev`/`build`/`test`/`lint`.
+
+  Ajouter une ligne (ou un court exemple `bash` supplémentaire, sur le
+  même modèle que la section "## Lint" juste en dessous) mentionnant
+  `npm run coverage` dans la section "## Tests" du `README.md`. Item
+  documentation pure — aucun changement de code ni de test attendu.
 
 ## Divers / à clarifier
 
