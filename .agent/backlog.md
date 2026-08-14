@@ -1035,6 +1035,42 @@ run lint`, `npx tsc --noEmit` et `npm run coverage` (`src/ui` reste à
 jour, les quatre sections actionnables du backlog n'avaient plus aucune
 entrée non cochée.
 
+Revue du 2026-08-14 (32e passe, planification périodique) : au moment
+de cette revue, les quatre sections actionnables du backlog n'avaient
+plus aucune entrée non cochée. `npm test` (291 tests), `npm run lint`,
+`npx tsc --noEmit` et `npm run build` (`tsc && vite build`, 64 modules,
+aucun avertissement) sont tous propres, aucun `TODO`/`FIXME`/`XXX` dans
+`src/`/`tests/`. `npm run coverage` confirme 98.07 % de lignes /
+98.17 % de branches ; tout `src/simulation`, `src/rendering` et
+`src/ui` reste à 100 % de couverture, les seules lignes non couvertes
+restent `App.tsx:55,57` et `SimulationScreen.tsx:148-164`, toutes deux
+déjà jugées trop marginales lors de passes précédentes. `npm outdated`/
+`npm audit` ne montrent rien de nouveau par rapport à la 16e passe
+(mêmes majeures et mêmes 6 vulnérabilités dev-only déjà documentées
+sous "Divers / à clarifier"). Une relecture de `App.tsx`,
+`SimulationScreen.tsx`, `MissionSetup.tsx`, `MissionPanel.tsx`,
+`Hud.tsx`, `TouchControls.tsx`, `mission-save.ts`,
+`mission-configuration.ts`, `simulation-engine.ts` et `engine.ts` n'a
+fait remonter aucun bug de logique, trou de couverture ou lacune
+d'accessibilité supplémentaire. En élargissant l'audit à la
+configuration du dépôt lui-même (jamais fait explicitement lors des 31
+passes précédentes, qui portaient sur le code applicatif) — `package.json`,
+`.gitignore`, `spec.md`, et la présence/absence d'un dossier
+`.github/` — un vrai point d'outillage manquant a été identifié :
+`git remote -v` confirme que `origin` pointe vers un vrai dépôt GitHub
+(`github.com/JUC0AG0G0/Space-Mission-Simulator`), mais aucun workflow
+GitHub Actions n'existe (`ls .github` échoue, dossier absent) — chaque
+commit poussé sur `main` n'a donc aucune vérification automatique
+visible côté GitHub (pas de coche verte/rouge sur l'historique des
+commits), alors que `npm test`/`npm run lint`/`npx tsc --noEmit`/`npm
+run build` sont déjà quatre commandes stables et rapides, systématiquement
+exécutées à la main à chaque passe de ce backlog depuis son origine.
+Voir le nouvel item sous "Tests manquants" ci-dessous. Aucun autre bug,
+trou de couverture actionnable ou doc obsolète trouvé cette fois-ci —
+le `README.md` reste cohérent avec `src/app`/`src/ui`. Les trois points
+sous "Divers / à clarifier" restent des décisions en attente, pas des
+tâches actionnables en l'état.
+
 ## Bugs connus
 
 - [x] Aucune gestion du focus clavier lors des transitions d'écran :
@@ -3250,6 +3286,58 @@ entrée non cochée.
   est désormais à 100 % de couverture (lignes/branches/fonctions),
   fermant le dernier trou de couverture connu de ce fichier. `npm test`
   (266 tests), `npm run lint` et `npx tsc --noEmit` restent propres.
+
+- [ ] Aucune intégration continue (CI) n'est configurée sur GitHub :
+  les commits poussés sur `main` n'ont aucune vérification automatique
+  visible, alors que quatre commandes rapides et stables existent déjà
+  (`npm test`, `npm run lint`, `npx tsc --noEmit`, `npm run build`)
+
+  `git remote -v` confirme que `origin` pointe vers un vrai dépôt
+  GitHub (`git@github.com:JUC0AG0G0/Space-Mission-Simulator.git`), mais
+  le dépôt ne contient aucun dossier `.github/` (`ls .github` échoue
+  avec "No such file or directory") — donc aucun workflow GitHub
+  Actions, et par conséquent aucune coche verte/rouge sur l'historique
+  des commits ni sur une éventuelle future pull request. Chaque passe
+  de ce backlog (32 à ce jour) exécute déjà `npm test`, `npm run lint`
+  et `npx tsc --noEmit` à la main avant de considérer le dépôt "propre"
+  (et `npm run build`/`npm run coverage` régulièrement) ; `spec.md`
+  (section 2, "Contexte d'usage") confirme que l'agent qui travaille
+  sur ce dépôt est censé lancer ces mêmes commandes avant de pousser
+  directement sur `main` (`push_mode: direct`, pas de revue humaine par
+  pull request). Un workflow CI n'est donc pas un remplacement de ce
+  processus, mais un filet de sécurité indépendant : il resterait
+  vérifiable depuis l'interface GitHub (utile pour un humain qui
+  consulte l'historique sans relancer les commandes localement), et
+  détecterait tout de même une régression si un run de l'agent poussait
+  malgré tout du code cassé (erreur de jugement, commande oubliée,
+  interruption avant la vérification finale).
+
+  Piste : ajouter un unique fichier `.github/workflows/ci.yml` minimal
+  — déclenché sur `push`/`pull_request` vers `main`, un seul job
+  `ubuntu-latest` avec `actions/checkout@v4` puis `actions/setup-node@v4`
+  (version Node alignée sur `engines.node` de `package.json`, soit
+  `>=20` — utiliser `node-version: 20` ou `'lts/*'`), `npm ci`, puis les
+  quatre commandes déjà utilisées par chaque passe de ce backlog dans
+  l'ordre `npm run lint && npx tsc --noEmit && npm test && npm run
+  build` (pas besoin d'un job séparé par commande pour un projet de
+  cette taille). Rester au plus simple : pas de matrice de versions
+  Node, pas de cache de dépendances sophistiqué au-delà de celui déjà
+  intégré à `actions/setup-node` (`cache: 'npm'`), pas de déploiement
+  ni de publication d'artefact (`npm run build` sert uniquement à
+  vérifier que la compilation reste propre, comme le fait déjà chaque
+  passe de ce backlog — pas besoin de publier `dist/`). Vérifier après
+  coup que le fichier YAML est syntaxiquement valide (`npx
+  js-yaml .github/workflows/ci.yml` ou équivalent, ou simplement une
+  relecture attentive de l'indentation) et que rien dans
+  `.gitignore`/`eslint.config.js` n'ignore par erreur le nouveau
+  dossier `.github/`. Item de configuration pure (YAML, aucun fichier
+  `src/`/`tests/` modifié) : aucun test unitaire n'est attendu
+  au-delà de `npm test`/`npm run lint`/`npx tsc --noEmit`/`npm run
+  build`, qui doivent rester propres. La confirmation définitive que le
+  workflow s'exécute réellement sur GitHub (onglet "Actions" du dépôt)
+  ne peut se faire qu'après le prochain `git push` vers `origin` — hors
+  du contrôle direct de ce backlog, mais la syntaxe et les commandes
+  utilisées peuvent être vérifiées localement avant de pousser.
 
 ## Documentation
 
