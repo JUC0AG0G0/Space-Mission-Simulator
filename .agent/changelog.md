@@ -2498,3 +2498,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Aucun `ErrorBoundary` React n'existe : une exception de rendu
 - Branche/push: main (direct)
 - Coût estimé: 2.5371324000000004 USD
+
+## 2026-08-14T20-42-21-134Z — doc
+- Description: `README.md` ne mentionne pas l'intégration continue (CI)
+- Branche/push: main (direct)
+- Coût estimé: 1.3462124000000004 USD
