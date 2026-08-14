@@ -868,7 +868,7 @@ tâches actionnables en l'état.
 
 ## Bugs connus
 
-- [ ] Le décompte de `CountdownOverlay` (T-3…T-1, LIFTOFF) n'est annoncé
+- [x] Le décompte de `CountdownOverlay` (T-3…T-1, LIFTOFF) n'est annoncé
   par aucun lecteur d'écran : aucune région `aria-live` ne couvre son
   texte, qui change automatiquement plusieurs fois sans action du joueur
 
@@ -913,6 +913,25 @@ tâches actionnables en l'état.
   `screen.getByRole('status')` doit exister et contenir le texte
   affiché), sur le même modèle que le test d'accessibilité déjà ajouté
   pour le `<canvas>` de `SimulationScreen` lors de la 27e passe.
+
+  Fait le 2026-08-14 : `CountdownOverlay.tsx` pose désormais
+  `role="status"` et `aria-live="polite"` sur le conteneur
+  `.countdown-overlay` (le parent des deux `<div>` de texte), exactement
+  la première option suggérée par la piste — un seul attribut sur le
+  conteneur plutôt que sur `.countdown-overlay__value` seul, pour que
+  "MISSION READY" et la valeur du compte à rebours soient couverts par
+  la même région annoncée. `aria-live="polite"` (pas `"assertive"`/
+  `role="alert"`) évite d'interrompre une lecture en cours, conformément
+  à la mise en garde de la piste sur le fait que le décompte n'est pas
+  une urgence. Deux tests ajoutés dans
+  `tests/ui/CountdownOverlay.test.tsx` : l'un vérifie que
+  `screen.getByRole('status')` existe, porte `aria-live="polite"` et
+  contient le texte affiché ; l'autre re-rend le composant avec des
+  `countdown` différents et vérifie que le contenu de la même région
+  passe bien de "T-1" à "LIFTOFF". `npm test` (282 tests), `npm run
+  lint`, `npx tsc --noEmit` et `npm run coverage` (`CountdownOverlay.tsx`
+  reste à 100 % de lignes/branches, 98.04 % de couverture globale
+  inchangée) restent propres.
 
 - [x] Le `<canvas>` de la simulation de vol n'a ni `role`, ni
   `aria-label`, ni contenu de repli pour les lecteurs d'écran

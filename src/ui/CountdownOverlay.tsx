@@ -16,7 +16,7 @@ export function CountdownOverlay({ countdown }: CountdownOverlayProps) {
       : 'LIFTOFF';
 
   return (
-    <div className="countdown-overlay">
+    <div className="countdown-overlay" role="status" aria-live="polite">
       <div className="countdown-overlay__status">MISSION READY</div>
       <div className="countdown-overlay__value">{label}</div>
     </div>

@@ -22,4 +22,22 @@ describe('CountdownOverlay', () => {
     render(<CountdownOverlay countdown={{ remainingSeconds: 0 }} />);
     expect(screen.getByText('LIFTOFF')).toBeInTheDocument();
   });
+
+  it('exposes the countdown as an assertive-free live region so screen readers announce each value', () => {
+    render(<CountdownOverlay countdown={{ remainingSeconds: 3 }} />);
+    const region = screen.getByRole('status');
+    expect(region).toHaveAttribute('aria-live', 'polite');
+    expect(region).toHaveTextContent('MISSION READY');
+    expect(region).toHaveTextContent('T-3');
+  });
+
+  it('keeps announcing the live region as the countdown value changes', () => {
+    const { rerender } = render(
+      <CountdownOverlay countdown={{ remainingSeconds: 1 }} />
+    );
+    expect(screen.getByRole('status')).toHaveTextContent('T-1');
+
+    rerender(<CountdownOverlay countdown={{ remainingSeconds: 0 }} />);
+    expect(screen.getByRole('status')).toHaveTextContent('LIFTOFF');
+  });
 });
