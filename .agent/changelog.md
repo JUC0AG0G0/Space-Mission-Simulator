@@ -2293,3 +2293,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
 - Branche/push: main (direct)
 - Coût estimé: 2.3268825000000004 USD
+
+## 2026-08-14T05-39-03-566Z — doc
+- Description: `README.md` ne mentionne nulle part les commandes tactiles
+- Branche/push: main (direct)
+- Coût estimé: 1.1365293 USD
