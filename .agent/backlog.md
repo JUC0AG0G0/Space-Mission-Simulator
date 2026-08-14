@@ -2824,7 +2824,7 @@ l'état.
 
 ## Features à ajouter
 
-- [ ] Le HUD n'affiche jamais l'apoapside/périapside de l'orbite
+- [x] Le HUD n'affiche jamais l'apoapside/périapside de l'orbite
   courante, alors que le calcul existe déjà et que le HUD d'exemple du
   spec les liste explicitement
 
@@ -2867,6 +2867,27 @@ l'état.
   vérifiant que "APOAPSIS"/"PERIAPSIS" s'affichent avec la bonne
   altitude, et un cas de trajectoire d'échappement vérifiant le repli
   `"—"`.
+
+  Fait le 2026-08-14 : `Hud.tsx` appelle désormais
+  `computeOrbitRadiusBounds(spacecraft.position, spacecraft.velocity,
+  centralBody)` et ajoute deux paires `<dt>/<dd>` ("APOAPSIS"/
+  "PERIAPSIS") dans `dl.hud__grid`, juste après "THROTTLE" — exactement
+  comme suggéré par la piste. Un nouvel helper `formatAltitudeOrDash`
+  convertit chaque rayon en altitude au-dessus de la surface (soustrait
+  `centralBody.radius`, même transformation que `altitudeAboveSurface`)
+  via le `formatKm` déjà existant, et affiche `"—"` pour le cas `null`
+  (trajectoire d'échappement, ex. juste après le décollage ou en
+  free-fall à très haute vitesse) plutôt que de laisser `undefined`/
+  `NaN` s'afficher. Deux tests ajoutés dans `tests/ui/Hud.test.tsx`, sur
+  le modèle suggéré par la piste : l'un construit une orbite circulaire
+  connue (même fixture que `tests/physics/orbit.test.ts`, périapside =
+  apoapside = altitude courante) et vérifie que "APOAPSIS"/"PERIAPSIS"
+  s'affichent avec la bonne valeur ; l'autre construit une trajectoire
+  d'échappement (vitesse tangentielle légèrement supérieure à la
+  vitesse de libération) et vérifie le repli `"—"` pour les deux
+  lignes. `npm test` (303 tests), `npm run lint`, `npx tsc --noEmit` et
+  `npm run coverage` (`Hud.tsx` reste à 100 % de lignes/branches,
+  97.97 % de couverture globale) restent propres.
 
 - [x] Aucun `ErrorBoundary` React n'existe : une exception de rendu
   imprévue fait planter toute l'application sur un écran blanc, sans

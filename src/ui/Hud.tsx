@@ -1,6 +1,7 @@
 import type { FlightPhase, GameState } from '../types/simulation';
 import { determineFlightPhase } from '../simulation/flight-phase';
 import { altitudeAboveSurface } from '../simulation/missions/mission';
+import { computeOrbitRadiusBounds } from '../simulation/physics/orbit';
 import { magnitude } from '../simulation/physics/vectors';
 import { totalMass } from '../simulation/spacecraft/spacecraft';
 
@@ -10,6 +11,10 @@ interface HudProps {
 
 function formatKm(meters: number): string {
   return `${(meters / 1000).toFixed(1)} km`;
+}
+
+function formatAltitudeOrDash(radius: number | null, planetRadius: number): string {
+  return radius === null ? '—' : formatKm(radius - planetRadius);
 }
 
 function formatKmPerSec(metersPerSecond: number): string {
@@ -46,6 +51,13 @@ export function Hud({ state }: HudProps) {
   const fuelPercent = Math.round((spacecraft.fuelMass / spacecraft.maxFuel) * 100);
   const throttlePercent = Math.round(spacecraft.engine.throttle * 100);
   const massTonnes = (totalMass(spacecraft) / 1000).toFixed(1);
+  const orbitBounds = computeOrbitRadiusBounds(
+    spacecraft.position,
+    spacecraft.velocity,
+    centralBody,
+  );
+  const apoapsisLabel = formatAltitudeOrDash(orbitBounds?.apoapsis ?? null, centralBody.radius);
+  const periapsisLabel = formatAltitudeOrDash(orbitBounds?.periapsis ?? null, centralBody.radius);
 
   return (
     <div className="hud">
@@ -74,6 +86,12 @@ export function Hud({ state }: HudProps) {
 
         <dt>THROTTLE</dt>
         <dd>{throttlePercent}%</dd>
+
+        <dt>APOAPSIS</dt>
+        <dd>{apoapsisLabel}</dd>
+
+        <dt>PERIAPSIS</dt>
+        <dd>{periapsisLabel}</dd>
       </dl>
       <div className="hud__engine" role="status" aria-live="polite">
         ENGINE {spacecraft.engine.active ? 'ONLINE' : 'OFFLINE'}

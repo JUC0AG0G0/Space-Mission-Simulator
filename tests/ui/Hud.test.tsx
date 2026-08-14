@@ -125,6 +125,47 @@ describe('Hud', () => {
     expect(screen.getByText('MISSION FAILED')).toBeInTheDocument();
   });
 
+  it('shows the apoapsis and periapsis of a closed orbit', () => {
+    const state = makeState();
+    const { centralBody } = state;
+    // Circular orbit: periapsis and apoapsis both equal the current radius.
+    const radius = centralBody.radius + 100_000;
+    const circularSpeed = Math.sqrt(centralBody.gravitationalParameter / radius);
+    const circularState: GameState = {
+      ...state,
+      spacecraft: {
+        ...state.spacecraft,
+        position: { x: radius, y: 0 },
+        velocity: { x: 0, y: circularSpeed },
+      },
+    };
+
+    render(<Hud state={circularState} />);
+
+    expect(screen.getByText('APOAPSIS')).toBeInTheDocument();
+    expect(screen.getByText('PERIAPSIS')).toBeInTheDocument();
+    expect(screen.getAllByText('100.0 km').length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('shows a dash placeholder for apoapsis/periapsis on an escape trajectory', () => {
+    const state = makeState();
+    const { centralBody } = state;
+    const radius = centralBody.radius + 100_000;
+    const escapeSpeed = Math.sqrt((2 * centralBody.gravitationalParameter) / radius);
+    const escapingState: GameState = {
+      ...state,
+      spacecraft: {
+        ...state.spacecraft,
+        position: { x: radius, y: 0 },
+        velocity: { x: 0, y: escapeSpeed + 1 },
+      },
+    };
+
+    render(<Hud state={escapingState} />);
+
+    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(2);
+  });
+
   it('exposes the flight phase as an assertive-free live region so screen readers announce it', () => {
     render(<Hud state={makeState()} />);
     const regions = screen.getAllByRole('status');
