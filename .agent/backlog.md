@@ -2208,7 +2208,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   `src/simulation/simulation-engine.ts` est désormais à 100 % de lignes/
   branches/fonctions (`98.36 %` de couverture globale, en légère hausse).
 
-- [ ] Supprimer la garde interne inatteignable `spacecraft.maxFuel > 0`
+- [x] Supprimer la garde interne inatteignable `spacecraft.maxFuel > 0`
   dans `Hud.tsx`
 
   Revue du 2026-08-14 (17e passe) : `npm run coverage` signale
@@ -2239,6 +2239,20 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   `src/ui/Hud.tsx` passe à 100 % de lignes/branches une fois la garde
   retirée, et que `npm test`/`npm run lint`/`npx tsc --noEmit` restent
   propres.
+
+  Fait le 2026-08-14 : la garde `spacecraft.maxFuel > 0 ? ... : 0` est
+  supprimée dans `src/ui/Hud.tsx` ; `fuelPercent` se calcule désormais
+  directement en `Math.round((spacecraft.fuelMass / spacecraft.maxFuel)
+  * 100)`, avec un court commentaire rappelant que `maxFuel` est
+  toujours strictement positif pour tout `Spacecraft` construit par
+  `createSpacecraft`/les modèles de fusée. Comportement observable
+  inchangé pour tous les cas atteignables aujourd'hui : aucun nouveau
+  test requis. `npm run coverage` confirme que `src/ui/Hud.tsx` est
+  désormais à 100 % de lignes/branches/fonctions (98.03 % de couverture
+  globale, en légère hausse) ; les seules lignes non couvertes
+  restantes sont `App.tsx:55,57` et `SimulationScreen.tsx:148-164`,
+  déjà jugées trop marginales lors de passes précédentes. `npm test`
+  (279 tests), `npm run lint` et `npx tsc --noEmit` restent propres.
 
 ## Tests manquants
 

@@ -41,10 +41,9 @@ export function Hud({ state }: HudProps) {
     activeMission: state.activeMission,
   });
   const speed = magnitude(spacecraft.velocity);
-  const fuelPercent =
-    spacecraft.maxFuel > 0
-      ? Math.round((spacecraft.fuelMass / spacecraft.maxFuel) * 100)
-      : 0;
+  // maxFuel is always strictly positive for any Spacecraft built by
+  // createSpacecraft/the rocket models, so no zero-division guard is needed.
+  const fuelPercent = Math.round((spacecraft.fuelMass / spacecraft.maxFuel) * 100);
   const throttlePercent = Math.round(spacecraft.engine.throttle * 100);
   const massTonnes = (totalMass(spacecraft) / 1000).toFixed(1);
 
