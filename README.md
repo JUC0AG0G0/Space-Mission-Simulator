@@ -1,5 +1,7 @@
 # Space Mission Simulator
 
+[![CI](https://github.com/JUC0AG0G0/Space-Mission-Simulator/actions/workflows/ci.yml/badge.svg)](https://github.com/JUC0AG0G0/Space-Mission-Simulator/actions/workflows/ci.yml)
+
 A small, browser-based space mission simulator. Build a stable orbit around
 a simplified Earth using a deterministic physics engine, driven entirely in
 the client — no backend, no database, no external API.

@@ -3473,7 +3473,7 @@ actionnables en l'état.
 
 ## Documentation
 
-- [ ] `README.md` ne mentionne pas l'intégration continue (CI)
+- [x] `README.md` ne mentionne pas l'intégration continue (CI)
   désormais configurée sur GitHub
 
   `.github/workflows/ci.yml` (ajouté lors d'une passe précédente de ce
@@ -3501,6 +3501,19 @@ actionnables en l'état.
   workflow). Item documentation pure, aucun changement de code ni de
   test attendu — comme les items déjà cochés similaires dans cette
   section, seul `npm run lint` doit rester propre.
+
+  Fait le 2026-08-14 : badge de statut Markdown ajouté juste sous le
+  titre `# Space Mission Simulator` du `README.md`, exactement au
+  format suggéré par la piste — `[![CI](https://github.com/
+  JUC0AG0G0/Space-Mission-Simulator/actions/workflows/ci.yml/badge.svg)]
+  (https://github.com/JUC0AG0G0/Space-Mission-Simulator/actions/
+  workflows/ci.yml)` — URL confirmée cohérente avec `git remote -v`
+  (`git@github.com:JUC0AG0G0/Space-Mission-Simulator.git`). Le badge
+  affichera "no status"/gris tant qu'aucun run n'a encore eu lieu sur
+  `main` avec ce fichier de workflow, comme prévenu par la piste ; ce
+  ne sera vérifiable qu'après le prochain push vers `origin`, hors du
+  contrôle direct de ce run. Item documentation pure : aucun fichier de
+  code ni de test modifié. `npm run lint` reste propre.
 
 - [x] La section "Architecture" du `README.md` décrit encore `src/ui/`
   comme un ensemble de composants qui ne traduisent que les entrées
