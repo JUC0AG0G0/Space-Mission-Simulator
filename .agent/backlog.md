@@ -2280,7 +2280,7 @@ actionnables en l'état.
 
 ## Features à ajouter
 
-- [ ] Aucun `ErrorBoundary` React n'existe : une exception de rendu
+- [x] Aucun `ErrorBoundary` React n'existe : une exception de rendu
   imprévue fait planter toute l'application sur un écran blanc, sans
   aucun moyen de récupérer sans recharger la page manuellement
 
@@ -2322,6 +2322,32 @@ actionnables en l'état.
   bruit console attendu de React en test, comme le fait déjà
   `console.error` mocké dans d'autres suites de ce projet si
   applicable).
+
+  Fait le 2026-08-14 : nouveau composant de classe
+  `src/ui/ErrorBoundary.tsx`, implémentant
+  `getDerivedStateFromError`/`componentDidCatch` (seul type de
+  composant React capable de le faire), qui journalise l'erreur dans la
+  console puis affiche un écran de repli minimal cohérent avec le reste
+  de l'UI (`.error-boundary`, styles ajoutés dans `src/app/styles.css`
+  sur le même modèle que `.mission-result`) : un titre "SOMETHING WENT
+  WRONG", un court message, et un bouton "Reload" qui appelle
+  `clearSavedMission()` (pour éviter un nouveau crash immédiat si la
+  cause était une sauvegarde corrompue) puis `window.location.reload()`.
+  `src/app/main.tsx` encapsule désormais `<App />` dans
+  `<ErrorBoundary>` à l'intérieur de `<StrictMode>`. Aucun service de
+  reporting externe, conformément à la contrainte "no backend, no
+  external API" du `README.md`. Tests ajoutés dans
+  `tests/ui/ErrorBoundary.test.tsx` (rendu normal des enfants ; un
+  enfant qui lève au rendu déclenche bien l'écran de repli au lieu de
+  laisser l'exception remonter ; le clic sur "Reload" vide la mission
+  sauvegardée et appelle `window.location.reload`), avec `console.error`
+  mocké pendant ces tests pour ne pas polluer la sortie avec le log
+  attendu de React/`componentDidCatch`. Vérifié aussi dans un vrai
+  navigateur (Playwright headless) que l'application démarre toujours
+  normalement avec ce nouvel encapsulage, sans erreur console. `npm
+  test` (294 tests), `npm run lint`, `npx tsc --noEmit`, `npm run
+  build` et `npm run coverage` (`ErrorBoundary.tsx` à 100 % de
+  couverture, 97.92 % de couverture globale) restent propres.
 
 - [x] Aucune commande de vol n'est accessible sur écran tactile : un
   joueur sur mobile/tablette peut configurer et lancer une mission mais
