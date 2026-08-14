@@ -915,7 +915,91 @@ branches, `Hud.tsx` toujours à 100 %) restent propres. Au moment de
 cette mise à jour, les quatre sections actionnables du backlog
 n'avaient plus aucune entrée non cochée.
 
+Revue du 2026-08-14 (30e passe, planification périodique) : au moment
+de cette revue, les quatre sections actionnables du backlog n'avaient
+plus aucune entrée non cochée. `npm test` (284 tests), `npm run lint`
+et `npx tsc --noEmit` sont propres, aucun `TODO`/`FIXME`/`XXX` dans
+`src/`/`tests/`. `npm run coverage` confirme 98.04 % de lignes /
+98.15 % de branches ; les seules lignes non couvertes restent
+`App.tsx:55,57` et `SimulationScreen.tsx:148-164`, toutes deux déjà
+jugées trop marginales lors de passes précédentes. `npm outdated`/`npm
+audit` ne montrent rien de nouveau par rapport à la 16e passe (mêmes
+majeures et mêmes 6 vulnérabilités dev-only déjà documentées sous
+"Divers / à clarifier"). En poursuivant l'audit accessibilité entamé
+lors des 17e/27e/28e/29e passes (marqueur ✓/🔒 de `MainMenu`, `<canvas>`
+de `SimulationScreen`, décompte de `CountdownOverlay`, libellé de phase
+du HUD) sur le dernier élément du HUD encore non couvert par cet angle,
+`.hud__engine` (`src/ui/Hud.tsx:78-80`) a été relu en détail : un vrai
+défaut de la même famille a été identifié, plus net encore que celui du
+libellé de phase déjà corrigé. Ce conteneur affiche "ENGINE ONLINE"/
+"ENGINE OFFLINE" à partir de `spacecraft.engine.active`, sans aucun
+`aria-live`/`role="status"` sur ce `<div>` ni sur son parent (`grep -rn
+"aria-live\|role=\"status\"" src/` — relancé pour cette passe — ne
+montre que `CountdownOverlay.tsx` et `.hud__phase`, pas `.hud__engine`).
+Le joueur peut certes couper le moteur lui-même (touche `SPACE` ou
+bouton tactile "Engine", `src/app/SimulationScreen.tsx`), auquel cas le
+changement suit une action directe — mais `applyFuelConsumption`
+(`src/simulation/spacecraft/spacecraft.ts:64-83`) coupe aussi
+**automatiquement** le moteur dès que le carburant atteint zéro
+(`engine: newFuelMass <= 0 ? { ...spacecraft.engine, active: false } :
+spacecraft.engine`, ligne 78-80), sans aucune action du joueur à cet
+instant précis — exactement le même schéma que la transition de phase
+`LAUNCH` → `FLIGHT` déjà jugée digne d'un `aria-live` lors de la 29e
+passe (un changement d'état déclenché par la simulation, pas par une
+touche pressée). Un joueur non-voyant qui laisse le moteur allumé
+jusqu'à épuisement du carburant n'a donc aucun moyen d'être informé
+automatiquement que le moteur vient de se couper — contrairement au
+joueur voyant, qui voit "ENGINE OFFLINE" apparaître immédiatement dans
+le HUD. `tests/ui/Hud.test.tsx` confirme qu'aucun test actuel ne vérifie
+de comportement d'annonce pour cet élément (seul le texte affiché est
+vérifié à chaque rendu isolé, lignes 77 et 84). Voir le nouvel item sous
+"Bugs connus" ci-dessous. Aucun autre bug, trou de couverture
+actionnable ou doc obsolète trouvé cette fois-ci — le `README.md` reste
+cohérent avec `src/app`/`src/ui`. Les deux points sous "Divers /
+à clarifier" restent des décisions en attente, pas des tâches
+actionnables en l'état.
+
 ## Bugs connus
+
+- [ ] Le statut moteur du HUD (`hud__engine` : `ENGINE ONLINE`/`ENGINE
+  OFFLINE`) change automatiquement sans qu'aucune région `aria-live` ne
+  le couvre
+
+  `src/ui/Hud.tsx:78-80` rend `<div className="hud__engine">ENGINE
+  {spacecraft.engine.active ? 'ONLINE' : 'OFFLINE'}</div>`, sans
+  `aria-live`/`role="status"` ni sur ce `<div>` ni sur son parent
+  (`grep -rn "aria-live\|role=\"status\"" src/` ne montre que
+  `CountdownOverlay.tsx` et `.hud__phase`, tous deux déjà corrigés lors
+  de passes précédentes — pas `.hud__engine`). Le joueur peut couper le
+  moteur lui-même (touche `SPACE` ou bouton tactile "Engine",
+  `src/app/SimulationScreen.tsx`), mais `applyFuelConsumption`
+  (`src/simulation/spacecraft/spacecraft.ts:64-83`) coupe aussi
+  **automatiquement** le moteur dès que le carburant atteint zéro
+  (`engine: newFuelMass <= 0 ? { ...spacecraft.engine, active: false } :
+  spacecraft.engine`), sans aucune action du joueur à cet instant précis
+  — exactement le même schéma que la transition de phase `LAUNCH` →
+  `FLIGHT` déjà jugée digne d'un `aria-live` (changement d'état déclenché
+  par la simulation, pas par une touche pressée). Un joueur non-voyant
+  qui laisse le moteur allumé jusqu'à épuisement du carburant n'a donc
+  aucun moyen d'être informé automatiquement que le moteur vient de se
+  couper, contrairement au joueur voyant qui voit "ENGINE OFFLINE"
+  apparaître immédiatement. `tests/ui/Hud.test.tsx` (lignes 77, 84) ne
+  vérifie que le texte affiché à chaque rendu isolé, pas de comportement
+  d'annonce. C'est la même famille de défaut que les quatre lacunes
+  d'accessibilité déjà corrigées dans ce backlog (marqueur ✓/🔒 de
+  `MainMenu`, `<canvas>` de vol, décompte de `CountdownOverlay`, libellé
+  de phase du HUD), appliquée ici à un cinquième élément qui change de
+  texte automatiquement.
+
+  Piste : ajouter `role="status"` et `aria-live="polite"` sur le
+  conteneur `.hud__engine` dans `Hud.tsx`, sur le même modèle que le
+  correctif déjà appliqué à `.hud__phase`. Étendre
+  `tests/ui/Hud.test.tsx` pour vérifier la présence de l'attribut
+  `aria-live`/`role` sur ce conteneur (ex. un second appel à
+  `screen.getByRole('status')`, ou `screen.getAllByRole('status')` si
+  les deux régions coexistent dans le même rendu — vérifier que le texte
+  "ENGINE ONLINE"/"ENGINE OFFLINE" y apparaît bien), sur le même modèle
+  que les tests d'accessibilité déjà ajoutés pour `.hud__phase`.
 
 - [x] Le libellé de phase de vol du HUD (`hud__phase` : `PRE-LAUNCH`,
   `LAUNCH`, `FLIGHT`, `MISSION COMPLETE`, `MISSION FAILED`) change
