@@ -2527,3 +2527,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Le bouton tactile "Engine" de `TouchControls` n'indique jamais si
 - Branche/push: main (direct)
 - Coût estimé: 2.3642284 USD
+
+## 2026-08-14T21-02-46-600Z — planning
+- Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
+- Branche/push: main (direct)
+- Coût estimé: 2.0099069999999997 USD
