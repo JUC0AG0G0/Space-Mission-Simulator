@@ -2328,3 +2328,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
 - Branche/push: main (direct)
 - Coût estimé: 0.6237693 USD
+
+## 2026-08-14T17-20-55-250Z — feature
+- Description: Supprimer la garde interne inatteignable `spacecraft.maxFuel > 0`
+- Branche/push: main (direct)
+- Coût estimé: 1.1428628 USD
