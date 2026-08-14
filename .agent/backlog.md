@@ -1343,7 +1343,115 @@ obsolète trouvé cette fois-ci — le `README.md` reste cohérent avec
 restent des décisions en attente, pas des tâches actionnables en
 l'état.
 
+Revue du 2026-08-14 (39e passe, planification périodique) : au moment
+de cette revue, les quatre sections actionnables du backlog n'avaient
+plus aucune entrée non cochée. `npm test` (303 tests), `npm run lint`
+et `npx tsc --noEmit` sont propres, aucun `TODO`/`FIXME`/`XXX` dans
+`src/`/`tests/`. `npm run coverage` confirme 97.97 % de lignes /
+98.27 % de branches ; tout `src/simulation`, `src/rendering` et
+`src/ui` reste à 100 % de couverture, les seules lignes non couvertes
+restent `App.tsx:55,57` et `SimulationScreen.tsx:148-164`, déjà jugées
+trop marginales lors de passes précédentes. `npm outdated`/`npm audit`
+ne montrent rien de nouveau par rapport à la 16e passe (mêmes majeures
+et mêmes 6 vulnérabilités dev-only déjà documentées sous "Divers / à
+clarifier"). `spec.md` relu intégralement (les 32 sections, jamais fait
+d'un seul bloc jusqu'ici — seule la section 11 "Instrumentation" avait
+été comparée en détail lors de la 38e passe) sans trouver d'autre écart
+avec l'implémentation actuelle. En vérifiant concrètement le nouvel
+affichage APOAPSIS/PERIAPSIS ajouté au HUD lors de la 38e passe — en
+appelant `computeOrbitRadiusBounds` sur l'état exact renvoyé par
+`createInitialGameState()`, c'est-à-dire l'état vu par un joueur qui
+vient de démarrer une mission (vaisseau posé au sol,
+`velocity: { x: 0, y: 0 }`) — un vrai bug d'affichage a été identifié
+dans cette fonctionnalité toute juste livrée : le calcul renvoie
+`{ periapsis: 0, apoapsis: 600000 }` pour cet état (vérifié en
+exécutant un test ponctuel), ce qui donne une fois converti en
+altitude **APOAPSIS 0.0 km** et **PERIAPSIS -600.0 km** — une valeur
+négative de plusieurs centaines de kilomètres, mathématiquement exacte
+pour une trajectoire radiale dégénérée (moment cinétique nul, le
+vaisseau "tomberait" tout droit vers le centre s'il n'était pas posé au
+sol) mais dénuée de sens pour un joueur qui n'a pas encore décollé.
+Cette fenêtre (vitesse quasi nulle, donc moment cinétique quasi nul)
+correspond exactement à toute la période entre `LIFTOFF` et
+l'allumage effectif du moteur par le joueur, pendant laquelle le HUD de
+vol est déjà affiché (`state.countdown ? <CountdownOverlay ... /> :
+<Hud state={state} />`, `src/app/SimulationScreen.tsx:214`) — donc
+visible dès la fin du compte à rebours, avant toute action du joueur.
+`tests/ui/Hud.test.tsx` confirme qu'aucun test actuel ne construit cet
+état exact (le test "shows LAUNCH while grounded..." repositionne le
+vaisseau au sol mais réutilise la vitesse non nulle de `makeState()`).
+Voir le nouvel item sous "Bugs connus" ci-dessous. Aucun autre bug,
+trou de couverture actionnable ou doc obsolète trouvé cette fois-ci —
+le `README.md` reste cohérent avec `src/app`/`src/ui`. Les trois points
+sous "Divers / à clarifier" restent des décisions en attente, pas des
+tâches actionnables en l'état.
+
 ## Bugs connus
+
+- [ ] Le nouvel affichage APOAPSIS/PERIAPSIS du HUD montre des valeurs
+  aberrantes tant que le vaisseau est immobile sur le pas de tir (avant
+  allumage du moteur)
+
+  `computeOrbitRadiusBounds` (`src/simulation/physics/orbit.ts`, ajoutée
+  et branchée dans `Hud.tsx` lors de la passe précédente de ce backlog,
+  voir l'item coché "Le HUD n'affiche jamais l'apoapside/périapside de
+  l'orbite courante..." sous "Features à ajouter" ci-dessous) part de la
+  formule de vis-viva et du moment cinétique spécifique `r × v` pour
+  calculer périapside/apoapside. Ces deux valeurs deviennent dégénérées
+  quand le moment cinétique est nul, c'est-à-dire quand `velocity` est
+  parallèle à `position` — le cas le plus courant étant précisément
+  `velocity = { x: 0, y: 0 }`, l'état initial exact du vaisseau au
+  décollage (`createInitialSpacecraft`,
+  `src/simulation/simulation-engine.ts:44-58` : `position: { x:
+  centralBody.radius, y: 0 }, velocity: { x: 0, y: 0 }`).
+
+  Vérifié concrètement en appelant `computeOrbitRadiusBounds` sur l'état
+  renvoyé par `createInitialGameState()` (aucune configuration
+  personnalisée, donc l'état exact vu par un joueur qui vient de
+  démarrer une mission) : `{ periapsis: 0, apoapsis: 600000 }`, avec
+  `centralBody.radius = 600000`. Une fois converti en altitude par
+  `formatAltitudeOrDash` (soustraction du rayon, comme pour toutes les
+  autres lignes du HUD), cela donne **APOAPSIS 0.0 km** et **PERIAPSIS
+  -600.0 km** — une valeur négative de plusieurs centaines de
+  kilomètres, correspondant mathématiquement au centre de la planète
+  (`periapsis: 0` = distance nulle au centre), mais qui n'a aucun sens
+  pour un joueur qui n'a même pas encore décollé : le vaisseau n'est
+  sur aucune orbite, il est simplement posé au sol, moteur éteint.
+
+  Le `<canvas>`/HUD de vol n'est affiché qu'une fois le compte à rebours
+  terminé (`state.countdown ? <CountdownOverlay ... /> : <Hud state=
+  {state} />`, `src/app/SimulationScreen.tsx:214`), donc cette valeur
+  aberrante est bien visible dès `LIFTOFF`, avant même que le joueur
+  ait appuyé sur `SPACE`/le bouton tactile "Engine" pour allumer le
+  moteur — c'est-à-dire pendant toute la fenêtre où le vaisseau reste
+  au sol, cloué par la garde `isGrounded`
+  (`src/simulation/simulation-engine.ts:67-77`) qui gèle sa position et
+  sa vitesse tant que la poussée ne dépasse pas la gravité. `npm run
+  coverage` confirme que ce cas précis (vitesse nulle) n'est exercé par
+  aucun test : `tests/ui/Hud.test.tsx` (test "shows LAUNCH while
+  grounded with the engine on", ligne 92-102) positionne bien le
+  vaisseau au sol mais réutilise la vitesse non nulle de `makeState()`
+  (`velocity: { x: 0, y: 7_800 }`), donc ne reproduit pas la vitesse
+  nulle réelle de l'état initial ; `tests/physics/orbit.test.ts` teste
+  déjà le cas `angularMomentum === 0` isolément (probablement pour une
+  autre raison), mais aucun test ne vérifie ce que `Hud`/
+  `formatAltitudeOrDash` affichent concrètement pour ce cas.
+
+  Piste : dans `Hud.tsx`, ne pas afficher le résultat brut de
+  `computeOrbitRadiusBounds` quand la vitesse du vaisseau est
+  quasi nulle (ex. `magnitude(spacecraft.velocity) < 1` — un seuil bas
+  suffit, la valeur exacte importe peu puisqu'il s'agit seulement
+  d'éviter la division par un moment cinétique proche de zéro) : traiter
+  ce cas comme `orbitBounds === null` et afficher `"—"` pour les deux
+  lignes, exactement comme le repli déjà en place pour une trajectoire
+  d'échappement. Ne pas modifier `computeOrbitRadiusBounds` elle-même
+  (la fonction reste mathématiquement correcte et déjà testée à 100 % —
+  le problème est uniquement dans la façon dont `Hud` interprète un
+  résultat dégénéré, pas dans le calcul). Étendre
+  `tests/ui/Hud.test.tsx` avec un cas construit directement à partir de
+  `createInitialGameState()` (état exact du pas de tir, vitesse nulle)
+  vérifiant que "APOAPSIS"/"PERIAPSIS" affichent `"—"` plutôt que "0.0
+  km"/valeur négative.
 
 - [x] Les écrans plein écran (`app`, `main-menu`/`mission-setup`,
   `mission-result`, `error-boundary`) utilisent `height: 100vh`, qui
