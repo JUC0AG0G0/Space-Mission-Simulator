@@ -5,28 +5,54 @@ import { TouchControls } from '../../src/ui/TouchControls';
 
 describe('TouchControls', () => {
   it('renders a button for each movement direction and the engine toggle', () => {
-    render(<TouchControls onEngineToggle={() => {}} onHoldChange={() => {}} />);
+    render(
+      <TouchControls engineActive={false} onEngineToggle={() => {}} onHoldChange={() => {}} />,
+    );
 
     expect(screen.getByRole('button', { name: 'Turn left' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Throttle up' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Throttle down' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Turn right' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Engine' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'ENGINE OFF' })).toBeInTheDocument();
   });
 
   it('calls onEngineToggle when the engine button is clicked', async () => {
     const onEngineToggle = vi.fn();
     const user = userEvent.setup();
-    render(<TouchControls onEngineToggle={onEngineToggle} onHoldChange={() => {}} />);
+    render(
+      <TouchControls
+        engineActive={false}
+        onEngineToggle={onEngineToggle}
+        onHoldChange={() => {}}
+      />,
+    );
 
-    await user.click(screen.getByRole('button', { name: 'Engine' }));
+    await user.click(screen.getByRole('button', { name: 'ENGINE OFF' }));
 
     expect(onEngineToggle).toHaveBeenCalledTimes(1);
   });
 
+  it('reflects the engine state in the button label and aria-pressed', () => {
+    const { rerender } = render(
+      <TouchControls engineActive={false} onEngineToggle={() => {}} onHoldChange={() => {}} />,
+    );
+
+    const offButton = screen.getByRole('button', { name: 'ENGINE OFF' });
+    expect(offButton).toHaveAttribute('aria-pressed', 'false');
+
+    rerender(
+      <TouchControls engineActive={true} onEngineToggle={() => {}} onHoldChange={() => {}} />,
+    );
+
+    const onButton = screen.getByRole('button', { name: 'ENGINE ON' });
+    expect(onButton).toHaveAttribute('aria-pressed', 'true');
+  });
+
   it('reports a movement key as held on pointerdown and released on pointerup', () => {
     const onHoldChange = vi.fn();
-    render(<TouchControls onEngineToggle={() => {}} onHoldChange={onHoldChange} />);
+    render(
+      <TouchControls engineActive={false} onEngineToggle={() => {}} onHoldChange={onHoldChange} />,
+    );
 
     const throttleUp = screen.getByRole('button', { name: 'Throttle up' });
     fireEvent.pointerDown(throttleUp);
@@ -38,7 +64,9 @@ describe('TouchControls', () => {
 
   it('releases the held key if the pointer is cancelled mid-press', () => {
     const onHoldChange = vi.fn();
-    render(<TouchControls onEngineToggle={() => {}} onHoldChange={onHoldChange} />);
+    render(
+      <TouchControls engineActive={false} onEngineToggle={() => {}} onHoldChange={onHoldChange} />,
+    );
 
     const turnLeft = screen.getByRole('button', { name: 'Turn left' });
     fireEvent.pointerDown(turnLeft);
@@ -50,7 +78,9 @@ describe('TouchControls', () => {
 
   it('releases the held key if the pointer leaves the button while still pressed', () => {
     const onHoldChange = vi.fn();
-    render(<TouchControls onEngineToggle={() => {}} onHoldChange={onHoldChange} />);
+    render(
+      <TouchControls engineActive={false} onEngineToggle={() => {}} onHoldChange={onHoldChange} />,
+    );
 
     const turnRight = screen.getByRole('button', { name: 'Turn right' });
     fireEvent.pointerDown(turnRight);

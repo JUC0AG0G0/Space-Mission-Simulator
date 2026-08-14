@@ -1149,7 +1149,7 @@ actionnables en l'état.
 
 ## Bugs connus
 
-- [ ] Le bouton tactile "Engine" de `TouchControls` n'indique jamais si
+- [x] Le bouton tactile "Engine" de `TouchControls` n'indique jamais si
   le moteur est actuellement allumé ou éteint
 
   `src/ui/TouchControls.tsx:39-45` rend le bouton moteur ainsi :
@@ -1209,7 +1209,32 @@ actionnables en l'état.
   le bouton reflète bien l'état réel du moteur après un
   allumage/extinction.
 
-
+  Fait le 2026-08-14 : `TouchControlsProps` porte désormais un nouveau
+  champ `engineActive: boolean`, câblé depuis `SimulationScreen.tsx`
+  avec `state.spacecraft.engine.active` (exactement la même source que
+  `Hud.tsx`). Le bouton "Engine" de `TouchControls.tsx` affiche
+  maintenant "ENGINE ON"/"ENGINE OFF" (vocabulaire aligné sur "ENGINE
+  ONLINE"/"ENGINE OFFLINE" du HUD) au lieu du texte statique "Engine",
+  porte `aria-pressed={engineActive}`, et une nouvelle classe
+  `touch-controls__button--engine-active` (utilisant `--color-success`,
+  déjà utilisée ailleurs dans `styles.css` pour les états positifs)
+  change sa couleur de fond/bordure/texte quand le moteur est actif —
+  en plus du retour tactile `:active` déjà présent. Tests étendus dans
+  `tests/ui/TouchControls.test.tsx` (nouveau test vérifiant le
+  libellé/`aria-pressed` pour `engineActive: true` et `false`, plus les
+  tests existants adaptés au nouveau texte de bouton) et dans
+  `tests/ui/SimulationScreen.test.tsx` (le test d'intégration existant
+  du tap sur le bouton Engine vérifie désormais aussi que le libellé et
+  `aria-pressed` du bouton changent après le basculement). Un test
+  préexistant ("gates the flight HUD behind the pre-flight countdown")
+  utilisait une regex générique `/ENGINE/` qui matchait accidentellement
+  le nouveau texte du bouton tactile (déjà monté pendant le countdown,
+  comportement inchangé par ce correctif) ; remplacé par deux
+  assertions ciblant spécifiquement le texte du HUD ("ENGINE ONLINE"/
+  "ENGINE OFFLINE"), qui est la donnée réellement pertinente pour ce
+  test. `npm test` (295 tests), `npm run lint`, `npx tsc --noEmit` et
+  `npm run coverage` (`TouchControls.tsx` reste à 100 % de
+  lignes/branches) restent propres.
 
 - [x] Aucune gestion du focus clavier lors des transitions d'écran :
   un utilisateur au clavier/lecteur d'écran perd son repère à chaque

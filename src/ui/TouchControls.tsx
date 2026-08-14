@@ -1,6 +1,8 @@
 type HoldKey = 'w' | 's' | 'a' | 'd';
 
 interface TouchControlsProps {
+  /** Whether the spacecraft engine is currently on, mirrored from `Hud`. */
+  engineActive: boolean;
   onEngineToggle: () => void;
   onHoldChange: (key: HoldKey, active: boolean) => void;
 }
@@ -18,7 +20,7 @@ const HOLD_BUTTONS: Array<{ key: HoldKey; label: string; symbol: string; classNa
  * media query in styles.css — the DOM is always present so it stays simple
  * to test, but a mouse-driven desktop never sees it.
  */
-export function TouchControls({ onEngineToggle, onHoldChange }: TouchControlsProps) {
+export function TouchControls({ engineActive, onEngineToggle, onHoldChange }: TouchControlsProps) {
   return (
     <div className="touch-controls">
       <div className="touch-controls__movement">
@@ -42,10 +44,13 @@ export function TouchControls({ onEngineToggle, onHoldChange }: TouchControlsPro
       </div>
       <button
         type="button"
-        className="touch-controls__button touch-controls__button--engine"
+        className={`touch-controls__button touch-controls__button--engine${
+          engineActive ? ' touch-controls__button--engine-active' : ''
+        }`}
+        aria-pressed={engineActive}
         onClick={onEngineToggle}
       >
-        Engine
+        {engineActive ? 'ENGINE ON' : 'ENGINE OFF'}
       </button>
     </div>
   );

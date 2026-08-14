@@ -222,6 +222,7 @@ export function SimulationScreen({ missionConfiguration, onExit }: SimulationScr
         <ControlsPanel />
       </div>
       <TouchControls
+        engineActive={state.spacecraft.engine.active}
         onEngineToggle={() => engineRef.current.applyCommand({ toggleEngine: true }, 0)}
         onHoldChange={handleTouchHoldChange}
       />

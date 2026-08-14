@@ -80,7 +80,12 @@ describe('SimulationScreen', () => {
     renderScreen();
 
     expect(screen.getByText('MISSION READY')).toBeInTheDocument();
-    expect(screen.queryByText(/ENGINE/)).not.toBeInTheDocument();
+    // The Hud (with its "ENGINE ONLINE"/"ENGINE OFFLINE" status) is swapped
+    // out for the CountdownOverlay during the countdown; the on-screen touch
+    // Engine button is unrelated and stays mounted throughout, so it's not
+    // a signal of the flight HUD being active.
+    expect(screen.queryByText('ENGINE ONLINE')).not.toBeInTheDocument();
+    expect(screen.queryByText('ENGINE OFFLINE')).not.toBeInTheDocument();
   });
 
   it('exposes the flight canvas to assistive technology by its accessible name', () => {
@@ -273,15 +278,19 @@ describe('SimulationScreen', () => {
     applyCommandSpy.mockRestore();
   });
 
-  it('toggles the engine when the on-screen touch Engine button is tapped', () => {
+  it('toggles the engine when the on-screen touch Engine button is tapped, and the button reflects the new state', () => {
     const frame = renderScreen();
     clearCountdown(frame);
     expect(screen.getByText('ENGINE OFFLINE')).toBeInTheDocument();
+    const engineButton = screen.getByRole('button', { name: 'ENGINE OFF' });
+    expect(engineButton).toHaveAttribute('aria-pressed', 'false');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Engine' }));
+    fireEvent.click(engineButton);
     frame.advance(16);
 
     expect(screen.getByText('ENGINE ONLINE')).toBeInTheDocument();
+    const toggledButton = screen.getByRole('button', { name: 'ENGINE ON' });
+    expect(toggledButton).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('applies a continuous-movement command while a touch control button is held, and stops once released', () => {

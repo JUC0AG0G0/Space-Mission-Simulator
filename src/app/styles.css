@@ -784,6 +784,12 @@ body {
     height: 56px;
     border-radius: 3px;
   }
+
+  .touch-controls__button--engine-active {
+    background: rgba(107, 242, 161, 0.18);
+    border-color: var(--color-success);
+    color: var(--color-success);
+  }
 }
 
 @media (max-width: 640px) {
