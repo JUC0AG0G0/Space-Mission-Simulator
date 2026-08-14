@@ -2503,3 +2503,7 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: `README.md` ne mentionne pas l'intégration continue (CI)
 - Branche/push: main (direct)
 - Coût estimé: 1.3462124000000004 USD
+
+## 2026-08-14T21-00-00-000Z — planning
+- Description: Le backlog ne contenait plus de tâche actionnable. Revue complète du dépôt (34e passe) : `npm test` (294 tests), `npm run lint`, `npx tsc --noEmit`, `npm run coverage` (97.92 % de lignes) tous propres, aucun `TODO`/`FIXME`, `npm outdated`/`npm audit` sans nouveauté par rapport aux passes précédentes. Un nouveau bug concret a été identifié en comparant `src/ui/TouchControls.tsx` à `src/ui/Hud.tsx` : le bouton tactile "Engine" affiche toujours le texte statique "Engine", sans jamais lire `spacecraft.engine.active` ni exposer d'`aria-pressed`, alors que le HUD voisin affiche déjà "ENGINE ONLINE"/"ENGINE OFFLINE" à partir de ce même champ — un joueur sur écran tactile n'a donc aucun moyen de savoir, en regardant seulement le bouton, si le prochain appui va allumer ou couper le moteur. Ajouté sous "Bugs connus" dans `.agent/backlog.md` avec une piste de correctif détaillée (prop `active`, texte dynamique, `aria-pressed`, classe CSS d'état).
+- Branche/push: main (non commité par l'agent)

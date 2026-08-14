@@ -1109,7 +1109,107 @@ par ailleurs cohérent avec `src/app`/`src/ui`. Les trois points sous
 "Divers / à clarifier" restent des décisions en attente, pas des tâches
 actionnables en l'état.
 
+Revue du 2026-08-14 (34e passe, planification périodique) : le badge de
+statut CI ajouté lors de la passe précédente est désormais dans
+`README.md` (voir l'entrée cochée correspondante et
+`.agent/changelog.md`). Au moment de cette revue, les quatre sections
+actionnables du backlog n'avaient plus aucune entrée non cochée. `npm
+test` (294 tests), `npm run lint` et `npx tsc --noEmit` sont propres,
+aucun `TODO`/`FIXME`/`XXX` dans `src/`/`tests/`. `npm run coverage`
+confirme 97.92 % de lignes / 98.21 % de branches (le nouvel
+`ErrorBoundary.tsx` est à 100 %, `main.tsx` et `types/simulation.ts`
+restent à 0 % — point d'entrée Vite et fichier de types purs, déjà
+jugés hors périmètre lors de passes précédentes) ; les seules lignes de
+code applicatif non couvertes restent `App.tsx:55,57` et
+`SimulationScreen.tsx:148-164`, toutes deux déjà jugées trop marginales.
+`npm outdated`/`npm audit` ne montrent rien de nouveau par rapport à la
+16e passe (mêmes majeures et mêmes 6 vulnérabilités dev-only déjà
+documentées sous "Divers / à clarifier"). En relisant `TouchControls.tsx`
+en détail — jamais spécifiquement comparé à `Hud.tsx` sur le plan de la
+cohérence d'état visuel, seulement sous l'angle fonctionnel/gameplay
+lors de son ajout — un vrai défaut a été identifié : le bouton tactile
+"Engine" (`src/ui/TouchControls.tsx:39-45`) affiche toujours le texte
+statique `Engine`, sans jamais lire `spacecraft.engine.active`, alors
+que `Hud.tsx:78-79` affiche "ENGINE ONLINE"/"ENGINE OFFLINE" à partir de
+ce même champ juste à côté. `grep -n "engine.active" src/ui/*.tsx` ne
+montre que `Hud.tsx` — `TouchControls.tsx` n'a aucune indication visuelle
+(couleur, texte, `aria-pressed`) de l'état courant du moteur, alors que
+`SimulationScreen.tsx:206-226` a déjà `state.spacecraft.engine.active`
+disponible au même endroit où `<TouchControls onEngineToggle=... />` est
+rendu. Un joueur sur écran tactile ne peut donc pas savoir, en regardant
+uniquement le bouton, si le prochain appui va allumer ou couper le
+moteur — il doit reporter son regard sur le HUD voisin (`.hud__engine`),
+ce qui n'est pas garanti d'être dans son champ de vision pendant un vol
+qui demande une attention constante au D-pad. Voir le nouvel item sous
+"Bugs connus" ci-dessous. Aucun autre bug, trou de couverture
+actionnable ou doc obsolète trouvé cette fois-ci — le `README.md` reste
+cohérent avec `src/app`/`src/ui`. Les trois points sous "Divers /
+à clarifier" restent des décisions en attente, pas des tâches
+actionnables en l'état.
+
 ## Bugs connus
+
+- [ ] Le bouton tactile "Engine" de `TouchControls` n'indique jamais si
+  le moteur est actuellement allumé ou éteint
+
+  `src/ui/TouchControls.tsx:39-45` rend le bouton moteur ainsi :
+
+  ```tsx
+  <button
+    type="button"
+    className="touch-controls__button touch-controls__button--engine"
+    onClick={onEngineToggle}
+  >
+    Engine
+  </button>
+  ```
+
+  Le texte est une chaîne statique `"Engine"`, et
+  `.touch-controls__button--engine` (`src/app/styles.css:782-786`) n'a
+  qu'une largeur/hauteur/`border-radius` fixes — aucune classe ni
+  attribut ne varie selon que le moteur est allumé ou éteint. Le
+  composant ne reçoit d'ailleurs même pas cette information : sa
+  signature (`TouchControlsProps`, lignes 3-6) n'expose que
+  `onEngineToggle`/`onHoldChange`, pas l'état du moteur. Comparer avec
+  `Hud.tsx:78-80`, qui affiche juste à côté "ENGINE ONLINE"/"ENGINE
+  OFFLINE" à partir de `spacecraft.engine.active`, avec
+  `role="status"`/`aria-live="polite"` (corrigé lors d'une passe
+  antérieure de ce backlog). `SimulationScreen.tsx` a pourtant déjà
+  cette valeur sous la main à l'endroit où `<TouchControls>` est monté
+  (`state.spacecraft.engine.active`, lignes 206-226), donc ce n'est pas
+  une donnée manquante, juste un fil non tiré jusqu'au composant.
+
+  Concrètement : un joueur sur écran tactile qui garde les yeux sur le
+  D-pad/bouton Engine (l'un des points d'interaction principaux pendant
+  le vol) n'a aucun moyen de savoir, sans reporter son regard ailleurs
+  sur l'écran, si le moteur est actuellement allumé ou éteint avant
+  d'appuyer — contrairement au joueur clavier, qui voit `ENGINE
+  ONLINE`/`ENGINE OFFLINE` dans le HUD au même endroit que le reste de
+  sa télémétrie qu'il consulte déjà. Ce n'est pas qu'un défaut
+  cosmétique : appuyer par erreur en pensant allumer un moteur déjà
+  actif le coupe à la place (`toggleEngine`,
+  `src/simulation/simulation-engine.ts`), ce qui peut interrompre une
+  poussée en cours sans que le joueur l'ait voulu.
+
+  Piste : faire remonter `active: boolean` (ou directement
+  `spacecraft.engine.active`) comme prop de `TouchControls`, l'utiliser
+  pour changer le texte du bouton (ex. "ENGINE ON"/"ENGINE OFF", sur le
+  même vocabulaire que le HUD) et ajouter `aria-pressed={active}` pour
+  que les lecteurs d'écran/technologies d'assistance sur mobile
+  connaissent aussi l'état courant, en plus de la surcouche visuelle
+  (ex. une classe `touch-controls__button--engine-active` dans
+  `styles.css` qui change la couleur de fond/bordure, sur le même
+  principe que `:active` déjà présent pour le retour tactile immédiat).
+  Câbler la prop depuis `SimulationScreen.tsx` avec
+  `state.spacecraft.engine.active`. Étendre
+  `tests/ui/TouchControls.test.tsx` pour vérifier que le texte/
+  `aria-pressed` du bouton changent selon la prop `active` (rendu avec
+  `active: true` puis `active: false`), et ajouter/adapter un test
+  d'intégration dans `tests/ui/SimulationScreen.test.tsx` vérifiant que
+  le bouton reflète bien l'état réel du moteur après un
+  allumage/extinction.
+
+
 
 - [x] Aucune gestion du focus clavier lors des transitions d'écran :
   un utilisateur au clavier/lecteur d'écran perd son repère à chaque
