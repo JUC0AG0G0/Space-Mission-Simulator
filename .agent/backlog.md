@@ -747,7 +747,73 @@ Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
+Revue du 2026-08-14 (26e passe, planification périodique) : au moment de
+cette revue, les quatre sections actionnables du backlog (Bugs connus,
+Features à ajouter, Tests manquants, Documentation) n'avaient plus aucune
+entrée non cochée. `npm test` (279 tests), `npm run lint`, `npx tsc
+--noEmit` et `npm run build` (`tsc && vite build`, 64 modules, aucun
+avertissement) sont tous propres, aucun `TODO`/`FIXME`/`XXX` dans
+`src/`/`tests/`. `npm run coverage` confirme 98.03 % de lignes / 98.15 %
+de branches — tout `src/simulation`, `src/rendering` et `src/ui` est
+désormais à 100 % de couverture ; les seules lignes non couvertes
+restent `App.tsx:55,57` et `SimulationScreen.tsx:148-164`, toutes deux
+déjà jugées trop marginales lors de passes précédentes (repli défensif
+déjà exhaustif, boucle `requestAnimationFrame`/redimensionnement du
+canvas). `npm outdated`/`npm audit` ne montrent rien de nouveau par
+rapport à la 16e passe (mêmes majeures et mêmes 6 vulnérabilités
+dev-only déjà documentées sous "Divers / à clarifier"). Chaque fichier
+de `src/` a un fichier de test dédié (`main.tsx` excepté, déjà jugé hors
+périmètre). Une relecture ciblée de `App.tsx`, `MissionSetup.tsx`,
+`SimulationScreen.tsx`, `TouchControls.tsx`, `simulation-engine.ts`,
+`mission.ts`, `mission-result.ts`, `Hud.tsx`, `MissionPanel.tsx`,
+`ControlsPanel.tsx`, `CountdownOverlay.tsx`, `SimulationControls.tsx` et
+`MainMenu.tsx` n'a fait remonter aucun bug de logique ni trou de
+couverture supplémentaire. Un vrai défaut concret, jamais audité lors
+des 25 passes précédentes, a en revanche été trouvé en comparant
+`index.html` au reste des assets statiques du dépôt : aucune balise
+`<link rel="icon">` n'y figure, et aucun fichier favicon n'existe nulle
+part dans le dépôt (`public/` ne contient qu'un `.gitkeep`) — vérifié en
+démarrant `npm run dev` et en interrogeant `/favicon.ico` avec `curl`,
+qui répond `404`, et confirmé aussi absent de `dist/` après `npm run
+build`. Voir le nouvel item sous "Bugs connus" ci-dessous. Aucun autre
+bug, trou de couverture actionnable ou doc obsolète trouvé cette
+fois-ci — le `README.md` reste cohérent avec `src/app`/`src/ui`. Les
+deux points sous "Divers / à clarifier" restent des décisions en
+attente, pas des tâches actionnables en l'état.
+
 ## Bugs connus
+
+- [ ] Aucun favicon n'est servi : le navigateur reçoit une 404 sur
+  `/favicon.ico` à chaque chargement de l'application
+
+  `index.html` ne contient aucune balise `<link rel="icon" ...>` dans son
+  `<head>` (seuls `<meta charset>`, `<meta name="viewport">` et `<title>`
+  y figurent), et le dépôt ne contient aucun fichier favicon nulle part
+  — `public/` (référencé par défaut comme racine des assets statiques de
+  Vite) ne contient qu'un `.gitkeep`. Confirmé concrètement : `npm run
+  dev` puis `curl -s -o /dev/null -w '%{http_code}' http://localhost:
+  <port>/favicon.ico` répond `404` (le navigateur demande cette URL par
+  défaut sur toute page qui n'indique pas explicitement d'icône) ; `npm
+  run build` produit un `dist/` sans aucun fichier favicon ni référence
+  à une icône dans `dist/index.html`. Ce n'est pas bloquant pour jouer,
+  mais c'est une requête ratée systématique visible dans les DevTools
+  (onglet Network/Console) à chaque chargement, et l'onglet du
+  navigateur affiche l'icône générique par défaut au lieu d'une icône
+  dédiée au jeu — un défaut de finition simple à corriger, jamais
+  identifié lors des 25 passes précédentes de ce backlog (qui portaient
+  sur la logique de jeu, l'accessibilité, le CSS responsive et la
+  couverture de tests, pas sur les assets statiques racine).
+
+  Piste : ajouter un favicon minimal (un simple SVG suffit, pas besoin
+  d'un jeu d'icônes multi-résolution pour ce projet V0 — ex.
+  `public/favicon.svg` avec une forme simple sur le thème spatial/fusée)
+  et référencer `<link rel="icon" type="image/svg+xml" href="/favicon.svg"
+  />` dans le `<head>` d'`index.html`, sur le modèle du template Vite par
+  défaut. Vérifier après coup que `npm run dev` ne renvoie plus de `404`
+  sur la requête d'icône du navigateur, et que `npm run build` copie
+  bien le fichier dans `dist/`. Item purement statique (HTML + un
+  fichier d'asset) : aucun test unitaire n'est attendu au-delà de
+  `npm run build`/`npm run lint` qui doivent rester propres.
 
 - [x] Sur un viewport très étroit (< 320px CSS, ex. Galaxy Fold replié
   ~280px), l'écran `MissionSetup` (et potentiellement `MissionResult`/
