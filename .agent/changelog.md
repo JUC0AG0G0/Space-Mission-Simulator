@@ -2556,3 +2556,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
 - Branche/push: main (direct)
 - Coût estimé: 2.1156045000000003 USD
+
+## 2026-08-14T21-13-32-575Z — bugfix
+- Description: L'écran de repli d'`ErrorBoundary` ne déplace pas le focus
+- Branche/push: main (direct)
+- Coût estimé: 2.4659489999999997 USD
