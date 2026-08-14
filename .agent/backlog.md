@@ -866,7 +866,83 @@ couverture actionnable ou doc obsolète trouvé cette fois-ci — le
 sous "Divers / à clarifier" restent des décisions en attente, pas des
 tâches actionnables en l'état.
 
+Revue du 2026-08-14 (29e passe, planification périodique) : le bug
+d'annonce du décompte de `CountdownOverlay`, identifié lors de la 28e
+passe, est désormais corrigé (voir l'entrée cochée correspondante et
+`.agent/changelog.md`). Au moment de cette revue, les quatre sections
+actionnables du backlog n'avaient plus aucune entrée non cochée. `npm
+test` (282 tests), `npm run lint` et `npx tsc --noEmit` sont propres,
+aucun `TODO`/`FIXME`/`XXX` dans `src/`/`tests/`. `npm run coverage`
+confirme 98.04 % de lignes / 98.15 % de branches, inchangé depuis la
+28e passe ; les seules lignes non couvertes restent `App.tsx:55,57` et
+`SimulationScreen.tsx:148-164`, toutes deux déjà jugées trop marginales
+lors de passes précédentes — tout `src/simulation`, `src/rendering` et
+`src/ui` reste à 100 % de couverture. En poursuivant l'audit
+accessibilité entamé lors des 17e/27e/28e passes (marqueur ✓/🔒 de
+`MainMenu`, `<canvas>` de `SimulationScreen`, décompte de
+`CountdownOverlay`) sur un élément encore non couvert par cet angle, le
+`<div className="hud__phase">` de `src/ui/Hud.tsx:55` a été relu en
+détail : un vrai défaut de la même famille a été identifié. Ce
+conteneur affiche le libellé de phase de vol (`PRE-LAUNCH`, `LAUNCH`,
+`FLIGHT`, `MISSION COMPLETE`, `MISSION FAILED`, via `phaseLabel`/
+`determineFlightPhase`, `src/simulation/flight-phase.ts`), qui change
+automatiquement au fil du vol sans action directe du joueur sur cet
+élément (ex. la transition `LAUNCH` → `FLIGHT` dépend de l'altitude/
+vitesse du vaisseau, pas d'une touche pressée) — mais aucun `aria-live`
+ni `role="status"` ne couvre ce `<div>` ni son parent `.hud`.
+`grep -rn "aria-live\|role=\"status\"" src/` (relancé pour cette passe)
+ne montre que `CountdownOverlay.tsx`, corrigé lors de la passe
+précédente ; `hud__phase` n'apparaît dans aucun résultat. Contrairement
+à `ALTITUDE`/`VELOCITY`/`FUEL` (qui changent à chaque frame et ne
+doivent délibérément pas être annoncés en continu, sous peine de noyer
+l'utilisateur de lecteur d'écran), le libellé de phase ne change qu'à
+quelques instants clés et précis du vol — c'est une information d'état
+discrète, du même type que le décompte déjà corrigé, pas un flux
+continu. Voir le nouvel item sous "Bugs connus" ci-dessous. Aucun autre
+bug, trou de couverture actionnable ou doc obsolète trouvé cette
+fois-ci — le `README.md` reste cohérent avec `src/app`/`src/ui`. Les
+deux points sous "Divers / à clarifier" restent des décisions en
+attente, pas des tâches actionnables en l'état.
+
 ## Bugs connus
+
+- [ ] Le libellé de phase de vol du HUD (`hud__phase` : `PRE-LAUNCH`,
+  `LAUNCH`, `FLIGHT`, `MISSION COMPLETE`, `MISSION FAILED`) change
+  automatiquement sans qu'aucune région `aria-live` ne le couvre
+
+  `src/ui/Hud.tsx:55` rend `<div className={`hud__phase
+  hud__phase--${phase}`}>{phaseLabel(phase)}</div>`, où `phase` vient de
+  `determineFlightPhase` (`src/simulation/flight-phase.ts`) et change au
+  fil du vol sans que le joueur agisse directement sur cet élément — en
+  particulier la transition `LAUNCH` → `FLIGHT` dépend de l'altitude/
+  vitesse du vaisseau, pas d'une touche pressée à cet instant précis.
+  `grep -rn "aria-live\|role=\"status\"" src/` ne montre aucune
+  occurrence sur `Hud.tsx` (seul `CountdownOverlay.tsx` en a une,
+  ajoutée lors de la 28e passe de ce backlog pour son propre décompte).
+  Sans région `aria-live`, un changement de texte dans le DOM n'est pas
+  annoncé par un lecteur d'écran tant que le focus ne s'y déplace pas
+  explicitement — un joueur non-voyant en vol n'a donc aucun moyen de
+  savoir que la phase a changé (ex. passage effectif en vol libre après
+  le décollage, ou bascule en `MISSION FAILED` juste avant que l'écran
+  de résultat ne prenne le relais) sans naviguer manuellement pour
+  redécouvrir la valeur affichée. C'est la même famille de défaut que
+  les trois lacunes d'accessibilité déjà corrigées dans ce backlog
+  (marqueur ✓/🔒 de `MainMenu`, `<canvas>` de vol, décompte de
+  `CountdownOverlay`), appliquée ici à un quatrième élément qui change
+  de texte automatiquement.
+
+  Piste : ajouter `role="status"` et `aria-live="polite"` sur le
+  conteneur `.hud__phase` dans `Hud.tsx`, sur le même modèle que le
+  correctif déjà appliqué à `CountdownOverlay.tsx` lors de la passe
+  précédente. Ne pas étendre cette région à tout le `.hud` (les valeurs
+  `ALTITUDE`/`VELOCITY`/`FUEL`/`MASS`/`THROTTLE` changent à chaque frame
+  et noieraient l'utilisateur de lecteur d'écran sous des annonces
+  continues) — seul le libellé de phase, qui ne change qu'à quelques
+  instants clés, doit être couvert. Étendre `tests/ui/Hud.test.tsx` pour
+  vérifier la présence de l'attribut `aria-live`/`role` sur ce
+  conteneur (ex. `screen.getByRole('status')` doit exister et contenir
+  le libellé de phase affiché), sur le même modèle que les tests
+  d'accessibilité déjà ajoutés pour `CountdownOverlay.tsx`.
 
 - [x] Le décompte de `CountdownOverlay` (T-3…T-1, LIFTOFF) n'est annoncé
   par aucun lecteur d'écran : aucune région `aria-live` ne couvre son
