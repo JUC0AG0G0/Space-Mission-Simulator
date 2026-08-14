@@ -2418,3 +2418,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Le libellé de phase de vol du HUD (`hud__phase` : `PRE-LAUNCH`,
 - Branche/push: main (direct)
 - Coût estimé: 1.6847439999999998 USD
+
+## 2026-08-14T20-16-20-156Z — planning
+- Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
+- Branche/push: main (direct)
+- Coût estimé: 1.6666663 USD
