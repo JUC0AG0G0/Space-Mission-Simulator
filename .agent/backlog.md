@@ -904,9 +904,20 @@ fois-ci — le `README.md` reste cohérent avec `src/app`/`src/ui`. Les
 deux points sous "Divers / à clarifier" restent des décisions en
 attente, pas des tâches actionnables en l'état.
 
+Suivi du 2026-08-14 : le bug d'annonce du libellé de phase de vol du
+HUD, identifié lors de la 29e passe ci-dessus, est désormais corrigé
+(voir l'entrée cochée correspondante et `.agent/changelog.md`) —
+`Hud.tsx` pose `role="status"`/`aria-live="polite"` sur `.hud__phase`,
+sur le même modèle que le correctif déjà appliqué à
+`CountdownOverlay.tsx`. `npm test` (284 tests), `npm run lint`, `npx
+tsc --noEmit` et `npm run coverage` (98.04 % de lignes / 98.15 % de
+branches, `Hud.tsx` toujours à 100 %) restent propres. Au moment de
+cette mise à jour, les quatre sections actionnables du backlog
+n'avaient plus aucune entrée non cochée.
+
 ## Bugs connus
 
-- [ ] Le libellé de phase de vol du HUD (`hud__phase` : `PRE-LAUNCH`,
+- [x] Le libellé de phase de vol du HUD (`hud__phase` : `PRE-LAUNCH`,
   `LAUNCH`, `FLIGHT`, `MISSION COMPLETE`, `MISSION FAILED`) change
   automatiquement sans qu'aucune région `aria-live` ne le couvre
 
@@ -943,6 +954,22 @@ attente, pas des tâches actionnables en l'état.
   conteneur (ex. `screen.getByRole('status')` doit exister et contenir
   le libellé de phase affiché), sur le même modèle que les tests
   d'accessibilité déjà ajoutés pour `CountdownOverlay.tsx`.
+
+  Fait le 2026-08-14 : `Hud.tsx` pose désormais `role="status"` et
+  `aria-live="polite"` sur le conteneur `.hud__phase`, exactement comme
+  suggéré par la piste — seul ce conteneur porte la région annoncée, le
+  reste du `.hud` (`ALTITUDE`/`VELOCITY`/`FUEL`/`MASS`/`THROTTLE`, qui
+  changent à chaque frame) reste inchangé pour ne pas noyer
+  l'utilisateur de lecteur d'écran sous des annonces continues. Deux
+  tests ajoutés dans `tests/ui/Hud.test.tsx`, sur le même modèle que
+  ceux déjà ajoutés pour `CountdownOverlay.tsx` : l'un vérifie que
+  `screen.getByRole('status')` existe, porte `aria-live="polite"` et
+  contient le libellé de phase affiché ("FLIGHT") ; l'autre re-rend le
+  composant avec un état de mission différent et vérifie que le contenu
+  de la même région passe bien de "FLIGHT" à "MISSION FAILED". `npm
+  test` (284 tests), `npm run lint`, `npx tsc --noEmit` et `npm run
+  coverage` (`Hud.tsx` reste à 100 % de lignes/branches, 98.04 % de
+  couverture globale inchangée) restent propres.
 
 - [x] Le décompte de `CountdownOverlay` (T-3…T-1, LIFTOFF) n'est annoncé
   par aucun lecteur d'écran : aucune région `aria-live` ne couvre son

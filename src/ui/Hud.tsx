@@ -52,7 +52,13 @@ export function Hud({ state }: HudProps) {
       <div className="hud__mission">
         MISSION: {state.activeMission?.name ?? '—'}
       </div>
-      <div className={`hud__phase hud__phase--${phase}`}>{phaseLabel(phase)}</div>
+      <div
+        className={`hud__phase hud__phase--${phase}`}
+        role="status"
+        aria-live="polite"
+      >
+        {phaseLabel(phase)}
+      </div>
       <dl className="hud__grid">
         <dt>ALTITUDE</dt>
         <dd>{formatKm(altitude)}</dd>

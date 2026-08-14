@@ -124,4 +124,26 @@ describe('Hud', () => {
     render(<Hud state={failedState} />);
     expect(screen.getByText('MISSION FAILED')).toBeInTheDocument();
   });
+
+  it('exposes the flight phase as an assertive-free live region so screen readers announce it', () => {
+    render(<Hud state={makeState()} />);
+    const region = screen.getByRole('status');
+    expect(region).toHaveAttribute('aria-live', 'polite');
+    expect(region).toHaveTextContent('FLIGHT');
+  });
+
+  it('keeps announcing the live region as the flight phase changes', () => {
+    const state = makeState();
+    const { rerender } = render(<Hud state={state} />);
+    expect(screen.getByRole('status')).toHaveTextContent('FLIGHT');
+
+    const failedState: GameState = {
+      ...state,
+      activeMission: state.activeMission
+        ? { ...state.activeMission, status: 'failed' }
+        : null,
+    };
+    rerender(<Hud state={failedState} />);
+    expect(screen.getByRole('status')).toHaveTextContent('MISSION FAILED');
+  });
 });
