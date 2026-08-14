@@ -111,8 +111,8 @@ src/rendering/    Draws a GameState onto an HTML Canvas 2D context. Reads
                    simulation state; never mutates it.
 
 src/ui/           React components (HUD, panels, controls) that read
-                   simulation state and turn keyboard input into commands
-                   for the simulation engine.
+                   simulation state and turn keyboard or touch input into
+                   commands for the simulation engine.
 ```
 
 `src/app/App.tsx` routes between the main menu, mission setup, and the

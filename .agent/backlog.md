@@ -735,6 +735,14 @@ clarifier" (vulnérabilités dev-only, boucle `requestAnimationFrame`
 après fin de mission) restent des décisions en attente, pas des tâches
 actionnables en l'état.
 
+Suivi du 2026-08-14 : la lacune de documentation sur la section
+"Architecture" identifiée lors de la 25e passe ci-dessus est désormais
+corrigée (voir l'entrée cochée correspondante et
+`.agent/changelog.md`) — la phrase décrivant `src/ui/` mentionne
+maintenant "keyboard or touch input" au lieu de "keyboard input" seul.
+Item documentation pure, aucun fichier de code ni de test modifié.
+`npm run lint` reste propre.
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
@@ -2526,7 +2534,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
 
 ## Documentation
 
-- [ ] La section "Architecture" du `README.md` décrit encore `src/ui/`
+- [x] La section "Architecture" du `README.md` décrit encore `src/ui/`
   comme un ensemble de composants qui ne traduisent que les entrées
   clavier en commandes, alors que `src/ui/TouchControls.tsx` fait
   exactement la même chose à partir d'entrées tactiles
@@ -2563,6 +2571,13 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   équivalente), sur le même modèle que les élargissements déjà faits
   dans "## Controls"/"## Gameplay" lors de la 24e passe. Item
   documentation pure — aucun changement de code ni de test attendu.
+
+  Fait le 2026-08-14 : la phrase de "## Architecture" décrivant
+  `src/ui/` dans `README.md` est élargie exactement comme suggéré par
+  la piste — "...and turn keyboard or touch input into commands for the
+  simulation engine." — pour couvrir `src/ui/TouchControls.tsx` en plus
+  du clavier. Item documentation pure : aucun fichier de code ni de
+  test modifié. `npm run lint` reste propre.
 
 - [x] La section "Architecture" du `README.md` attribuait encore la
   boucle de jeu (`requestAnimationFrame`, avance de `SimulationEngine`,
