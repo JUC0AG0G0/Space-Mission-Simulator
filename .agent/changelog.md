@@ -2368,3 +2368,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
 - Branche/push: main (direct)
 - Coût estimé: 1.4968674000000004 USD
+
+## 2026-08-14T17-31-22-908Z — bugfix
+- Description: Le `<canvas>` de la simulation de vol n'a ni `role`, ni
+- Branche/push: main (direct)
+- Coût estimé: 1.3262335 USD
