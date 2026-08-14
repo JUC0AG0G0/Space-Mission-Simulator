@@ -783,7 +783,7 @@ attente, pas des tâches actionnables en l'état.
 
 ## Bugs connus
 
-- [ ] Aucun favicon n'est servi : le navigateur reçoit une 404 sur
+- [x] Aucun favicon n'est servi : le navigateur reçoit une 404 sur
   `/favicon.ico` à chaque chargement de l'application
 
   `index.html` ne contient aucune balise `<link rel="icon" ...>` dans son
@@ -814,6 +814,23 @@ attente, pas des tâches actionnables en l'état.
   bien le fichier dans `dist/`. Item purement statique (HTML + un
   fichier d'asset) : aucun test unitaire n'est attendu au-delà de
   `npm run build`/`npm run lint` qui doivent rester propres.
+
+  Fait le 2026-08-14 : nouveau fichier `public/favicon.svg` (une forme
+  simple sur le thème spatial — planète bleu nuit avec une fusée
+  stylisée et ses deux flammes), et nouvelle balise `<link rel="icon"
+  type="image/svg+xml" href="/favicon.svg" />` ajoutée dans le `<head>`
+  d'`index.html`, entre `<meta name="viewport">` et `<title>`, sur le
+  modèle du template Vite par défaut suggéré par la piste. Vérifié
+  concrètement : `npm run build` copie bien `favicon.svg` dans `dist/`
+  (à côté d'`index.html`, qui référence la même balise `<link>`) ; `npm
+  run dev` répond `200` sur `GET /favicon.svg` (`/favicon.ico` répond
+  toujours `404`, mais un navigateur ne le demande plus automatiquement
+  dès qu'une balise `<link rel="icon">` est présente dans le HTML, donc
+  la 404 systématique visible dans les DevTools disparaît). Item
+  purement statique (HTML + un fichier d'asset), sans logique
+  applicative : aucun test unitaire ajouté, conformément à la piste —
+  `npm test` (279 tests), `npm run lint`, `npx tsc --noEmit` et `npm run
+  build` restent tous propres.
 
 - [x] Sur un viewport très étroit (< 320px CSS, ex. Galaxy Fold replié
   ~280px), l'écran `MissionSetup` (et potentiellement `MissionResult`/
