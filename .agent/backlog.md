@@ -1239,7 +1239,125 @@ obsolète trouvé cette fois-ci — le `README.md` reste cohérent avec
 restent des décisions en attente, pas des tâches actionnables en
 l'état.
 
+Revue du 2026-08-14 (37e passe, planification périodique) : au moment
+de cette revue, les quatre sections actionnables du backlog n'avaient
+plus aucune entrée non cochée. `npm test` (301 tests), `npm run lint`
+et `npx tsc --noEmit` sont propres, aucun `TODO`/`FIXME`/`XXX` dans
+`src/`/`tests/`. `npm run coverage` confirme 97.95 % de lignes /
+98.24 % de branches ; tout `src/simulation`, `src/rendering` et
+`src/ui` reste à 100 % de couverture (`ErrorBoundary.tsx` inclus,
+désormais avec sa gestion du focus) — les seules lignes non couvertes
+restent `App.tsx:55,57` et `SimulationScreen.tsx:148-164`, toutes deux
+déjà jugées trop marginales lors de passes précédentes. `npm outdated`/
+`npm audit` ne montrent rien de nouveau par rapport à la 16e passe
+(mêmes majeures et mêmes 6 vulnérabilités dev-only déjà documentées
+sous "Divers / à clarifier"). `spec.md`, `index.html` et
+`package.json` relus sans rien trouver de nouveau (aucune ressource
+externe chargée par `src/app/styles.css`/`index.html`, cohérent avec la
+contrainte "no external API" ; aucun `console.log`/`console.warn` dans
+`src/`). En relisant `src/app/styles.css` en détail sous un angle pas
+encore exploré lors des passes précédentes (le comportement des
+conteneurs plein écran sur un *vrai* navigateur mobile, par opposition
+au layout/débordement déjà audité via Playwright headless), un vrai
+défaut a été identifié : les quatre écrans plein écran de l'application
+— `.app` (`src/app/styles.css:39`, l'écran de simulation),
+`.main-menu`/`.mission-setup` (`src/app/styles.css:312`),
+`.mission-result` (`src/app/styles.css:555`) et `.error-boundary`
+(`src/app/styles.css:662`) — utilisent tous `height: 100vh` sans
+alternative. Sur la plupart des navigateurs mobiles (Safari iOS en
+particulier, mais aussi Chrome Android dans une moindre mesure), `100vh`
+est calculé par rapport à la hauteur maximale théorique du viewport une
+fois la barre d'adresse/les contrôles du navigateur repliés — pas par
+rapport à la hauteur réellement visible tant qu'ils sont affichés (au
+chargement de la page, ou après un défilement vers le haut) ; c'est un
+défaut de longue date de la spécification CSS `vh`, documenté depuis
+plusieurs années et corrigé côté standard par les unités `dvh`
+("dynamic viewport height", supportées par Safari iOS depuis la version
+15.4 et Chrome Android depuis la version 108, donc largement disponibles
+aujourd'hui). `grep -n "100vh\|dvh" src/app/styles.css` confirme qu'
+aucune des quatre règles n'utilise `dvh`, ni en remplacement ni en
+complément. Concrètement, sur un téléphone avec la barre d'adresse
+visible (le cas le plus courant à l'arrivée sur la page), le bas de
+chacun de ces quatre écrans plein écran (le bouton "Launch mission" en
+bas du résumé de `MissionSetup`, les boutons "Back to menu"/"Replay" de
+`MissionResult`, le bouton "Reload" d'`ErrorBoundary`) peut se retrouver
+masqué derrière la barre d'outils du navigateur, sans qu'aucun
+défilement ne soit possible pour l'atteindre (ces conteneurs ne sont pas
+scrollables, `overflow` n'y est explicitement défini que sur `.app`,
+`hidden`) — un défaut d'un genre différent des trois bugs de
+superposition/débordement déjà corrigés dans ce backlog (ceux-là
+touchaient une largeur/orientation d'écran précise, celui-ci touche la
+présence ou non de la barre d'outils du navigateur, invisible aux outils
+d'audit déjà utilisés jusqu'ici — Playwright headless ne simule pas ce
+comportement dynamique des navigateurs mobiles réels). Voir le nouvel
+item sous "Bugs connus" ci-dessous. Aucun autre bug, trou de couverture
+actionnable ou doc obsolète trouvé cette fois-ci — le `README.md` reste
+cohérent avec `src/app`/`src/ui`. Les trois points sous "Divers /
+à clarifier" restent des décisions en attente, pas des tâches
+actionnables en l'état.
+
 ## Bugs connus
+
+- [ ] Les écrans plein écran (`app`, `main-menu`/`mission-setup`,
+  `mission-result`, `error-boundary`) utilisent `height: 100vh`, qui
+  peut masquer le bas de l'écran (boutons compris) derrière la barre
+  d'outils d'un navigateur mobile
+
+  Quatre règles de `src/app/styles.css` dimensionnent leur conteneur
+  plein écran avec `height: 100vh` sans alternative : `.app` (ligne 39,
+  l'écran de simulation — vol, HUD, commandes tactiles), `.main-menu,
+  .mission-setup` (ligne 312, partagée entre le menu principal et la
+  préparation de mission), `.mission-result` (ligne 555) et
+  `.error-boundary` (ligne 662). `grep -n "100vh\|dvh" src/app/
+  styles.css` confirme qu'aucune de ces quatre règles n'utilise `dvh`
+  ("dynamic viewport height"), ni en remplacement ni en complément.
+
+  Sur la plupart des navigateurs mobiles — Safari iOS en particulier,
+  mais aussi Chrome Android dans une moindre mesure —, `100vh` est
+  calculé par rapport à la hauteur maximale théorique du viewport (une
+  fois la barre d'adresse et les contrôles de navigation repliés par un
+  défilement), pas par rapport à la hauteur réellement visible tant
+  qu'ils restent affichés — ce qui est le cas par défaut au chargement
+  de la page, ou après tout retour en haut d'écran. C'est un défaut de
+  longue date de la spécification CSS `vh`, largement documenté, corrigé
+  côté standard par les unités `dvh` (support Safari iOS ≥ 15.4, Chrome
+  Android ≥ 108 — largement disponibles aujourd'hui). Concrètement, sur
+  un téléphone avec la barre d'outils du navigateur visible (le cas le
+  plus courant à l'ouverture de la page), le bas de chacun de ces quatre
+  écrans peut se retrouver masqué derrière cette barre — par exemple le
+  bouton "Launch mission" en bas du résumé de `MissionSetup`, les
+  boutons "Back to menu"/"Replay" de `MissionResult`, ou le bouton
+  "Reload" d'`ErrorBoundary` — sans qu'aucun défilement ne soit possible
+  pour les atteindre, puisqu'aucun de ces conteneurs n'est scrollable
+  (seul `.app` définit explicitement `overflow: hidden`, les trois
+  autres n'ont simplement pas de contenu qui dépasse `100vh` en
+  temps normal, donc rien à faire défiler pour compenser le
+  rétrécissement apparent du viewport). C'est un défaut d'un genre
+  différent des trois bugs de superposition/débordement tactile déjà
+  corrigés dans ce backlog (ceux-là dépendaient d'une largeur/orientation
+  d'écran précise, statique) : celui-ci dépend de la présence ou non de
+  la barre d'outils du navigateur à l'instant présent, un état dynamique
+  invisible aux outils d'audit automatisés déjà utilisés jusqu'ici
+  (Playwright headless ne simule pas ce comportement des navigateurs
+  mobiles réels).
+
+  Piste : pour chacune des quatre règles, garder `height: 100vh;` comme
+  première déclaration (filet de sécurité pour les navigateurs qui ne
+  supportent pas `dvh`, ignorée silencieusement par CSS) et ajouter
+  `height: 100dvh;` juste après, qui écrase la première sur tout
+  navigateur qui la comprend — le motif de repli progressif standard
+  pour cette unité, sans media query ni JS nécessaire. Vérifier après
+  coup qu'aucune régression n'apparaît sur desktop (où `100vh` et
+  `100dvh` sont généralement équivalents, la barre d'adresse n'y étant
+  pas rétractable) via les mêmes contextes Playwright déjà utilisés pour
+  les bugs de mise en page précédents. Comme pour les autres correctifs
+  CSS purs de ce backlog (superposition tactile portrait/paysage,
+  débordement horizontal sous 320px), ce changement n'est pas
+  vérifiable par un test unitaire classique (jsdom ne fait pas de mise
+  en page réelle, et aucun outil headless disponible ici ne simule le
+  rétrécissement dynamique du viewport d'un vrai navigateur mobile) :
+  aucun test à ajouter, une relecture visuelle suffit à confirmer que
+  `100dvh` est bien pris en compte partout où `100vh` l'était.
 
 - [x] L'écran de repli d'`ErrorBoundary` ne déplace pas le focus
   clavier vers son titre, contrairement aux trois autres écrans
