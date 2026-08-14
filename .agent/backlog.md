@@ -1296,6 +1296,53 @@ cohérent avec `src/app`/`src/ui`. Les trois points sous "Divers /
 à clarifier" restent des décisions en attente, pas des tâches
 actionnables en l'état.
 
+Revue du 2026-08-14 (38e passe, planification périodique) : le bug
+`100vh`/`100dvh` identifié lors de la 37e passe est désormais corrigé
+(voir l'entrée cochée correspondante et `.agent/changelog.md`). Au
+moment de cette revue, les quatre sections actionnables du backlog
+(Bugs connus, Features à ajouter, Tests manquants, Documentation)
+n'avaient plus aucune entrée non cochée. `npm test` (301 tests), `npm
+run lint`, `npx tsc --noEmit` et `npm run build` (`tsc && vite build`,
+65 modules, aucun avertissement) sont tous propres, aucun `TODO`/
+`FIXME`/`XXX` dans `src/`/`tests/`. `npm run coverage` confirme
+97.95 % de lignes / 98.24 % de branches ; tout `src/simulation`,
+`src/rendering` et `src/ui` reste à 100 % de couverture, les seules
+lignes non couvertes restent `App.tsx:55,57` et
+`SimulationScreen.tsx:148-164`, toutes deux déjà jugées trop marginales
+lors de passes précédentes. `npm outdated`/`npm audit` ne montrent rien
+de nouveau par rapport à la 16e passe (mêmes majeures et mêmes 6
+vulnérabilités dev-only déjà documentées sous "Divers / à clarifier").
+En relisant `spec.md` en détail (section 11, "Instrumentation" — jamais
+recomparée au HUD réellement livré depuis la génération initiale du
+projet) face à `src/ui/Hud.tsx`, un vrai écart a été identifié : le HUD
+d'exemple du spec liste explicitement `APOAPSIS`/`PERIAPSIS` parmi les
+métriques de vol ("Le système doit être conçu pour permettre l'ajout de
+nouvelles métriques ultérieurement"), mais `Hud.tsx` (lignes 62-77,
+`dl.hud__grid`) ne montre que `ALTITUDE`/`VELOCITY`/`FUEL`/`MASS`/
+`THROTTLE` — aucune trace d'apoapside/périapside dans l'interface,
+alors même que le calcul existe déjà et est déjà entièrement testé :
+`computeOrbitRadiusBounds` (`src/simulation/physics/orbit.ts`,
+100 % de couverture) calcule le périapside/apoapside d'une trajectoire
+à partir de la position/vitesse courantes, mais `grep -rn
+"computeOrbitRadiusBounds" src/` montre qu'il n'est utilisé nulle part
+en dehors de `src/simulation/missions/mission.ts` (la garde interne
+`isStrandedOutsideTargetBand`, déjà documentée dans ce backlog) — jamais
+par le HUD ni aucun autre composant `src/ui`. C'est une lacune
+d'affichage plutôt qu'un trou de couverture ou un bug de logique
+(`orbit.ts` est déjà testé à 100 %), et un item plus substantiel qu'un
+simple ajustement CSS/texte, donc classé sous "Features à ajouter"
+plutôt que "Bugs connus" — voir le nouvel item ci-dessous. C'est aussi
+la première fois que `spec.md` est relu ligne à ligne face au code
+livré lors d'une passe de ce backlog (les 37 passes précédentes
+comparaient surtout `README.md`/`src/` entre eux) ; aucun autre écart
+substantiel n'a été trouvé entre `spec.md` et l'implémentation actuelle
+(architecture, contrôles, persistance, déterminisme, scripts npm — tout
+reste conforme). Aucun autre bug, trou de couverture actionnable ou doc
+obsolète trouvé cette fois-ci — le `README.md` reste cohérent avec
+`src/app`/`src/ui`. Les trois points sous "Divers / à clarifier"
+restent des décisions en attente, pas des tâches actionnables en
+l'état.
+
 ## Bugs connus
 
 - [x] Les écrans plein écran (`app`, `main-menu`/`mission-setup`,
@@ -2776,6 +2823,50 @@ actionnables en l'état.
   fois (`ENGINE ONLINE`).
 
 ## Features à ajouter
+
+- [ ] Le HUD n'affiche jamais l'apoapside/périapside de l'orbite
+  courante, alors que le calcul existe déjà et que le HUD d'exemple du
+  spec les liste explicitement
+
+  `spec.md` (section 11, "Instrumentation") montre un HUD d'exemple qui
+  inclut `APOAPSIS       181 km` et `PERIAPSIS      96 km` en plus des
+  métriques déjà affichées, et précise que "le système doit être conçu
+  pour permettre l'ajout de nouvelles métriques ultérieurement". Or
+  `src/ui/Hud.tsx` (lignes 62-77, `dl.hud__grid`) n'affiche que
+  `ALTITUDE`/`VELOCITY`/`FUEL`/`MASS`/`THROTTLE` — aucune ligne
+  apoapside/périapside. Ce n'est pourtant pas un calcul à écrire depuis
+  zéro : `computeOrbitRadiusBounds(position, velocity, body)`
+  (`src/simulation/physics/orbit.ts`, déjà à 100 % de couverture, testé
+  dans `tests/physics/orbit.test.ts`) calcule exactement le périapside
+  et l'apoapside (en distance au centre du corps central) de la
+  trajectoire képlérienne non propulsée à partir de la position/vitesse
+  courantes, et renvoie `null` pour une trajectoire non liée
+  (échappement). `grep -rn "computeOrbitRadiusBounds" src/` montre
+  qu'il n'est utilisé que par la garde interne `isStrandedOutsideTargetBand`
+  de `src/simulation/missions/mission.ts` — jamais par le HUD ni aucun
+  composant `src/ui`. Un joueur en vol ne peut donc pas savoir où le
+  point haut/bas de sa trajectoire actuelle se situe sans attendre de
+  les atteindre physiquement, alors que c'est une information de
+  pilotage orbital de base (le résumé "MISSION COMPLETE" de
+  `MissionResult.tsx` a lui aussi une altitude max/vitesse max, mais pas
+  d'apoapside/périapside courant en vol).
+
+  Piste : dans `Hud.tsx`, appeler `computeOrbitRadiusBounds(spacecraft
+  .position, spacecraft.velocity, centralBody)` et ajouter deux paires
+  `<dt>/<dd>` ("APOAPSIS"/"PERIAPSIS") dans `dl.hud__grid`, converties
+  en altitude au-dessus de la surface (soustraire `centralBody.radius`,
+  même transformation que `altitudeAboveSurface`) et formatées avec le
+  `formatKm` déjà existant dans ce fichier. Gérer explicitement le cas
+  `null` (trajectoire d'échappement, ex. juste après le décollage
+  quand la vitesse/direction ne forment pas encore une ellipse fermée,
+  ou en free-fall à très haute vitesse) avec un repli textuel simple
+  (ex. `"—"`), plutôt que de laisser `undefined`/`NaN` s'afficher.
+  Étendre `tests/ui/Hud.test.tsx` avec un cas d'orbite fermée connue
+  (mêmes fixtures de position/vitesse que
+  `tests/physics/orbit.test.ts`, pour une valeur numérique prévisible)
+  vérifiant que "APOAPSIS"/"PERIAPSIS" s'affichent avec la bonne
+  altitude, et un cas de trajectoire d'échappement vérifiant le repli
+  `"—"`.
 
 - [x] Aucun `ErrorBoundary` React n'existe : une exception de rendu
   imprévue fait planter toute l'application sur un écran blanc, sans
