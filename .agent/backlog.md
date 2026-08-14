@@ -1147,7 +1147,96 @@ cohérent avec `src/app`/`src/ui`. Les trois points sous "Divers /
 à clarifier" restent des décisions en attente, pas des tâches
 actionnables en l'état.
 
+Revue du 2026-08-14 (35e passe, planification périodique) : le bug
+d'état visuel du bouton tactile "Engine", identifié lors de la 34e
+passe, est désormais corrigé (voir l'entrée cochée correspondante et
+`.agent/changelog.md`). Au moment de cette revue, les quatre sections
+actionnables du backlog n'avaient plus aucune entrée non cochée. `npm
+test` (295 tests), `npm run lint` et `npx tsc --noEmit` sont propres,
+aucun `TODO`/`FIXME`/`XXX` dans `src/`/`tests/`. `npm run coverage`
+confirme 97.93 % de lignes / 98.23 % de branches ; tout
+`src/simulation`, `src/rendering` et `src/ui` reste à 100 % de
+couverture, les seules lignes non couvertes restent `App.tsx:55,57` et
+`SimulationScreen.tsx:148-164`, toutes deux déjà jugées trop marginales
+lors de passes précédentes. `npm outdated`/`npm audit` ne montrent rien
+de nouveau par rapport à la 16e passe (mêmes majeures et mêmes 6
+vulnérabilités dev-only déjà documentées sous "Divers / à clarifier").
+En poursuivant l'audit accessibilité entamé lors des 17e/27e/28e/29e/
+30e passes (marqueur ✓/🔒 de `MainMenu`, `<canvas>` de vol, décompte de
+`CountdownOverlay`, libellé de phase et statut moteur du HUD — tous des
+éléments qui changent automatiquement sans `aria-live`) sur le dernier
+panneau encore non couvert par cet angle, `MissionPanel.tsx` a été relu
+en détail : un vrai défaut de la même famille a été identifié. Ce
+panneau affiche à la fois le statut de la mission (`IN PROGRESS`/
+`SUCCESS`/`FAILED`, `statusLabel`, lignes 7-16) et le marqueur ✓/○ de
+chaque objectif (`objective.completed`, ligne 40), deux valeurs qui
+changent automatiquement en cours de vol sans action directe du joueur
+sur cet élément précis — exactement le même schéma que les cinq
+éléments déjà corrigés dans ce backlog (ex. l'objectif "Reach target
+altitude" passe de ○ à ✓ dès que l'altitude entre dans la bande cible,
+pas au moment d'une touche pressée). `grep -rn "aria-live\|role=
+\"status\"" src/` (relancé pour cette passe) ne montre que `Hud.tsx` et
+`CountdownOverlay.tsx` — `MissionPanel.tsx` n'apparaît dans aucun
+résultat. Un joueur non-voyant en vol n'a donc aucun moyen d'être
+informé automatiquement qu'un objectif vient de se compléter, ou que la
+mission vient de réussir/échouer (l'instant précis où
+`SimulationScreen` bascule vers `MissionResult`), sans naviguer
+manuellement pour redécouvrir l'état affiché — contrairement au joueur
+voyant, qui voit le marqueur et le badge de statut changer
+immédiatement à l'écran. `tests/ui/MissionPanel.test.tsx` confirme
+qu'aucun test actuel ne vérifie de comportement d'annonce (seul le
+texte affiché est vérifié à chaque rendu isolé). Voir le nouvel item
+sous "Bugs connus" ci-dessous. Aucun autre bug, trou de couverture
+actionnable ou doc obsolète trouvé cette fois-ci — le `README.md` reste
+cohérent avec `src/app`/`src/ui`. Les trois points sous "Divers /
+à clarifier" restent des décisions en attente, pas des tâches
+actionnables en l'état.
+
 ## Bugs connus
+
+- [ ] Le statut de mission et les marqueurs d'objectif de
+  `MissionPanel` (`IN PROGRESS`/`SUCCESS`/`FAILED`, ✓/○) changent
+  automatiquement en vol sans qu'aucune région `aria-live` ne les
+  couvre
+
+  `src/ui/MissionPanel.tsx` affiche `statusLabel(mission.status)`
+  (lignes 7-16, dans le `<h2>` du panneau, ligne 31) et un marqueur
+  `✓`/`○` par objectif (`objective.completed`, ligne 40), tous deux
+  recalculés à chaque frame par `evaluateMission`
+  (`src/simulation/missions/mission.ts`) — un objectif se complète
+  (ex. atteindre l'altitude cible) ou la mission entière passe à
+  `'succeeded'`/`'failed'` sans qu'aucune touche ne soit pressée à cet
+  instant précis, exactement le même schéma que les cinq éléments déjà
+  corrigés dans ce backlog (marqueur ✓/🔒 de `MainMenu`, `<canvas>` de
+  vol, décompte de `CountdownOverlay`, libellé de phase et statut
+  moteur du HUD — tous avec `role="status"`/`aria-live="polite"`
+  ajoutés lors de passes précédentes). `grep -rn "aria-live\|role=
+  \"status\"" src/` ne montre que `Hud.tsx` et `CountdownOverlay.tsx` —
+  `MissionPanel.tsx` n'a ni l'un ni l'autre. Sans région `aria-live`,
+  un changement de texte dans le DOM n'est pas annoncé par un lecteur
+  d'écran tant que le focus ne s'y déplace pas explicitement : un
+  joueur non-voyant en vol n'a donc aucun moyen de savoir qu'un
+  objectif vient de se compléter, ni que la mission vient de réussir ou
+  d'échouer, sans naviguer manuellement pour redécouvrir l'état
+  affiché.
+
+  Piste : ajouter `role="status"` et `aria-live="polite"` sur le
+  `<h2>` (ou un conteneur englobant le statut) et sur la `<ul>` des
+  objectifs de `MissionPanel.tsx`, sur le même modèle que les
+  correctifs déjà appliqués à `.hud__phase`/`.hud__engine`
+  (`src/ui/Hud.tsx`) et à `.countdown-overlay`
+  (`src/ui/CountdownOverlay.tsx`). Attention à ne pas dupliquer les
+  annonces : si le statut et les objectifs sont dans deux régions
+  `aria-live` séparées plutôt qu'une seule englobant tout le panneau,
+  vérifier qu'un changement de statut (ex. `'active'` → `'succeeded'`)
+  n'est pas annoncé deux fois si plusieurs objectifs se complètent au
+  même instant. Étendre `tests/ui/MissionPanel.test.tsx` pour vérifier
+  la présence de l'attribut `aria-live`/`role` sur ces deux régions, et
+  qu'un re-rendu avec un statut/objectif différent met bien à jour le
+  contenu de la région déjà présente (pas une région recréée), sur le
+  même modèle que les tests d'accessibilité déjà ajoutés pour
+  `CountdownOverlay.tsx`/`Hud.tsx`.
+
 
 - [x] Le bouton tactile "Engine" de `TouchControls` n'indique jamais si
   le moteur est actuellement allumé ou éteint
