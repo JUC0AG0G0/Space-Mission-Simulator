@@ -694,6 +694,47 @@ probablement négligeable, correctif non trivial sans risquer de
 régresser le bouton "Replay"). Aucun autre bug, trou de couverture
 actionnable ou doc obsolète trouvé cette fois-ci.
 
+Revue du 2026-08-14 (25e passe, planification périodique) : la lacune
+de documentation sur les commandes tactiles, identifiée lors de la 24e
+passe, est désormais corrigée (voir l'entrée cochée correspondante et
+`.agent/changelog.md`). Au moment de cette revue, les quatre sections
+actionnables du backlog n'avaient plus aucune entrée non cochée. `npm
+test` (279 tests), `npm run lint`, `npx tsc --noEmit` et `npm run
+build` sont propres, aucun `TODO`/`FIXME`/`XXX` dans `src/`/`tests/`.
+`npm run coverage` confirme 97.97 % de lignes / 97.89 % de branches,
+inchangé depuis la 21e/22e/23e/24e passe ; les seules lignes non
+couvertes restent `App.tsx:55,57`, `SimulationScreen.tsx:148-164` et
+`Hud.tsx:47`, toutes trois déjà jugées trop marginales lors de passes
+précédentes — tout le code de `src/simulation`/`src/rendering` reste à
+100 % de couverture. `npm outdated`/`npm audit` ne montrent rien de
+nouveau par rapport à la 16e passe (mêmes majeures et mêmes 6
+vulnérabilités dev-only déjà documentées sous "Divers / à clarifier").
+Une relecture complète de chaque fichier de `src/` non spécifiquement
+revisité en détail depuis plusieurs passes (`SimulationControls.tsx`,
+`ControlsPanel.tsx`, `MissionPanel.tsx`, `MainMenu.tsx`,
+`CountdownOverlay.tsx`, `MissionResult.tsx`, `MissionSetup.tsx`,
+`mission-configuration.ts`, `App.tsx`, `app-state.ts`,
+`simulation-engine.ts`, `SimulationScreen.tsx`, `TouchControls.tsx`,
+`mission.ts`, `mission-result.ts`, `orbit.ts`, `celestial-body.ts`,
+`spacecraft.ts`, `canvas-renderer.ts`, `rocket-models.ts`), complétée
+par une vérification numérique du ratio poussée/poids au sol des trois
+modèles de fusée et une relecture de `package.json`/`vite.config.ts`/
+`eslint.config.js`/`.gitignore`/`index.html`, n'a fait remonter aucun
+bug de logique, trou de couverture ou incohérence de configuration.
+Une seule lacune de documentation, mineure mais concrète, a été
+trouvée en comparant la section "## Architecture" du `README.md` au
+code réel : elle décrit toujours `src/ui/` comme un ensemble de
+composants qui "turn keyboard input into commands for the simulation
+engine", alors que `src/ui/TouchControls.tsx` (documenté depuis la 24e
+passe dans les sections "## Controls" et "## Gameplay" du même fichier,
+mais pas dans "## Architecture") fait exactement la même chose à partir
+d'entrées tactiles — voir le nouvel item sous "Documentation"
+ci-dessous. Aucun autre bug, trou de couverture actionnable ou doc
+obsolète trouvé cette fois-ci. Les deux points sous "Divers / à
+clarifier" (vulnérabilités dev-only, boucle `requestAnimationFrame`
+après fin de mission) restent des décisions en attente, pas des tâches
+actionnables en l'état.
+
 Chaque tâche doit rester suffisamment petite pour être réalisée dans un
 seul run et produire un diff raisonnablement limité. Une tâche peut être
 subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
@@ -2484,6 +2525,44 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   (266 tests), `npm run lint` et `npx tsc --noEmit` restent propres.
 
 ## Documentation
+
+- [ ] La section "Architecture" du `README.md` décrit encore `src/ui/`
+  comme un ensemble de composants qui ne traduisent que les entrées
+  clavier en commandes, alors que `src/ui/TouchControls.tsx` fait
+  exactement la même chose à partir d'entrées tactiles
+
+  La section "## Architecture" du `README.md` décrit `src/ui/` ainsi :
+
+  ```text
+  src/ui/           React components (HUD, panels, controls) that read
+                     simulation state and turn keyboard input into commands
+                     for the simulation engine.
+  ```
+
+  `grep -n "keyboard input" README.md` confirme qu'il s'agit de la
+  seule occurrence : cette phrase ne mentionne que "keyboard input".
+  Or `src/ui/TouchControls.tsx` (le D-pad + bouton "Engine" affiché sur
+  écran tactile via la media query `pointer: coarse`, ajouté et corrigé
+  au fil de plusieurs passes précédentes de ce backlog — voir les items
+  cochés "Aucune commande de vol n'est accessible sur écran tactile" et
+  les bugs de superposition tactile déjà résolus sous "Bugs connus")
+  construit exactement le même type de commande (`SimulationCommand`,
+  via `onHoldChange`/`onEngineToggle` câblés dans
+  `SimulationScreen.tsx`) à partir d'événements `pointerdown`/
+  `pointerup` plutôt que `keydown`/`keyup`. Les sections "## Controls"
+  et "## Gameplay" du même `README.md` mentionnent déjà les commandes
+  tactiles depuis la 24e passe de ce backlog (voir l'item coché
+  "`README.md` ne mentionne nulle part les commandes tactiles..."
+  ci-dessous), mais ce correctif n'avait pas touché la section
+  "## Architecture", qui reste donc en retard sur le reste du fichier
+  et sous-décrit le rôle réel de `src/ui/`.
+
+  Piste : élargir la phrase de "## Architecture" pour couvrir les deux
+  sources d'entrée, par exemple "...and turn keyboard or touch input
+  into commands for the simulation engine." (ou une formulation
+  équivalente), sur le même modèle que les élargissements déjà faits
+  dans "## Controls"/"## Gameplay" lors de la 24e passe. Item
+  documentation pure — aucun changement de code ni de test attendu.
 
 - [x] La section "Architecture" du `README.md` attribuait encore la
   boucle de jeu (`requestAnimationFrame`, avance de `SimulationEngine`,
