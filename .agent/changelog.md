@@ -2542,3 +2542,7 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Le statut de mission et les marqueurs d'objectif de
 - Branche/push: main (direct)
 - Coût estimé: 1.8020348000000002 USD
+
+## 2026-08-14T21-12-10-000Z — planning
+- Description: Le backlog ne contenait plus de tâche actionnable (bug/feature/test/doc). Revue complète du dépôt (36e passe) : `npm test` (299 tests), `npm run lint`, `npx tsc --noEmit`, `npm run coverage` (97.94 % de lignes, `src/simulation`/`src/rendering`/`src/ui` à 100 %) tous propres, aucun `TODO`/`FIXME`, `npm outdated`/`npm audit` sans nouveauté. Un nouveau bug d'accessibilité a été identifié en relisant `src/ui/ErrorBoundary.tsx` : contrairement à `MainMenu`/`MissionSetup`/`MissionResult`, son écran de repli ne déplace pas le focus clavier vers son `<h1>` au montage — un oubli de séquencement, ce composant ayant été ajouté avant la convention de gestion du focus introduite pour les trois autres écrans. Ajouté sous "Bugs connus" dans `.agent/backlog.md` avec une piste détaillée (createRef + componentDidUpdate, adapté au composant de classe).
+- Branche/push: main (non commité par l'agent)

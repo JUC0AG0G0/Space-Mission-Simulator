@@ -1192,7 +1192,96 @@ cohérent avec `src/app`/`src/ui`. Les trois points sous "Divers /
 à clarifier" restent des décisions en attente, pas des tâches
 actionnables en l'état.
 
+Revue du 2026-08-14 (36e passe, planification périodique) : au moment
+de cette revue, les quatre sections actionnables du backlog n'avaient
+plus aucune entrée non cochée. `npm test` (299 tests), `npm run lint`
+et `npx tsc --noEmit` sont propres, aucun `TODO`/`FIXME`/`XXX` dans
+`src/`/`tests/`. `npm run coverage` confirme 97.94 % de lignes /
+98.23 % de branches ; tout `src/simulation`, `src/rendering` et
+`src/ui` est désormais à 100 % de couverture (`ErrorBoundary.tsx`
+inclus) — les seules lignes non couvertes restent `App.tsx:55,57` et
+`SimulationScreen.tsx:148-164`, toutes deux déjà jugées trop marginales
+lors de passes précédentes. `npm outdated`/`npm audit` ne montrent rien
+de nouveau par rapport à la 16e passe (mêmes majeures et mêmes 6
+vulnérabilités dev-only déjà documentées sous "Divers / à clarifier").
+`index.html`/`spec.md`/`package.json` relus en détail (balises meta,
+absence de ressource externe chargée par `src/app/styles.css` ou
+`index.html` — cohérent avec la contrainte "no external API" du
+`spec.md` — scripts npm) sans rien trouver d'actionnable.
+`src/simulation/progression/mission-progress.ts` relu en détail (`Set`
+utilisé dans `markMissionCompleted`, aucun risque de doublon) sans bug
+trouvé. En poursuivant l'audit accessibilité entamé lors des
+17e/27e/28e/29e/30e/35e passes (gestion du focus clavier et régions
+`aria-live` déjà appliquées à `MainMenu`/`MissionSetup`/`MissionResult`
+et à plusieurs éléments du HUD/`MissionPanel`/`CountdownOverlay`) sur un
+composant ajouté après ces correctifs et jamais revisité sous cet
+angle, `src/ui/ErrorBoundary.tsx` a été relu en détail : un vrai défaut
+de la même famille que le bug de gestion du focus déjà corrigé pour les
+trois écrans principaux (voir l'item coché "Aucune gestion du focus
+clavier lors des transitions d'écran..." ci-dessous) a été identifié.
+Ce composant affiche son propre `<h1 className="error-boundary__title">`
+(`src/ui/ErrorBoundary.tsx:41`) quand une exception de rendu est
+interceptée — un changement d'écran complet au même titre que les
+transitions déjà couvertes — mais, contrairement à `MainMenu.tsx`,
+`MissionSetup.tsx` et `MissionResult.tsx`, il ne porte ni `ref`, ni
+`tabIndex={-1}`, ni logique de focus au montage : `grep -n "focus\|
+tabIndex" src/ui/ErrorBoundary.tsx` ne renvoie aucun résultat.
+`tests/ui/ErrorBoundary.test.tsx` confirme qu'aucun test actuel ne
+vérifie de comportement de focus (seuls le texte affiché et le clic sur
+"Reload" sont vérifiés). C'est très probablement un oubli de
+séquencement plutôt qu'un choix délibéré : `ErrorBoundary.tsx` a été
+ajouté par une passe antérieure à celle qui a introduit la convention
+de gestion du focus pour les trois autres écrans, et n'a jamais été
+retouché depuis pour l'aligner. Voir le nouvel item sous "Bugs connus"
+ci-dessous. Aucun autre bug, trou de couverture actionnable ou doc
+obsolète trouvé cette fois-ci — le `README.md` reste cohérent avec
+`src/app`/`src/ui`. Les trois points sous "Divers / à clarifier"
+restent des décisions en attente, pas des tâches actionnables en
+l'état.
+
 ## Bugs connus
+
+- [ ] L'écran de repli d'`ErrorBoundary` ne déplace pas le focus
+  clavier vers son titre, contrairement aux trois autres écrans
+  principaux
+
+  `src/ui/ErrorBoundary.tsx` affiche un `<h1 className=
+  "error-boundary__title">SOMETHING WENT WRONG</h1>` (ligne 41) quand
+  une exception de rendu est interceptée — un changement d'écran
+  complet, remplaçant tout l'arbre React monté jusque-là, au même titre
+  que les transitions déjà couvertes par le correctif "Aucune gestion
+  du focus clavier lors des transitions d'écran" (voir l'item coché
+  correspondant plus bas dans cette section). Ce correctif a ajouté un
+  `ref` + `tabIndex={-1}` + un `useEffect` qui appelle `.focus()` au
+  montage sur le `<h1>` de `MainMenu.tsx`, `MissionSetup.tsx` (formulaire
+  et résumé) et `MissionResult.tsx` — mais `ErrorBoundary.tsx` n'a
+  jamais reçu le même traitement (`grep -n "focus\|tabIndex"
+  src/ui/ErrorBoundary.tsx` ne renvoie aucun résultat). Un utilisateur
+  au clavier/lecteur d'écran qui déclenche accidentellement ce chemin
+  (bug de rendu imprévu ailleurs dans l'app) se retrouve donc, comme
+  avant ce correctif pour les trois autres écrans, avec le focus resté
+  sur un élément qui n'existe plus dans le nouveau DOM — la plupart des
+  navigateurs le reportent silencieusement sur `<body>`, sans aucune
+  indication qu'un nouvel écran (le message d'erreur, potentiellement
+  la seule information exploitable pour comprendre ce qui vient de se
+  passer) vient de s'afficher. `tests/ui/ErrorBoundary.test.tsx` ne
+  vérifie aujourd'hui que le texte affiché et le comportement du bouton
+  "Reload", pas de comportement de focus.
+
+  Piste : comme `ErrorBoundary` est un composant de classe (obligatoire
+  pour `componentDidCatch`/`getDerivedStateFromError`, donc pas de
+  hooks), utiliser `createRef<HTMLHeadingElement>()` plutôt que
+  `useRef`, et appeler `.focus()` dans `componentDidUpdate` (déclenché
+  quand `this.state.hasError` passe de `false` à `true` — comparer
+  `prevState.hasError`) plutôt que dans un `useEffect` — sur le même
+  modèle que le correctif déjà appliqué aux trois écrans fonctionnels,
+  mais adapté au cycle de vie d'un composant de classe. Ajouter
+  `tabIndex={-1}` sur le `<h1>`. Ajouter un test dans
+  `tests/ui/ErrorBoundary.test.tsx` vérifiant que
+  `screen.getByRole('heading', { level: 1 })).toHaveFocus()` juste après
+  qu'un enfant a levé une exception au rendu, sur le même modèle que les
+  tests déjà ajoutés pour `MainMenu.test.tsx`/`MissionSetup.test.tsx`/
+  `MissionResult.test.tsx`.
 
 - [x] Le statut de mission et les marqueurs d'objectif de
   `MissionPanel` (`IN PROGRESS`/`SUCCESS`/`FAILED`, ✓/○) changent
