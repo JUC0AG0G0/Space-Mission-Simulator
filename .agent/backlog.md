@@ -1071,6 +1071,44 @@ le `README.md` reste cohérent avec `src/app`/`src/ui`. Les trois points
 sous "Divers / à clarifier" restent des décisions en attente, pas des
 tâches actionnables en l'état.
 
+Revue du 2026-08-14 (33e passe, planification périodique) : le point
+d'outillage CI identifié lors de la 32e passe ci-dessus est désormais
+traité (`.github/workflows/ci.yml` existe et exécute `npm run lint`,
+`npx tsc --noEmit`, `npm test` et `npm run build`, voir l'entrée cochée
+correspondante sous "Tests manquants" et `.agent/changelog.md`). Au
+moment de cette revue, les quatre sections actionnables du backlog
+n'avaient plus aucune entrée non cochée. `npm test` (291 tests), `npm
+run lint` et `npx tsc --noEmit` sont propres, aucun `TODO`/`FIXME`/
+`XXX` dans `src/`/`tests/` (`grep -rn "TODO\|FIXME\|XXX" src tests`).
+`npm run coverage` confirme 98.07 % de lignes / 98.17 % de branches ;
+tout `src/simulation`, `src/rendering` et `src/ui` reste à 100 % de
+couverture, les seules lignes non couvertes restent `App.tsx:55,57` et
+`SimulationScreen.tsx:148-164`, toutes deux déjà jugées trop marginales
+lors de passes précédentes (repli défensif déjà exhaustif, boucle
+`requestAnimationFrame`/redimensionnement du canvas). En relisant
+`TouchControls.tsx`, `index.html` et `main.tsx` sous un angle pas
+encore exploré lors des 32 passes précédentes — la résilience de
+l'application *après* une erreur inattendue, plutôt que la prévention
+d'un bug précis — un vrai point de robustesse manquant a été identifié :
+`grep -rn "ErrorBoundary|componentDidCatch|getDerivedStateFromError"
+src/` ne renvoie aucun résultat, et `main.tsx` monte `<App />`
+directement sans aucun composant d'englobement qui intercepterait une
+exception de rendu — une erreur imprévue dans n'importe quel composant
+ferait donc planter toute l'application sur un écran blanc, sans
+message ni moyen de récupérer autrement qu'en rechargeant la page
+manuellement. Voir le nouvel item sous "Features à ajouter" ci-dessous.
+Un second point, plus mineur, a été identifié en comparant le nouveau
+`.github/workflows/ci.yml` (ajouté lors de la passe précédente) au
+contenu du `README.md` : `grep -i "badge\|workflows\|actions"
+README.md` ne renvoie aucun résultat — rien n'indique dans le README
+qu'une CI existe désormais, alors qu'un badge de statut est la
+convention standard pour l'exposer. Voir le nouvel item sous
+"Documentation" ci-dessous. Aucun autre bug, trou de couverture
+actionnable ou doc obsolète trouvé cette fois-ci — le `README.md` reste
+par ailleurs cohérent avec `src/app`/`src/ui`. Les trois points sous
+"Divers / à clarifier" restent des décisions en attente, pas des tâches
+actionnables en l'état.
+
 ## Bugs connus
 
 - [x] Aucune gestion du focus clavier lors des transitions d'écran :
@@ -2242,6 +2280,49 @@ tâches actionnables en l'état.
 
 ## Features à ajouter
 
+- [ ] Aucun `ErrorBoundary` React n'existe : une exception de rendu
+  imprévue fait planter toute l'application sur un écran blanc, sans
+  aucun moyen de récupérer sans recharger la page manuellement
+
+  `src/app/main.tsx` monte `<App />` directement dans `<StrictMode>`
+  sans aucun composant englobant qui intercepterait une erreur de rendu
+  (`grep -rn "ErrorBoundary|componentDidCatch|getDerivedStateFromError"
+  src/` ne renvoie aucun résultat dans tout le projet). React démonte
+  l'arbre entier dès qu'un composant lève pendant le rendu si aucun
+  `ErrorBoundary` ne l'intercepte plus haut — l'utilisateur se retrouve
+  alors sur une page blanche, sans message ni bouton, et doit deviner
+  qu'il faut recharger manuellement. Ce projet n'a heureusement pas
+  connu ce cas jusqu'ici (`npm test`/`npm run coverage` confirment 291
+  tests propres et une couverture quasi totale de `src/`), mais il n'a
+  jamais été audité sous cet angle précis (résilience *après* une
+  erreur inattendue, plutôt que prévention d'un bug donné) : un futur
+  bug de rendu (ex. une donnée corrompue en `localStorage` qui passe la
+  validation mais fait planter un composant plus loin, ou une
+  régression introduite par une future passe) resterait aujourd'hui
+  sans aucun filet de sécurité côté utilisateur, alors que
+  l'application manipule déjà des données persistées côté client
+  (`mission-save.ts`, `mission-progress.ts`) qui peuvent varier d'une
+  session à l'autre.
+
+  Piste : ajouter un composant de classe `ErrorBoundary`
+  (`src/ui/ErrorBoundary.tsx` ou `src/app/ErrorBoundary.tsx`, seul type
+  de composant React capable d'implémenter `componentDidCatch`/
+  `getDerivedStateFromError` — les hooks ne le permettent pas) qui
+  encapsule `<App />` dans `main.tsx`, affiche un écran de repli simple
+  et cohérent avec le reste de l'UI (titre, message court, un bouton
+  qui recharge la page ou réinitialise l'état via `clearSavedMission`)
+  en cas d'erreur de rendu, et journalise l'erreur dans la console pour
+  le diagnostic. Rester minimal (pas de service de reporting externe,
+  hors périmètre "no backend, no external API" du projet, cf.
+  `README.md`). Ajouter un test dans
+  `tests/ui/ErrorBoundary.test.tsx` : rendre `ErrorBoundary` avec un
+  composant enfant qui lève une exception au rendu (motif standard
+  React Testing Library), et vérifier que le fallback s'affiche au lieu
+  de laisser l'exception remonter (attention à supprimer/vérifier le
+  bruit console attendu de React en test, comme le fait déjà
+  `console.error` mocké dans d'autres suites de ce projet si
+  applicable).
+
 - [x] Aucune commande de vol n'est accessible sur écran tactile : un
   joueur sur mobile/tablette peut configurer et lancer une mission mais
   ne peut ensuite ni allumer le moteur, ni piloter le vaisseau
@@ -3365,6 +3446,35 @@ tâches actionnables en l'état.
   `origin`, hors du contrôle direct de ce run.
 
 ## Documentation
+
+- [ ] `README.md` ne mentionne pas l'intégration continue (CI)
+  désormais configurée sur GitHub
+
+  `.github/workflows/ci.yml` (ajouté lors d'une passe précédente de ce
+  backlog, voir l'item coché "Aucune intégration continue (CI) n'est
+  configurée sur GitHub..." sous "Tests manquants" ci-dessous) exécute
+  désormais `npm run lint`, `npx tsc --noEmit`, `npm test` et `npm run
+  build` sur chaque `push`/`pull_request` vers `main`, via un job nommé
+  `verify` dans un workflow nommé `CI`. `grep -i "badge\|workflows\|
+  actions" README.md` ne renvoie aucun résultat : rien dans le
+  `README.md` n'indique qu'une vérification automatique existe
+  désormais côté GitHub, ni ne pointe vers l'onglet "Actions" du dépôt
+  — un lecteur qui arrive sur la page du dépôt (ou son README rendu sur
+  GitHub) n'a aucun moyen visuel de savoir si le dernier commit sur
+  `main` passe les vérifications, alors que c'est précisément
+  l'information qu'un badge de statut CI en haut de README existe pour
+  donner en un coup d'œil.
+
+  Piste : ajouter un badge de statut Markdown standard juste sous le
+  titre `# Space Mission Simulator` du `README.md`, au format GitHub
+  Actions habituel :
+  `[![CI](https://github.com/JUC0AG0G0/Space-Mission-Simulator/actions/workflows/ci.yml/badge.svg)](https://github.com/JUC0AG0G0/Space-Mission-Simulator/actions/workflows/ci.yml)`
+  (URL déduite de `git remote -v`, à vérifier après coup en ouvrant le
+  lien une fois poussé sur GitHub — le badge peut afficher "no status"
+  tant qu'aucun run n'a encore eu lieu sur `main` avec ce fichier de
+  workflow). Item documentation pure, aucun changement de code ni de
+  test attendu — comme les items déjà cochés similaires dans cette
+  section, seul `npm run lint` doit rester propre.
 
 - [x] La section "Architecture" du `README.md` décrit encore `src/ui/`
   comme un ensemble de composants qui ne traduisent que les entrées
