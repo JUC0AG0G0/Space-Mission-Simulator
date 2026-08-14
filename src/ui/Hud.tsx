@@ -9,6 +9,8 @@ interface HudProps {
   state: GameState;
 }
 
+const MIN_SPEED_FOR_ORBIT_BOUNDS = 1;
+
 function formatKm(meters: number): string {
   return `${(meters / 1000).toFixed(1)} km`;
 }
@@ -51,11 +53,13 @@ export function Hud({ state }: HudProps) {
   const fuelPercent = Math.round((spacecraft.fuelMass / spacecraft.maxFuel) * 100);
   const throttlePercent = Math.round(spacecraft.engine.throttle * 100);
   const massTonnes = (totalMass(spacecraft) / 1000).toFixed(1);
-  const orbitBounds = computeOrbitRadiusBounds(
-    spacecraft.position,
-    spacecraft.velocity,
-    centralBody,
-  );
+  // Below this speed, the angular momentum is too close to zero for
+  // periapsis/apoapsis to mean anything (e.g. sitting on the launch pad
+  // with velocity {0, 0}) — treat it the same as an unbound trajectory.
+  const orbitBounds =
+    speed < MIN_SPEED_FOR_ORBIT_BOUNDS
+      ? null
+      : computeOrbitRadiusBounds(spacecraft.position, spacecraft.velocity, centralBody);
   const apoapsisLabel = formatAltitudeOrDash(orbitBounds?.apoapsis ?? null, centralBody.radius);
   const periapsisLabel = formatAltitudeOrDash(orbitBounds?.periapsis ?? null, centralBody.radius);
 

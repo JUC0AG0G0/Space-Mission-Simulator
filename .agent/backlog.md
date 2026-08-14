@@ -1388,7 +1388,7 @@ tâches actionnables en l'état.
 
 ## Bugs connus
 
-- [ ] Le nouvel affichage APOAPSIS/PERIAPSIS du HUD montre des valeurs
+- [x] Le nouvel affichage APOAPSIS/PERIAPSIS du HUD montre des valeurs
   aberrantes tant que le vaisseau est immobile sur le pas de tir (avant
   allumage du moteur)
 
@@ -1452,6 +1452,23 @@ tâches actionnables en l'état.
   `createInitialGameState()` (état exact du pas de tir, vitesse nulle)
   vérifiant que "APOAPSIS"/"PERIAPSIS" affichent `"—"` plutôt que "0.0
   km"/valeur négative.
+
+  Fait le 2026-08-14 : `Hud.tsx` calcule désormais `orbitBounds` en
+  traitant explicitement le cas d'une vitesse quasi nulle
+  (`speed < MIN_SPEED_FOR_ORBIT_BOUNDS`, seuil fixé à `1` m/s comme
+  suggéré par la piste) comme `null` — même repli textuel `"—"` que la
+  trajectoire d'échappement déjà gérée, sans appeler
+  `computeOrbitRadiusBounds` du tout dans ce cas. `computeOrbitRadiusBounds`
+  elle-même n'est pas modifiée (le calcul reste correct, le problème
+  était uniquement dans son interprétation par `Hud`). Test ajouté dans
+  `tests/ui/Hud.test.tsx` ("shows a dash placeholder for
+  apoapsis/periapsis while sitting still on the pad") construit
+  directement à partir de `createInitialGameState()` (état exact du pas
+  de tir, `velocity: { x: 0, y: 0 }`) et vérifie que "APOAPSIS"/
+  "PERIAPSIS" affichent bien `"—"` au lieu de "0.0 km"/valeur négative.
+  `npm test` (304 tests), `npm run lint`, `npx tsc --noEmit` et `npm run
+  coverage` (`Hud.tsx` reste à 100 % de lignes/branches) restent
+  propres.
 
 - [x] Les écrans plein écran (`app`, `main-menu`/`mission-setup`,
   `mission-result`, `error-boundary`) utilisent `height: 100vh`, qui

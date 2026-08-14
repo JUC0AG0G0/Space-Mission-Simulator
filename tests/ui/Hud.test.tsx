@@ -166,6 +166,17 @@ describe('Hud', () => {
     expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(2);
   });
 
+  it('shows a dash placeholder for apoapsis/periapsis while sitting still on the pad', () => {
+    // The exact state a player sees right at LIFTOFF, before touching the
+    // controls: velocity is {0, 0}, so angular momentum is zero and orbit
+    // bounds are degenerate (periapsis 0 / apoapsis at the planet's center).
+    const state = createInitialGameState();
+
+    render(<Hud state={{ ...state, countdown: null }} />);
+
+    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(2);
+  });
+
   it('exposes the flight phase as an assertive-free live region so screen readers announce it', () => {
     render(<Hud state={makeState()} />);
     const regions = screen.getAllByRole('status');
