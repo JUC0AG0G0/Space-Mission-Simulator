@@ -2303,3 +2303,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: `README.md` ne mentionne nulle part les commandes tactiles
 - Branche/push: main (direct)
 - Coût estimé: 1.1365293 USD
+
+## 2026-08-14T05-40-30-158Z — planning
+- Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
+- Branche/push: main (direct)
+- Coût estimé: 4.051688100000002 USD
