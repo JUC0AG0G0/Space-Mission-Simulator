@@ -2458,3 +2458,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Aucune gestion du focus clavier lors des transitions d'écran :
 - Branche/push: main (direct)
 - Coût estimé: 4.022006400000001 USD
+
+## 2026-08-14T20-29-44-232Z — planning
+- Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
+- Branche/push: main (direct)
+- Coût estimé: 2.6566830499999994 USD
