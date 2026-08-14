@@ -2565,3 +2565,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 ## 2026-08-14T21-20-44-000Z — planning
 - Description: Le backlog ne contenait plus de tâche actionnable (bug/feature/test/doc). Revue complète du dépôt (37e passe) : `npm test` (301 tests), `npm run lint`, `npx tsc --noEmit`, `npm run coverage` (97.95 % de lignes, `src/simulation`/`src/rendering`/`src/ui` à 100 %) tous propres, aucun `TODO`/`FIXME`, `npm outdated`/`npm audit` sans nouveauté. Un nouveau bug CSS a été identifié en relisant `src/app/styles.css` sous l'angle du comportement des navigateurs mobiles réels (jamais exploré aussi précisément jusqu'ici) : les quatre conteneurs plein écran (`.app`, `.main-menu`/`.mission-setup`, `.mission-result`, `.error-boundary`) utilisent `height: 100vh` sans repli `dvh`, ce qui peut masquer le bas de l'écran (boutons "Launch mission"/"Replay"/"Reload" compris) derrière la barre d'outils d'un navigateur mobile tant qu'elle reste affichée (Safari iOS notamment). Ajouté sous "Bugs connus" dans `.agent/backlog.md` avec une piste détaillée (repli progressif `100vh` puis `100dvh`).
 - Branche/push: main (non commité par l'agent)
+
+## 2026-08-14T21-17-34-404Z — planning
+- Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
+- Branche/push: main (direct)
+- Coût estimé: 2.3800133500000005 USD
