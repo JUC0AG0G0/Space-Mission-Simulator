@@ -3287,7 +3287,7 @@ tâches actionnables en l'état.
   fermant le dernier trou de couverture connu de ce fichier. `npm test`
   (266 tests), `npm run lint` et `npx tsc --noEmit` restent propres.
 
-- [ ] Aucune intégration continue (CI) n'est configurée sur GitHub :
+- [x] Aucune intégration continue (CI) n'est configurée sur GitHub :
   les commits poussés sur `main` n'ont aucune vérification automatique
   visible, alors que quatre commandes rapides et stables existent déjà
   (`npm test`, `npm run lint`, `npx tsc --noEmit`, `npm run build`)
@@ -3338,6 +3338,31 @@ tâches actionnables en l'état.
   ne peut se faire qu'après le prochain `git push` vers `origin` — hors
   du contrôle direct de ce backlog, mais la syntaxe et les commandes
   utilisées peuvent être vérifiées localement avant de pousser.
+
+  Fait le 2026-08-14 : nouveau fichier `.github/workflows/ci.yml`,
+  exactement sur le modèle suggéré par la piste — déclenché sur `push`/
+  `pull_request` vers `main`, un seul job `verify` sur `ubuntu-latest`
+  avec `actions/checkout@v4`, `actions/setup-node@v4` (`node-version:
+  20`, alignée sur `engines.node: ">=20"` de `package.json`, avec
+  `cache: npm`), `npm ci`, puis les quatre commandes déjà utilisées par
+  chaque passe de ce backlog en quatre étapes séparées (`npm run lint`,
+  `npx tsc --noEmit`, `npm test`, `npm run build`) plutôt qu'une seule
+  commande chaînée, pour que l'onglet "Actions" de GitHub distingue
+  clairement laquelle des quatre a échoué le cas échéant. Pas de
+  matrice de versions Node, pas de déploiement ni de publication
+  d'artefact, conformément à la piste. Vérifié que `.gitignore`
+  (`node_modules/`, `dist/`, `coverage/`) et `eslint.config.js`
+  (`ignores: ['dist', 'node_modules', 'coverage']`) n'excluent pas le
+  nouveau dossier `.github/`, et que le YAML ne contient aucune
+  tabulation. Les quatre commandes utilisées par le workflow ont été
+  exécutées localement dans le même ordre pour confirmer qu'elles
+  restent propres : `npm run lint`, `npx tsc --noEmit`, `npm test`
+  (291 tests), `npm run build` (`tsc && vite build`, 64 modules). Item
+  de configuration pure (un seul fichier YAML, aucun `src/`/`tests/`
+  modifié) : aucun test unitaire ajouté, conformément à la piste. La
+  confirmation que le workflow s'exécute réellement sur GitHub (onglet
+  "Actions") ne pourra se faire qu'après le prochain `git push` vers
+  `origin`, hors du contrôle direct de ce run.
 
 ## Documentation
 
