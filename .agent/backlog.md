@@ -822,7 +822,97 @@ trouvé cette fois-ci — le `README.md` reste cohérent avec `src/app`/
 dev-only, boucle `requestAnimationFrame` après fin de mission) restent
 des décisions en attente, pas des tâches actionnables en l'état.
 
+Revue du 2026-08-14 (28e passe, planification périodique) : le bug
+d'accessibilité du `<canvas>` de vol, identifié lors de la 27e passe,
+est désormais corrigé (voir l'entrée cochée correspondante et
+`.agent/changelog.md`). Au moment de cette revue, les quatre sections
+actionnables du backlog n'avaient plus aucune entrée non cochée. `npm
+test` (280 tests), `npm run lint` et `npx tsc --noEmit` sont propres,
+aucun `TODO`/`FIXME`/`XXX` dans `src/`/`tests/`. `npm run coverage`
+confirme 98.04 % de lignes / 98.15 % de branches, en légère hausse
+depuis la 27e passe (le test ajouté pour `SimulationScreen.tsx` porte
+ce fichier à 90.5 % de lignes contre un peu moins auparavant) ; les
+seules lignes non couvertes restent `App.tsx:55,57` et
+`SimulationScreen.tsx:148-164`, toutes deux déjà jugées trop marginales
+lors de passes précédentes. `npm outdated`/`npm audit` ne montrent rien
+de nouveau par rapport à la 16e passe (mêmes majeures et mêmes 6
+vulnérabilités dev-only déjà documentées sous "Divers / à clarifier").
+En poursuivant l'audit accessibilité entamé lors des 17e/27e passes
+(marqueur ✓/🔒 de `MainMenu`, puis `<canvas>` de `SimulationScreen`) sur
+un composant encore non couvert par cet angle, `CountdownOverlay.tsx` a
+été relu en détail : un vrai défaut a été identifié. Ce composant
+affiche `MISSION READY` puis un décompte qui change de valeur à chaque
+frame (`T-3`, `T-2`, `T-1`, `LIFTOFF`, `src/ui/CountdownOverlay.tsx:13-16`)
+en réécrivant le même nœud de texte (`<div
+className="countdown-overlay__value">{label}</div>`), sans aucun
+`aria-live` ni `role="status"`/`role="timer"` sur ce conteneur ni sur
+son parent. `grep -rn "aria-live\|role=\"status\"\|role=\"alert\""
+src/` ne renvoie aucun résultat dans tout le projet — ce mécanisme n'est
+utilisé nulle part, alors que c'est le seul endroit de l'application où
+un texte change automatiquement, plusieurs fois de suite, sans action
+du joueur. Par défaut, un changement de texte dans le DOM en dehors
+d'une région `aria-live` n'est pas annoncé par un lecteur d'écran tant
+que le focus ne s'y déplace pas explicitement — un joueur non-voyant
+qui atteint cet écran n'a donc aucun moyen de savoir que le compte à
+rebours progresse ni quand `LIFTOFF` est atteint (moment exact où le
+contrôle manuel devient actif, cf. `determineFlightPhase`,
+`src/simulation/flight-phase.ts`), contrairement au joueur voyant qui
+voit le chiffre défiler visuellement. `tests/ui/CountdownOverlay.test.tsx`
+confirme qu'aucun test actuel ne vérifie de comportement d'annonce
+(seul le texte affiché est vérifié à chaque rendu isolé). Voir le
+nouvel item sous "Bugs connus" ci-dessous. Aucun autre bug, trou de
+couverture actionnable ou doc obsolète trouvé cette fois-ci — le
+`README.md` reste cohérent avec `src/app`/`src/ui`. Les deux points
+sous "Divers / à clarifier" restent des décisions en attente, pas des
+tâches actionnables en l'état.
+
 ## Bugs connus
+
+- [ ] Le décompte de `CountdownOverlay` (T-3…T-1, LIFTOFF) n'est annoncé
+  par aucun lecteur d'écran : aucune région `aria-live` ne couvre son
+  texte, qui change automatiquement plusieurs fois sans action du joueur
+
+  `CountdownOverlay.tsx` (`src/ui/CountdownOverlay.tsx:18-23`) affiche
+  `MISSION READY` puis un `<div className="countdown-overlay__value">`
+  dont le contenu texte (`T-3`, `T-2`, `T-1`, `LIFTOFF`) est recalculé
+  et réaffecté à chaque re-rendu, au rythme du temps de simulation (le
+  compte à rebours est piloté par `SimulationEngine`/`advanceCountdown`,
+  `src/simulation/simulation-engine.ts`). Aucun `aria-live`, `role=
+  "status"` ni `role="timer"` n'entoure ce conteneur ni son parent
+  `.countdown-overlay` — `grep -rn "aria-live\|role=\"status\"\|role=
+  \"alert\"" src/` ne renvoie aucun résultat dans tout le projet.
+  Sans région `aria-live`, un changement de texte dans le DOM n'est pas
+  annoncé par les lecteurs d'écran tant que le focus ne s'y déplace pas
+  explicitement (ce qui n'arrive jamais ici, l'écran ne reçoit aucune
+  interaction pendant le compte à rebours). C'est le seul endroit de
+  l'application où du texte change plusieurs fois de suite sans action
+  du joueur : un utilisateur de lecteur d'écran qui atteint cet écran
+  entend "MISSION READY" une fois, puis plus rien jusqu'à ce qu'il
+  navigue manuellement pour redécouvrir la valeur affichée — il n'a
+  aucun moyen de savoir que le décompte progresse ni de repérer le
+  moment `LIFTOFF`, qui est pourtant l'instant précis où le contrôle
+  manuel du vaisseau devient actif (`determineFlightPhase`,
+  `src/simulation/flight-phase.ts`). C'est la même famille de défaut que
+  les deux lacunes d'accessibilité déjà corrigées dans ce backlog
+  (marqueur ✓/🔒 de `MainMenu` sans texte accessible, `<canvas>` de vol
+  sans `aria-label`), appliquée ici à une région dynamique plutôt qu'à
+  un élément statique.
+
+  Piste : ajouter `role="status"` (ou `role="timer"`) et `aria-live=
+  "polite"` sur le conteneur `.countdown-overlay` (ou directement sur
+  `.countdown-overlay__value`) dans `CountdownOverlay.tsx`, pour que
+  chaque changement de valeur soit annoncé automatiquement par les
+  lecteurs d'écran sans déplacement de focus. Attention à ne pas
+  sur-annoncer : `aria-live="polite"` avec `role="status"` n'interrompt
+  pas la lecture en cours (contrairement à `role="alert"`/
+  `aria-live="assertive"`, à éviter ici puisque le décompte n'est pas
+  une urgence) — vérifier que chaque valeur (`T-3`, `T-2`, `T-1`,
+  `LIFTOFF`) est bien lue l'une après l'autre plutôt qu'une seule fois
+  résumée. Étendre `tests/ui/CountdownOverlay.test.tsx` pour vérifier la
+  présence de l'attribut `aria-live`/`role` sur le conteneur (ex.
+  `screen.getByRole('status')` doit exister et contenir le texte
+  affiché), sur le même modèle que le test d'accessibilité déjà ajouté
+  pour le `<canvas>` de `SimulationScreen` lors de la 27e passe.
 
 - [x] Le `<canvas>` de la simulation de vol n'a ni `role`, ni
   `aria-label`, ni contenu de repli pour les lecteurs d'écran
