@@ -971,7 +971,119 @@ coverage` (98.04 % de lignes / 98.15 % de branches, `Hud.tsx` toujours
 sections actionnables du backlog n'avaient plus aucune entrée non
 cochée.
 
+Revue du 2026-08-14 (31e passe, planification périodique) : au moment
+de cette revue, les quatre sections actionnables du backlog n'avaient
+plus aucune entrée non cochée. `npm test` (286 tests), `npm run lint`
+et `npx tsc --noEmit` sont propres, aucun `TODO`/`FIXME`/`XXX` dans
+`src/`/`tests/`. `npm run coverage` confirme 98.04 % de lignes /
+98.15 % de branches ; les seules lignes non couvertes restent
+`App.tsx:55,57` et `SimulationScreen.tsx:148-164`, toutes deux déjà
+jugées trop marginales lors de passes précédentes — tout
+`src/simulation`, `src/rendering` et `src/ui` reste à 100 % de
+couverture. `npm outdated`/`npm audit` ne montrent rien de nouveau par
+rapport à la 16e passe (mêmes majeures et mêmes 6 vulnérabilités
+dev-only déjà documentées sous "Divers / à clarifier"). En poursuivant
+l'audit accessibilité entamé lors des 17e/27e/28e/29e/30e passes
+(marqueur ✓/🔒 de `MainMenu`, `<canvas>` de `SimulationScreen`, décompte
+de `CountdownOverlay`, libellé de phase et statut moteur du HUD — tous
+des éléments qui changent de texte *à l'intérieur* d'un même écran),
+l'angle a été élargi aux transitions *entre* écrans elles-mêmes : un
+vrai défaut d'une autre nature a été identifié. `grep -rn "useRef|\.
+focus\(\)|autoFocus" src/` ne montre que les `useRef` de
+`SimulationScreen.tsx` utilisés pour le canvas/le moteur/les touches
+tenues (`canvasRef`, `engineRef`, `heldKeysRef`,
+`missionConfigurationRef`) — aucun appel à `.focus()` ni `autoFocus`
+nulle part dans `src/`. Chaque écran (`MainMenu`, `MissionSetup` sous
+ses deux formes formulaire/résumé, `SimulationScreen` sous ses
+sous-écrans pré-lancement/vol/`MissionResult`) porte pourtant son
+propre `<h1>` (`grep -n "<h1" src/ui` : `MainMenu.tsx:18`,
+`MissionSetup.tsx:54,166`, `MissionResult.tsx:24`), mais rien ne
+déplace jamais le focus clavier vers ce titre lors d'une transition —
+`App.tsx` (lignes 25-58) change simplement l'arbre React retourné par
+son `switch (appState.phase)`, sans plus d'action, et
+`SimulationScreen.tsx` fait de même en interne pour basculer vers
+`MissionResult` une fois `isMissionOver` vrai (ligne 194). Un
+utilisateur qui navigue au clavier (ex. valide "New mission" avec
+`Enter`/`Space`) se retrouve donc avec le focus resté sur un bouton qui
+n'existe plus dans le nouveau DOM — la plupart des navigateurs le
+reportent silencieusement sur `<body>`, donc un lecteur d'écran n'a
+alors plus aucune indication qu'un nouvel écran vient de se charger, ni
+aucun repère pour reprendre la navigation par tabulation depuis le
+début du nouvel écran (il doit retourner tout en haut manuellement).
+C'est le même type de lacune que les cinq déjà corrigées dans ce
+backlog (contenu qui change sans que rien ne le signale à l'assistance
+technique), mais appliquée cette fois à un changement d'écran complet
+plutôt qu'à un élément isolé — et contrairement aux cas déjà traités
+avec `aria-live`/`role="status"` (annonce passive d'un texte qui
+change), la pratique standard ici est la gestion de focus (déplacer le
+focus clavier vers le titre du nouvel écran), le mécanisme recommandé
+pour les transitions d'écran complètes dans une SPA. Voir le nouvel
+item sous "Bugs connus" ci-dessous. Aucun autre bug, trou de couverture
+actionnable ou doc obsolète trouvé cette fois-ci — le `README.md` reste
+cohérent avec `src/app`/`src/ui`. Les deux points sous "Divers /
+à clarifier" restent des décisions en attente, pas des tâches
+actionnables en l'état.
+
 ## Bugs connus
+
+- [ ] Aucune gestion du focus clavier lors des transitions d'écran :
+  un utilisateur au clavier/lecteur d'écran perd son repère à chaque
+  changement d'écran
+
+  Chaque écran principal porte son propre `<h1>` (`MainMenu.tsx:18`,
+  `MissionSetup.tsx:54,166` pour le formulaire et le résumé,
+  `MissionResult.tsx:24`), mais rien ne déplace jamais le focus clavier
+  vers ce titre lors d'une transition. `App.tsx:25-58` change
+  simplement l'arbre React retourné par son `switch (appState.phase)`
+  (`main-menu` → `mission-setup` → `simulation`), sans aucune autre
+  action ; `SimulationScreen.tsx:194-201` fait de même en interne pour
+  basculer vers `MissionResult` une fois `isMissionOver` vrai. `grep -rn
+  "useRef|\.focus\(\)|autoFocus" src/` ne montre aucun appel à
+  `.focus()` ni `autoFocus` nulle part dans le projet — les seuls
+  `useRef` existants (`SimulationScreen.tsx`) servent au canvas, au
+  moteur de simulation et aux touches tenues, pas à la gestion du
+  focus.
+
+  Concrètement : un joueur qui navigue au clavier (ex. atteint le
+  bouton "New mission" par tabulation puis valide avec `Enter`/`Space`)
+  se retrouve, une fois l'écran `MissionSetup` monté, avec le focus
+  resté sur l'ancien bouton "New mission" — qui n'existe plus dans le
+  nouveau DOM. La plupart des navigateurs reportent alors silencieusement
+  le focus sur `<body>` : un utilisateur de lecteur d'écran n'a plus
+  aucune indication qu'un nouvel écran vient de se charger (aucune
+  annonce, contrairement aux changements de texte *à l'intérieur* d'un
+  écran déjà couverts par les cinq correctifs `aria-live`/`role=
+  "status"` précédents de ce backlog — marqueur ✓/🔒 de `MainMenu`,
+  `<canvas>` de vol, décompte de `CountdownOverlay`, libellé de phase et
+  statut moteur du HUD), et doit reprendre sa navigation par tabulation
+  depuis le tout début de la page (potentiellement en retraversant tout
+  le nouvel écran) plutôt que depuis le titre ou le premier champ
+  pertinent du nouvel écran. C'est le même défaut à chacune des quatre
+  transitions principales : menu → préparation de mission, formulaire →
+  résumé de `MissionSetup`, préparation → vol, et vol → écran de
+  résultat.
+
+  Piste : gérer le focus explicitement à chaque transition d'écran,
+  plutôt que de laisser le navigateur y reporter silencieusement.
+  Approche la plus simple et la plus cohérente avec le style du projet
+  (pas de librairie de routage, tout est déjà un `switch` React) :
+  ajouter un `ref` sur le `<h1>` de chaque écran (`MainMenu`,
+  `MissionSetup`, `MissionResult`) et un `useEffect` avec dépendances
+  `[]` dans chacun de ces composants qui appelle `headingRef.current
+  ?.focus()` au montage — nécessite d'ajouter `tabIndex={-1}` sur ces
+  `<h1>` pour les rendre focusables par script sans les ajouter à
+  l'ordre de tabulation naturel (motif standard pour la gestion de
+  focus en SPA). Vérifier qu'aucun style visuel de focus indésirable
+  n'apparaît sur ces titres (ex. `outline: none` ciblé sur ces `<h1>`
+  précis si le contour par défaut du navigateur détonne, en gardant tout
+  de même un indicateur visible pour les utilisateurs de clavier qui
+  arrivent par tabulation classique — pas la peine de le masquer
+  entièrement). Ajouter un test par écran (`tests/ui/MainMenu.test.tsx`,
+  `tests/ui/MissionSetup.test.tsx`, `tests/ui/MissionResult.test.tsx`,
+  et un test d'intégration dans `tests/ui/SimulationScreen.test.tsx`
+  pour la transition vol → résultat) vérifiant que
+  `document.activeElement` est bien le titre de l'écran juste après son
+  rendu (ex. `expect(screen.getByRole('heading', { level: 1 })).toHaveFocus()`).
 
 - [x] Le statut moteur du HUD (`hud__engine` : `ENGINE ONLINE`/`ENGINE
   OFFLINE`) change automatiquement sans qu'aucune région `aria-live` ne
