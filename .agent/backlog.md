@@ -781,7 +781,90 @@ fois-ci — le `README.md` reste cohérent avec `src/app`/`src/ui`. Les
 deux points sous "Divers / à clarifier" restent des décisions en
 attente, pas des tâches actionnables en l'état.
 
+Revue du 2026-08-14 (27e passe, planification périodique) : le bug de
+favicon manquant, identifié lors de la 26e passe, est désormais corrigé
+(voir l'entrée cochée correspondante et `.agent/changelog.md`). Au
+moment de cette revue, les quatre sections actionnables du backlog
+n'avaient plus aucune entrée non cochée. `npm test` (279 tests), `npm
+run lint`, `npx tsc --noEmit` et `npm run build` (`tsc && vite build`,
+64 modules, aucun avertissement) sont tous propres, aucun `TODO`/
+`FIXME`/`XXX` dans `src/`/`tests/`. `npm run coverage` confirme
+98.03 % de lignes / 98.15 % de branches, inchangé depuis la 26e passe ;
+les seules lignes non couvertes restent `App.tsx:55,57` et
+`SimulationScreen.tsx:148-164`, toutes deux déjà jugées trop marginales
+lors de passes précédentes. `npm outdated`/`npm audit` ne montrent rien
+de nouveau par rapport à la 16e passe (mêmes majeures et mêmes 6
+vulnérabilités dev-only déjà documentées sous "Divers / à clarifier",
+si ce n'est le bump mineur `typescript-eslint` 8.66.0 → 8.67.0 déjà
+absorbé sans action dédiée). En relisant `src/app/SimulationScreen.tsx`
+sous l'angle accessibilité — un axe déjà exploité avec succès lors de la
+17e passe (marqueur ✓/🔒 de `MainMenu` sans texte accessible) mais
+jamais appliqué à l'élément `<canvas>` lui-même — un vrai défaut a été
+identifié : `<canvas ref={canvasRef} className="app__canvas" />`
+(`src/app/SimulationScreen.tsx:208`) n'a ni `role`, ni `aria-label`, ni
+contenu de repli. `grep -rn "aria-\|role=" src/` confirme que
+`MainMenu.tsx`, `MissionSetup.tsx` et `TouchControls.tsx` portent tous
+des `aria-label`/`aria-pressed`, mais qu'aucun élément de
+`SimulationScreen.tsx`/`Hud.tsx` n'en porte — un lecteur d'écran qui
+atteint ce canvas n'a donc aucune indication de ce qu'il représente
+(planète, trajectoire, vaisseau) ; ce n'est pas rattrapé par le HUD
+voisin (`Hud.tsx`, déjà accessible en tant que texte), qui reste un
+élément frère distinct plutôt qu'une alternative textuelle du canvas
+lui-même. Voir le nouvel item sous "Bugs connus" ci-dessous. En
+relisant aussi `MissionPanel.tsx` dans la foulée (motif ✓/○ voisin de
+celui de `MainMenu`) : le marqueur d'objectif n'a toujours pas
+`aria-hidden`, donc reste au moins partiellement annoncé par un lecteur
+d'écran — confirmé non-régressé et toujours jugé de sévérité moindre,
+comme tranché explicitement lors de la 17e passe, donc pas un nouvel
+item. Aucun autre bug, trou de couverture actionnable ou doc obsolète
+trouvé cette fois-ci — le `README.md` reste cohérent avec `src/app`/
+`src/ui`. Les deux points sous "Divers / à clarifier" (vulnérabilités
+dev-only, boucle `requestAnimationFrame` après fin de mission) restent
+des décisions en attente, pas des tâches actionnables en l'état.
+
 ## Bugs connus
+
+- [ ] Le `<canvas>` de la simulation de vol n'a ni `role`, ni
+  `aria-label`, ni contenu de repli pour les lecteurs d'écran
+
+  `SimulationScreen.tsx:208` rend l'élément qui porte tout le rendu
+  visuel du vol (planète, trajectoire, vaisseau, via `renderScene`,
+  `src/rendering/canvas-renderer.ts`) ainsi :
+
+  ```tsx
+  <canvas ref={canvasRef} className="app__canvas" />
+  ```
+
+  Aucun `role`, `aria-label`/`aria-labelledby`, ni contenu HTML de
+  repli entre les balises `<canvas>...</canvas>` (le contenu de repli
+  d'un `<canvas>` n'est rendu par le navigateur que si l'élément est
+  vide de tout `ref`/dessin — ici il ne l'est jamais, puisque
+  `renderScene` dessine dès la première frame). `grep -rn "aria-\|
+  role=" src/` (voir 27e passe ci-dessus) montre que `MainMenu.tsx`,
+  `MissionSetup.tsx` et `TouchControls.tsx` portent déjà des
+  `aria-label`, mais que ni `SimulationScreen.tsx` ni aucun de ses
+  enfants directs (le `<canvas>` lui-même, distinct du `Hud`/
+  `MissionPanel` déjà textuels) n'en porte pour ce point précis. Un
+  utilisateur de lecteur d'écran qui navigue jusqu'à cet élément
+  n'obtient donc aucune indication sur ce qu'il représente — ce n'est
+  pas une régression fonctionnelle (le HUD adjacent expose déjà
+  altitude/vitesse/carburant/statut en texte), mais une lacune
+  d'accessibilité du même type que celle déjà corrigée pour `MainMenu`
+  lors de la 17e passe de ce backlog (voir l'item coché "La liste de
+  progression des missions du menu principal n'indique aucun statut
+  terminé/verrouillé..." ci-dessous).
+
+  Piste : ajouter `role="img"` et un `aria-label` statique et concis
+  sur l'élément `<canvas>` de `SimulationScreen.tsx` (ex. `aria-label="
+  Live spacecraft flight visualization"` ou équivalent — un texte fixe
+  suffit, puisque le détail dynamique (altitude, vitesse, carburant,
+  statut de mission) est déjà exposé en texte par `Hud.tsx`/
+  `MissionPanel.tsx` juste à côté ; pas besoin de recalculer un libellé
+  par frame). Ajouter un test dans `tests/ui/SimulationScreen.test.tsx`
+  vérifiant que le canvas est accessible par son nom (ex.
+  `screen.getByRole('img', { name: /flight visualization/i })`), sur le
+  même modèle que les tests d'accessibilité déjà ajoutés pour
+  `MainMenu.tsx` lors de la 17e passe.
 
 - [x] Aucun favicon n'est servi : le navigateur reçoit une 404 sur
   `/favicon.ico` à chaque chargement de l'application
