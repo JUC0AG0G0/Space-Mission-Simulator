@@ -2208,6 +2208,38 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   `src/simulation/simulation-engine.ts` est désormais à 100 % de lignes/
   branches/fonctions (`98.36 %` de couverture globale, en légère hausse).
 
+- [ ] Supprimer la garde interne inatteignable `spacecraft.maxFuel > 0`
+  dans `Hud.tsx`
+
+  Revue du 2026-08-14 (17e passe) : `npm run coverage` signale
+  `src/ui/Hud.tsx:47` comme non couverte. C'est la branche `else` du
+  ternaire calculant `fuelPercent`
+  (`src/ui/Hud.tsx:44-47`) :
+  `spacecraft.maxFuel > 0 ? Math.round((spacecraft.fuelMass /
+  spacecraft.maxFuel) * 100) : 0`. `maxFuel` est initialisé une seule
+  fois dans le moteur, à `rocketModel.fuelMass`
+  (`src/simulation/simulation-engine.ts:52`), et les trois modèles de
+  fusée exportés par `src/simulation/spacecraft/rocket-models.ts`
+  (lignes 28, 38, 48) ont tous un `fuelMass` strictement positif
+  (2 400, 4 000, 1 500) — aucun chemin de l'app ne peut donc produire un
+  `Spacecraft` avec `maxFuel <= 0`, ce qui rend la branche `: 0`
+  inatteignable en pratique, exactement le même schéma que la garde
+  d'`advanceCountdown` déjà traitée ci-dessus (14e passe).
+
+  Suivre la même convention déjà appliquée ici (« ne pas ajouter de
+  garde pour un scénario qui ne peut pas se produire, faire confiance
+  aux garanties internes du code ») : simplifier `fuelPercent` en
+  `Math.round((spacecraft.fuelMass / spacecraft.maxFuel) * 100)`, sans
+  garde, avec éventuellement un court commentaire rappelant que
+  `maxFuel` est toujours strictement positif pour tout `Spacecraft`
+  construit par `createSpacecraft`/les modèles de fusée. Comportement
+  observable inchangé pour tous les cas atteignables aujourd'hui :
+  aucun nouveau test requis au-delà de la couverture existante de
+  `tests/ui/Hud.test.tsx`. Vérifier avec `npm run coverage` que
+  `src/ui/Hud.tsx` passe à 100 % de lignes/branches une fois la garde
+  retirée, et que `npm test`/`npm run lint`/`npx tsc --noEmit` restent
+  propres.
+
 ## Tests manquants
 
 - [x] La branche "trajectoire non liée" d'`isStrandedOutsideTargetBand`
