@@ -401,4 +401,31 @@ describe('SimulationScreen', () => {
 
     getStateSpy.mockRestore();
   });
+
+  it('moves keyboard focus to the mission result heading once the flight ends', () => {
+    const frame = renderScreen();
+
+    const failedState: GameState = {
+      ...createInitialGameState(createDefaultMissionConfiguration()),
+      countdown: null,
+      activeMission: {
+        id: 'ORBIT-01',
+        name: 'Mission 01',
+        description: 'Reach a stable orbit.',
+        status: 'failed',
+        objectives: [],
+        successCriteria: DEFAULT_ORBIT_SUCCESS_CRITERIA,
+        failureReason: 'crashed',
+      },
+    };
+    const getStateSpy = vi
+      .spyOn(SimulationEngine.prototype, 'getState')
+      .mockReturnValue(failedState);
+
+    frame.advance(16);
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveFocus();
+
+    getStateSpy.mockRestore();
+  });
 });

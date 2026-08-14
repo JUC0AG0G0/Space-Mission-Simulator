@@ -131,4 +131,17 @@ describe('MainMenu', () => {
     expect(screen.getByRole('listitem', { name: 'Earth orbit — Completed' })).toBeInTheDocument();
     expect(screen.getByRole('listitem', { name: 'High orbit — Locked' })).toBeInTheDocument();
   });
+
+  it('moves keyboard focus to the screen heading on mount', () => {
+    render(
+      <MainMenu
+        hasSavedMission={false}
+        missionProgress={NO_PROGRESS}
+        onNewMission={() => {}}
+        onContinue={() => {}}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveFocus();
+  });
 });

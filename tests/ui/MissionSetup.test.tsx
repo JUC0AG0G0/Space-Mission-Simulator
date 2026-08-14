@@ -168,6 +168,23 @@ describe('MissionSetup', () => {
     );
   });
 
+  it('moves keyboard focus to the screen heading on mount', () => {
+    render(<MissionSetup onBack={() => {}} onLaunch={() => {}} />);
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveFocus();
+  });
+
+  it('moves keyboard focus to the heading when reviewing, and back when editing', async () => {
+    const user = userEvent.setup();
+    render(<MissionSetup onBack={() => {}} onLaunch={() => {}} />);
+
+    await user.click(screen.getByRole('button', { name: 'Review mission' }));
+    expect(screen.getByRole('heading', { level: 1 })).toHaveFocus();
+
+    await user.click(screen.getByRole('button', { name: 'Edit' }));
+    expect(screen.getByRole('heading', { level: 1 })).toHaveFocus();
+  });
+
   it('calls onLaunch with the reviewed configuration when "Launch mission" is clicked', async () => {
     const onLaunch = vi.fn();
     const user = userEvent.setup();

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type { MissionResultStats } from '../simulation/missions/mission-result';
 
 interface MissionResultProps {
@@ -19,9 +20,20 @@ function formatDuration(totalSeconds: number): string {
  * from `GameState` — nothing here is recomputed from raw simulation data.
  */
 export function MissionResult({ stats, onMenu, onReplay }: MissionResultProps) {
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  // Move keyboard focus to this screen's heading as soon as it mounts, so a
+  // keyboard/screen reader user isn't left stranded on a button that no
+  // longer exists in the previous screen's DOM.
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
+
   return (
     <div className="mission-result">
       <h1
+        ref={headingRef}
+        tabIndex={-1}
         className={`mission-result__title mission-result__title--${
           stats.succeeded ? 'success' : 'failure'
         }`}

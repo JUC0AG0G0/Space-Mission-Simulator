@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type { MissionProgressEntry } from '../simulation/progression/mission-progress';
 
 interface MainMenuProps {
@@ -13,9 +14,20 @@ export function MainMenu({
   onNewMission,
   onContinue,
 }: MainMenuProps) {
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  // Move keyboard focus to this screen's heading as soon as it mounts, so a
+  // keyboard/screen reader user isn't left stranded on a button that no
+  // longer exists in the previous screen's DOM.
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
+
   return (
     <div className="main-menu">
-      <h1 className="main-menu__title">Space Mission Simulator</h1>
+      <h1 className="main-menu__title" ref={headingRef} tabIndex={-1}>
+        Space Mission Simulator
+      </h1>
       <nav className="main-menu__actions">
         <button type="button" onClick={onNewMission}>
           New mission

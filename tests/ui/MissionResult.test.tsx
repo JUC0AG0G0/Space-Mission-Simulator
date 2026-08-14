@@ -93,4 +93,10 @@ describe('MissionResult', () => {
     expect(items[1]).toHaveTextContent('✓Hold orbital speed');
     expect(items[1]).toHaveClass('objective--done');
   });
+
+  it('moves keyboard focus to the screen heading on mount', () => {
+    render(<MissionResult stats={makeStats()} onMenu={() => {}} onReplay={() => {}} />);
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveFocus();
+  });
 });

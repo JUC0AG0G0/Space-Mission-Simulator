@@ -1024,9 +1024,20 @@ cohérent avec `src/app`/`src/ui`. Les deux points sous "Divers /
 à clarifier" restent des décisions en attente, pas des tâches
 actionnables en l'état.
 
+Suivi du 2026-08-14 : le bug d'absence de gestion du focus clavier lors
+des transitions d'écran, identifié lors de la 31e passe ci-dessus, est
+désormais corrigé (voir l'entrée cochée correspondante et
+`.agent/changelog.md`) — `MainMenu.tsx`, `MissionSetup.tsx` (formulaire
+et résumé) et `MissionResult.tsx` déplacent désormais le focus clavier
+vers leur `<h1>` dès qu'ils apparaissent. `npm test` (291 tests), `npm
+run lint`, `npx tsc --noEmit` et `npm run coverage` (`src/ui` reste à
+100 % de lignes/branches) restent propres. Au moment de cette mise à
+jour, les quatre sections actionnables du backlog n'avaient plus aucune
+entrée non cochée.
+
 ## Bugs connus
 
-- [ ] Aucune gestion du focus clavier lors des transitions d'écran :
+- [x] Aucune gestion du focus clavier lors des transitions d'écran :
   un utilisateur au clavier/lecteur d'écran perd son repère à chaque
   changement d'écran
 
@@ -1084,6 +1095,51 @@ actionnables en l'état.
   pour la transition vol → résultat) vérifiant que
   `document.activeElement` est bien le titre de l'écran juste après son
   rendu (ex. `expect(screen.getByRole('heading', { level: 1 })).toHaveFocus()`).
+
+  Fait le 2026-08-14 : chacun des trois composants d'écran principal
+  (`MainMenu.tsx`, `MissionSetup.tsx` — formulaire *et* résumé,
+  `MissionResult.tsx`) porte désormais un `ref` sur son `<h1>`, avec
+  `tabIndex={-1}` et un `useEffect` qui appelle `headingRef.current
+  ?.focus()` au montage, exactement comme suggéré par la piste. Pour
+  `MissionSetup.tsx`, qui ne remonte pas entre le formulaire et le
+  résumé (un seul composant qui retourne l'un ou l'autre selon l'état
+  `reviewing`), le `useEffect` du formulaire dépend de `[reviewing]`
+  plutôt que `[]`, pour redéplacer le focus aussi bien au montage
+  initial qu'au retour depuis "Edit" ; le résumé (`MissionSummary`),
+  lui, est un composant à part qui remonte fraîchement à chaque passage
+  en revue, donc un `useEffect` à dépendances `[]` suffit. Comme
+  `MissionResult` est déjà rendu par `SimulationScreen` à la place du
+  reste de l'écran de vol dès que `isMissionOver` devient vrai (un
+  changement de type d'élément React, donc un démontage/remontage), la
+  transition vol → résultat est couverte sans code supplémentaire dans
+  `SimulationScreen.tsx`. La transition "préparation → vol" (écran de
+  compte à rebours dans `SimulationScreen`) reste hors périmètre de ce
+  correctif : cet écran n'a pas de `<h1>` (uniquement le canvas déjà
+  accessible via `role="img"`/`aria-label` et le HUD/`CountdownOverlay`
+  déjà couverts par `aria-live`/`role="status"`), conformément à la
+  piste qui ne mentionne que les trois composants avec un `<h1>` — même
+  limitation que le champ documenté par la piste elle-même. Vérifié
+  qu'aucun style de focus indésirable n'apparaît : aucune règle
+  `outline: none` ciblant ces `<h1>` n'existe dans `src/app/styles.css`,
+  donc l'anneau de focus par défaut du navigateur s'applique tel quel ;
+  confirmé dans un vrai navigateur (Playwright, installé temporairement
+  via `npm install --no-save`, jamais ajouté à `package.json`) que
+  `document.activeElement` est bien le `<h1>` de chaque écran après
+  chacune des quatre transitions (menu → préparation, formulaire →
+  résumé, résumé → formulaire via "Edit", vol → résultat), et que
+  l'anneau de focus (`:focus-visible`, `outline: auto`) s'affiche
+  visuellement pour une activation au clavier (Tab + Enter) tout en
+  restant invisible pour une activation à la souris — comportement
+  natif de `:focus-visible`, sans CSS supplémentaire nécessaire. Tests
+  ajoutés dans `tests/ui/MainMenu.test.tsx`, `tests/ui/MissionSetup
+  .test.tsx` (montage, et aller-retour résumé/formulaire) et
+  `tests/ui/MissionResult.test.tsx` (montage), plus un test
+  d'intégration dans `tests/ui/SimulationScreen.test.tsx` pour la
+  transition vol → résultat — les cinq vérifient
+  `screen.getByRole('heading', { level: 1 })).toHaveFocus()`, sur le
+  modèle suggéré par la piste. `npm test` (291 tests), `npm run lint`,
+  `npx tsc --noEmit` et `npm run coverage` (`src/ui` reste à 100 % de
+  lignes/branches) restent propres.
 
 - [x] Le statut moteur du HUD (`hud__engine` : `ENGINE ONLINE`/`ENGINE
   OFFLINE`) change automatiquement sans qu'aucune région `aria-live` ne

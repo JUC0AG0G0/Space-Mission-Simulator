@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   AVAILABLE_MISSION_PROFILES,
   createDefaultMissionConfiguration,
@@ -31,6 +31,17 @@ export function MissionSetup({ onBack, onLaunch }: MissionSetupProps) {
     createDefaultMissionConfiguration,
   );
   const [reviewing, setReviewing] = useState(false);
+  const formHeadingRef = useRef<HTMLHeadingElement>(null);
+
+  // Move keyboard focus to this screen's heading whenever it (re)appears —
+  // on initial mount, and when coming back from the summary via "Edit" —
+  // so a keyboard/screen reader user isn't left stranded on a button that
+  // no longer exists in the previous screen's DOM.
+  useEffect(() => {
+    if (!reviewing) {
+      formHeadingRef.current?.focus();
+    }
+  }, [reviewing]);
 
   function updateField<K extends keyof MissionConfiguration>(
     field: K,
@@ -51,7 +62,9 @@ export function MissionSetup({ onBack, onLaunch }: MissionSetupProps) {
 
   return (
     <div className="mission-setup">
-      <h1 className="mission-setup__title">Mission setup</h1>
+      <h1 className="mission-setup__title" ref={formHeadingRef} tabIndex={-1}>
+        Mission setup
+      </h1>
       <form
         className="mission-setup__form"
         onSubmit={(event) => {
@@ -160,10 +173,19 @@ interface MissionSummaryProps {
 function MissionSummary({ configuration, onEdit, onLaunch }: MissionSummaryProps) {
   const profile = findMissionProfile(configuration.missionProfileId);
   const rocketModel = findRocketModel(configuration.rocketModelId);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  // This component mounts fresh each time the player moves from the form to
+  // the summary, so a mount-only effect is enough to move focus here too.
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
 
   return (
     <div className="mission-setup">
-      <h1 className="mission-setup__title">Mission setup</h1>
+      <h1 className="mission-setup__title" ref={headingRef} tabIndex={-1}>
+        Mission setup
+      </h1>
       <dl className="mission-setup__summary">
         <dt>Mission</dt>
         <dd>{configuration.missionName}</dd>
