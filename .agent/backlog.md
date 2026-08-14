@@ -1194,7 +1194,7 @@ actionnables en l'état.
 
 ## Bugs connus
 
-- [ ] Le statut de mission et les marqueurs d'objectif de
+- [x] Le statut de mission et les marqueurs d'objectif de
   `MissionPanel` (`IN PROGRESS`/`SUCCESS`/`FAILED`, ✓/○) changent
   automatiquement en vol sans qu'aucune région `aria-live` ne les
   couvre
@@ -1236,6 +1236,31 @@ actionnables en l'état.
   contenu de la région déjà présente (pas une région recréée), sur le
   même modèle que les tests d'accessibilité déjà ajoutés pour
   `CountdownOverlay.tsx`/`Hud.tsx`.
+
+  Fait le 2026-08-14 : `MissionPanel.tsx` pose désormais `role="status"`
+  et `aria-live="polite"` sur deux régions distinctes — le `<span
+  className="mission-panel__status">` qui affiche `IN PROGRESS`/
+  `SUCCESS`/`FAILED` dans le `<h2>`, et un nouveau `<div>` englobant la
+  `<ul>` des objectifs (plutôt que poser `role="status"` directement sur
+  la `<ul>`, qui aurait écrasé son rôle implicite de liste et cassé la
+  sémantique lue par les lecteurs d'écran/`getAllByRole('listitem')`) —
+  exactement le premier choix suggéré par la piste ("un conteneur
+  englobant le statut" plutôt que le `<h2>` entier, pour ne pas
+  ré-annoncer le nom de la mission à chaque changement de statut). Les
+  deux régions restent séparées comme envisagé par la piste : un
+  changement de statut et une complétion d'objectif au même instant
+  déclenchent chacun une seule annonce dans leur propre région, sans
+  duplication croisée. Quatre tests ajoutés dans
+  `tests/ui/MissionPanel.test.tsx`, sur le même modèle que ceux déjà
+  ajoutés pour `Hud.tsx`/`CountdownOverlay.tsx` : deux vérifient la
+  région de statut (présence de `aria-live="polite"`, puis mise à jour
+  du contenu de la même région lors d'un re-rendu `'active'` →
+  `'succeeded'`), deux vérifient la région des objectifs (présence de
+  `aria-live="polite"`, puis mise à jour du marqueur `○` → `✓` de la
+  même région lors d'un re-rendu avec un objectif nouvellement
+  complété). `npm test` (299 tests), `npm run lint`, `npx tsc --noEmit`
+  et `npm run coverage` (`MissionPanel.tsx` reste à 100 % de
+  lignes/branches, 97.94 % de couverture globale) restent propres.
 
 
 - [x] Le bouton tactile "Engine" de `TouchControls` n'indique jamais si

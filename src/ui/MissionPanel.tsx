@@ -28,20 +28,29 @@ export function MissionPanel({ mission }: MissionPanelProps) {
   return (
     <div className={`panel mission-panel mission-panel--${mission.status}`}>
       <h2>
-        {mission.name} <span className="mission-panel__status">{statusLabel(mission.status)}</span>
+        {mission.name}{' '}
+        <span
+          className="mission-panel__status"
+          role="status"
+          aria-live="polite"
+        >
+          {statusLabel(mission.status)}
+        </span>
       </h2>
       <p>{mission.description}</p>
-      <ul>
-        {mission.objectives.map((objective) => (
-          <li
-            key={objective.id}
-            className={objective.completed ? 'objective objective--done' : 'objective'}
-          >
-            <span className="objective__marker">{objective.completed ? '✓' : '○'}</span>
-            {objective.description}
-          </li>
-        ))}
-      </ul>
+      <div role="status" aria-live="polite">
+        <ul>
+          {mission.objectives.map((objective) => (
+            <li
+              key={objective.id}
+              className={objective.completed ? 'objective objective--done' : 'objective'}
+            >
+              <span className="objective__marker">{objective.completed ? '✓' : '○'}</span>
+              {objective.description}
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

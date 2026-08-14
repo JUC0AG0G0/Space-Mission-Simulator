@@ -53,4 +53,59 @@ describe('MissionPanel', () => {
 
     expect(screen.getByText(label)).toBeInTheDocument();
   });
+
+  it('exposes the mission status as a live region so screen readers announce success/failure', () => {
+    render(<MissionPanel mission={makeMission()} />);
+    const regions = screen.getAllByRole('status');
+    const statusRegion = regions.find((region) => region.textContent === 'IN PROGRESS');
+
+    expect(statusRegion).toHaveAttribute('aria-live', 'polite');
+    expect(statusRegion).toHaveTextContent('IN PROGRESS');
+  });
+
+  it('keeps announcing the status live region when the mission succeeds', () => {
+    const mission = makeMission();
+    const { rerender } = render(<MissionPanel mission={mission} />);
+    expect(
+      screen.getAllByRole('status').find((region) => region.textContent === 'IN PROGRESS'),
+    ).toBeDefined();
+
+    rerender(<MissionPanel mission={{ ...mission, status: 'succeeded' }} />);
+    expect(
+      screen.getAllByRole('status').find((region) => region.textContent === 'SUCCESS'),
+    ).toBeDefined();
+  });
+
+  it('exposes the objectives list as a live region so screen readers announce completion', () => {
+    render(<MissionPanel mission={makeMission()} />);
+    const regions = screen.getAllByRole('status');
+    const objectivesRegion = regions.find((region) => region.querySelector('li'));
+
+    expect(objectivesRegion).toHaveAttribute('aria-live', 'polite');
+    expect(objectivesRegion).toHaveTextContent('Reach target altitude');
+  });
+
+  it('keeps announcing the objectives live region when an objective completes', () => {
+    const mission = makeMission();
+    const { rerender } = render(<MissionPanel mission={mission} />);
+    const initialRegion = screen
+      .getAllByRole('status')
+      .find((region) => region.querySelector('li'));
+    expect(initialRegion).toHaveTextContent('○Reach target altitude');
+
+    rerender(
+      <MissionPanel
+        mission={{
+          ...mission,
+          objectives: mission.objectives.map((objective) =>
+            objective.id === 'altitude' ? { ...objective, completed: true } : objective,
+          ),
+        }}
+      />,
+    );
+    const updatedRegion = screen
+      .getAllByRole('status')
+      .find((region) => region.querySelector('li'));
+    expect(updatedRegion).toHaveTextContent('✓Reach target altitude');
+  });
 });
