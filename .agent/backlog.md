@@ -959,9 +959,21 @@ cohérent avec `src/app`/`src/ui`. Les deux points sous "Divers /
 à clarifier" restent des décisions en attente, pas des tâches
 actionnables en l'état.
 
+Suivi du 2026-08-14 : le bug d'annonce du statut moteur du HUD
+(`hud__engine`), identifié lors de la 30e passe ci-dessus, est
+désormais corrigé (voir l'entrée cochée correspondante et
+`.agent/changelog.md`) — `Hud.tsx` pose `role="status"`/
+`aria-live="polite"` sur `.hud__engine`, sur le même modèle que les
+correctifs déjà appliqués à `.hud__phase` et `CountdownOverlay.tsx`.
+`npm test` (286 tests), `npm run lint`, `npx tsc --noEmit` et `npm run
+coverage` (98.04 % de lignes / 98.15 % de branches, `Hud.tsx` toujours
+à 100 %) restent propres. Au moment de cette mise à jour, les quatre
+sections actionnables du backlog n'avaient plus aucune entrée non
+cochée.
+
 ## Bugs connus
 
-- [ ] Le statut moteur du HUD (`hud__engine` : `ENGINE ONLINE`/`ENGINE
+- [x] Le statut moteur du HUD (`hud__engine` : `ENGINE ONLINE`/`ENGINE
   OFFLINE`) change automatiquement sans qu'aucune région `aria-live` ne
   le couvre
 
@@ -1000,6 +1012,24 @@ actionnables en l'état.
   les deux régions coexistent dans le même rendu — vérifier que le texte
   "ENGINE ONLINE"/"ENGINE OFFLINE" y apparaît bien), sur le même modèle
   que les tests d'accessibilité déjà ajoutés pour `.hud__phase`.
+
+  Fait le 2026-08-14 : `Hud.tsx` pose désormais `role="status"` et
+  `aria-live="polite"` sur le conteneur `.hud__engine`, exactement comme
+  suggéré par la piste et sur le même modèle que le correctif déjà
+  appliqué à `.hud__phase`. Le HUD contient maintenant deux régions
+  `role="status"` distinctes (phase de vol et statut moteur) : les deux
+  tests existants de `tests/ui/Hud.test.tsx` qui utilisaient
+  `screen.getByRole('status')` (attendant une seule correspondance) sont
+  adaptés en `screen.getAllByRole('status')` filtré par contenu textuel,
+  pour continuer à cibler spécifiquement la région de phase sans se
+  casser sur l'ajout de la seconde région. Deux nouveaux tests ajoutés
+  sur le même modèle : l'un vérifie que la région `ENGINE ONLINE` porte
+  `aria-live="polite"`, l'autre re-rend le composant avec le moteur
+  coupé et vérifie que le contenu de cette même région passe bien de
+  "ENGINE ONLINE" à "ENGINE OFFLINE". `npm test` (286 tests), `npm run
+  lint`, `npx tsc --noEmit` et `npm run coverage` (`Hud.tsx` reste à
+  100 % de lignes/branches, 98.04 % de couverture globale inchangée)
+  restent propres.
 
 - [x] Le libellé de phase de vol du HUD (`hud__phase` : `PRE-LAUNCH`,
   `LAUNCH`, `FLIGHT`, `MISSION COMPLETE`, `MISSION FAILED`) change

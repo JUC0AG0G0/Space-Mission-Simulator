@@ -75,7 +75,7 @@ export function Hud({ state }: HudProps) {
         <dt>THROTTLE</dt>
         <dd>{throttlePercent}%</dd>
       </dl>
-      <div className="hud__engine">
+      <div className="hud__engine" role="status" aria-live="polite">
         ENGINE {spacecraft.engine.active ? 'ONLINE' : 'OFFLINE'}
       </div>
     </div>

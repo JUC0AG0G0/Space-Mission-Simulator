@@ -127,15 +127,18 @@ describe('Hud', () => {
 
   it('exposes the flight phase as an assertive-free live region so screen readers announce it', () => {
     render(<Hud state={makeState()} />);
-    const region = screen.getByRole('status');
-    expect(region).toHaveAttribute('aria-live', 'polite');
-    expect(region).toHaveTextContent('FLIGHT');
+    const regions = screen.getAllByRole('status');
+    const phaseRegion = regions.find((region) => region.textContent === 'FLIGHT');
+    expect(phaseRegion).toHaveAttribute('aria-live', 'polite');
+    expect(phaseRegion).toHaveTextContent('FLIGHT');
   });
 
   it('keeps announcing the live region as the flight phase changes', () => {
     const state = makeState();
     const { rerender } = render(<Hud state={state} />);
-    expect(screen.getByRole('status')).toHaveTextContent('FLIGHT');
+    expect(
+      screen.getAllByRole('status').find((region) => region.textContent === 'FLIGHT'),
+    ).toBeDefined();
 
     const failedState: GameState = {
       ...state,
@@ -144,6 +147,33 @@ describe('Hud', () => {
         : null,
     };
     rerender(<Hud state={failedState} />);
-    expect(screen.getByRole('status')).toHaveTextContent('MISSION FAILED');
+    expect(
+      screen.getAllByRole('status').find((region) => region.textContent === 'MISSION FAILED'),
+    ).toBeDefined();
+  });
+
+  it('exposes the engine status as a live region so screen readers announce automatic shutdowns', () => {
+    render(<Hud state={makeState()} />);
+    const regions = screen.getAllByRole('status');
+    const engineRegion = regions.find((region) => region.textContent === 'ENGINE ONLINE');
+    expect(engineRegion).toHaveAttribute('aria-live', 'polite');
+    expect(engineRegion).toHaveTextContent('ENGINE ONLINE');
+  });
+
+  it('keeps announcing the engine live region when the engine turns off automatically', () => {
+    const state = makeState();
+    const { rerender } = render(<Hud state={state} />);
+    expect(
+      screen.getAllByRole('status').find((region) => region.textContent === 'ENGINE ONLINE'),
+    ).toBeDefined();
+
+    const offState: GameState = {
+      ...state,
+      spacecraft: { ...state.spacecraft, engine: { ...state.spacecraft.engine, active: false } },
+    };
+    rerender(<Hud state={offState} />);
+    expect(
+      screen.getAllByRole('status').find((region) => region.textContent === 'ENGINE OFFLINE'),
+    ).toBeDefined();
   });
 });
