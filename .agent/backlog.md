@@ -1298,7 +1298,7 @@ actionnables en l'état.
 
 ## Bugs connus
 
-- [ ] Les écrans plein écran (`app`, `main-menu`/`mission-setup`,
+- [x] Les écrans plein écran (`app`, `main-menu`/`mission-setup`,
   `mission-result`, `error-boundary`) utilisent `height: 100vh`, qui
   peut masquer le bas de l'écran (boutons compris) derrière la barre
   d'outils d'un navigateur mobile
@@ -1358,6 +1358,27 @@ actionnables en l'état.
   rétrécissement dynamique du viewport d'un vrai navigateur mobile) :
   aucun test à ajouter, une relecture visuelle suffit à confirmer que
   `100dvh` est bien pris en compte partout où `100vh` l'était.
+
+  Fait le 2026-08-14 : les quatre règles identifiées par la piste
+  (`.app`, `.main-menu, .mission-setup`, `.mission-result`,
+  `.error-boundary` dans `src/app/styles.css`) gardent chacune
+  `height: 100vh;` comme filet de sécurité et gagnent une seconde
+  déclaration `height: 100dvh;` juste après, qui l'écrase sur tout
+  navigateur qui la comprend — exactement le motif de repli progressif
+  suggéré par la piste, sans media query ni JS. Vérifié dans un vrai
+  navigateur (Playwright headless, installé temporairement via `npm
+  install`, jamais ajouté à `package.json`, émulation `devices['iPhone
+  13']`) que `CSS.supports('height', '100dvh')` est vrai et que
+  `getComputedStyle(.main-menu).height` correspond bien à
+  `window.innerHeight` (664px), sans régression par rapport à `100vh`
+  seul (Chromium headless n'a pas de barre d'outils dynamique, donc les
+  deux valeurs se résolvent identiquement — le bénéfice réel n'est
+  observable que sur un vrai appareil mobile avec barre d'adresse
+  rétractable, non simulable ici, conformément à la limite déjà notée
+  par la piste). Changement CSS pur, non vérifiable par un test
+  unitaire classique (jsdom ne fait pas de mise en page réelle) : aucun
+  test ajouté/modifié, comme prévu par la piste. `npm test` (301
+  tests), `npm run lint` et `npx tsc --noEmit` restent propres.
 
 - [x] L'écran de repli d'`ErrorBoundary` ne déplace pas le focus
   clavier vers son titre, contrairement aux trois autres écrans
