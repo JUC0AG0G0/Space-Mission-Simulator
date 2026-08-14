@@ -824,7 +824,7 @@ des décisions en attente, pas des tâches actionnables en l'état.
 
 ## Bugs connus
 
-- [ ] Le `<canvas>` de la simulation de vol n'a ni `role`, ni
+- [x] Le `<canvas>` de la simulation de vol n'a ni `role`, ni
   `aria-label`, ni contenu de repli pour les lecteurs d'écran
 
   `SimulationScreen.tsx:208` rend l'élément qui porte tout le rendu
@@ -865,6 +865,19 @@ des décisions en attente, pas des tâches actionnables en l'état.
   `screen.getByRole('img', { name: /flight visualization/i })`), sur le
   même modèle que les tests d'accessibilité déjà ajoutés pour
   `MainMenu.tsx` lors de la 17e passe.
+
+  Fait le 2026-08-14 : `SimulationScreen.tsx` pose désormais
+  `role="img"` et `aria-label="Live spacecraft flight visualization"`
+  sur l'élément `<canvas>`, exactement comme suggéré par la piste — un
+  libellé statique, puisque le détail dynamique (altitude, vitesse,
+  carburant, statut de mission) reste exposé en texte par `Hud.tsx`/
+  `MissionPanel.tsx` juste à côté. Test ajouté dans
+  `tests/ui/SimulationScreen.test.tsx` ("exposes the flight canvas to
+  assistive technology by its accessible name") vérifiant
+  `screen.getByRole('img', { name: /flight visualization/i })`. `npm
+  test` (280 tests), `npm run lint`, `npx tsc --noEmit` et `npm run
+  coverage` (`SimulationScreen.tsx` reste à 100 % de lignes/branches en
+  dehors des lignes déjà jugées marginales) restent propres.
 
 - [x] Aucun favicon n'est servi : le navigateur reçoit une 404 sur
   `/favicon.ico` à chaque chargement de l'application

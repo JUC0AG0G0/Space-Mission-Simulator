@@ -205,7 +205,12 @@ export function SimulationScreen({ missionConfiguration, onExit }: SimulationScr
 
   return (
     <div className="app">
-      <canvas ref={canvasRef} className="app__canvas" />
+      <canvas
+        ref={canvasRef}
+        className="app__canvas"
+        role="img"
+        aria-label="Live spacecraft flight visualization"
+      />
       {state.countdown ? <CountdownOverlay countdown={state.countdown} /> : <Hud state={state} />}
       <div className="app__sidebar">
         <MissionPanel mission={state.activeMission} />

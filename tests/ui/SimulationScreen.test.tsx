@@ -83,6 +83,14 @@ describe('SimulationScreen', () => {
     expect(screen.queryByText(/ENGINE/)).not.toBeInTheDocument();
   });
 
+  it('exposes the flight canvas to assistive technology by its accessible name', () => {
+    renderScreen();
+
+    expect(
+      screen.getByRole('img', { name: /flight visualization/i }),
+    ).toBeInTheDocument();
+  });
+
   it('does not toggle the engine on SPACE while the countdown is still running', () => {
     renderScreen();
 
