@@ -51,6 +51,11 @@ npm run lint
 > Note: this table is not exhaustive — the in-app **Controls** panel is the
 > source of truth for all available keyboard shortcuts.
 
+On touch devices (phone, tablet), an on-screen D-pad and an **Engine**
+button appear automatically in place of the keyboard table above — no
+setting to toggle, it shows up whenever a coarse pointer (touch) is
+detected.
+
 ## Gameplay
 
 A playthrough moves through the following screens and flight phases:
@@ -83,8 +88,9 @@ Mission complete / Mission failed
   HUD is inactive during this phase.
 - **Launch / Flight** — once the countdown ends, the player must turn the
   engine on to take off. Throttle and heading are controlled with
-  WASD/arrow keys (see **Controls**); the flight HUD shows live telemetry
-  while the deterministic physics engine (two-body gravity, thrust, fuel
+  WASD/arrow keys, or the on-screen touch controls on touch devices (see
+  **Controls**); the flight HUD shows live telemetry while the
+  deterministic physics engine (two-body gravity, thrust, fuel
   consumption) advances each frame.
 - **Mission complete / Mission failed** — reached when the active mission's
   success or failure conditions are met (e.g. holding a stable orbit inside

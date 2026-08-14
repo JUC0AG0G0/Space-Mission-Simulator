@@ -2567,7 +2567,7 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   dessous. Item documentation pure — aucun fichier de code ni de test
   modifié.
 
-- [ ] `README.md` ne mentionne nulle part les commandes tactiles
+- [x] `README.md` ne mentionne nulle part les commandes tactiles
   (`TouchControls`), déjà fonctionnelles depuis plusieurs passes
 
   `src/ui/TouchControls.tsx` (D-pad tactile Turn left/Throttle up/
@@ -2601,6 +2601,19 @@ subdivisée si son implémentation dépasse le périmètre raisonnable d'un run.
   sur les appareils à pointeur tactile). Item documentation pure —
   aucun changement de code ni de test attendu, sur le même modèle que
   les deux items déjà cochés ci-dessus dans cette section.
+
+  Fait le 2026-08-14 : les deux pistes suggérées ont été appliquées dans
+  `README.md`. Une note est ajoutée juste après le tableau clavier de la
+  section "## Controls" ("On touch devices (phone, tablet), an on-screen
+  D-pad and an **Engine** button appear automatically..."), symétrique à
+  la note déjà présente sur le panneau in-app. Le paragraphe "Launch /
+  Flight" de "## Gameplay" est élargi pour mentionner l'alternative
+  tactile ("...WASD/arrow keys, or the on-screen touch controls on touch
+  devices..."). Contenu vérifié par lecture de
+  `src/ui/TouchControls.tsx` (D-pad Turn left/Throttle up/Throttle
+  down/Turn right + bouton Engine, affiché via la media query `pointer:
+  coarse`). Item documentation pure : aucun fichier de code ni de test
+  modifié. `npm run lint` reste propre.
 
 ## Divers / à clarifier
 
