@@ -1241,7 +1241,7 @@ l'état.
 
 ## Bugs connus
 
-- [ ] L'écran de repli d'`ErrorBoundary` ne déplace pas le focus
+- [x] L'écran de repli d'`ErrorBoundary` ne déplace pas le focus
   clavier vers son titre, contrairement aux trois autres écrans
   principaux
 
@@ -1282,6 +1282,36 @@ l'état.
   qu'un enfant a levé une exception au rendu, sur le même modèle que les
   tests déjà ajoutés pour `MainMenu.test.tsx`/`MissionSetup.test.tsx`/
   `MissionResult.test.tsx`.
+
+  Fait le 2026-08-14 : `ErrorBoundary.tsx` porte désormais un
+  `headingRef = createRef<HTMLHeadingElement>()`, câblé sur le `<h1>`
+  du fallback (avec `tabIndex={-1}`, comme suggéré par la piste). La
+  piste envisageait un seul `componentDidUpdate` comparant
+  `prevState.hasError` — insuffisant en pratique : quand un enfant lève
+  dès le tout premier rendu (le cas du test déjà existant
+  "shows a fallback screen...", qui monte directement `<ErrorBoundary>
+  <ThrowingComponent /></ErrorBoundary>`), React ne committe jamais
+  d'état `hasError: false` au préalable ; le fallback est ce qui
+  finit monté, donc c'est `componentDidMount` qui s'exécute pour ce
+  commit, pas `componentDidUpdate`. Deux méthodes de cycle de vie sont
+  donc ajoutées : `componentDidMount` (appelle `.focus()` si
+  `hasError` est déjà vrai au tout premier commit) et
+  `componentDidUpdate` (appelle `.focus()` quand `hasError` passe de
+  `false` à `true` lors d'un rendu ultérieur — un enfant qui lève après
+  un montage initial réussi). Deux tests ajoutés dans
+  `tests/ui/ErrorBoundary.test.tsx`, un par chemin : l'un réutilise le
+  composant `ThrowingComponent` existant (lève dès le premier rendu,
+  exerce `componentDidMount`) et vérifie
+  `screen.getByRole('heading', { level: 1 })).toHaveFocus()` ; l'autre
+  introduit un nouveau composant `ThrowsOnlyWhenAsked` monté d'abord
+  avec `shouldThrow={false}` (rendu normal vérifié), puis re-rendu avec
+  `shouldThrow={true}` (exerce `componentDidUpdate`), avec la même
+  assertion de focus. `npm run coverage` confirme que
+  `src/ui/ErrorBoundary.tsx` est désormais à 100 % de couverture
+  (lignes/branches/fonctions) — sans le second test, la branche
+  `componentDidUpdate` restait non exercée. `npm test` (301 tests),
+  `npm run lint`, `npx tsc --noEmit` et `npm run coverage` (97.95 % de
+  couverture globale) restent propres.
 
 - [x] Le statut de mission et les marqueurs d'objectif de
   `MissionPanel` (`IN PROGRESS`/`SUCCESS`/`FAILED`, ✓/○) changent

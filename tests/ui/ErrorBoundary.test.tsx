@@ -10,6 +10,13 @@ function ThrowingComponent(): never {
   throw new Error('boom');
 }
 
+function ThrowsOnlyWhenAsked({ shouldThrow }: { shouldThrow: boolean }) {
+  if (shouldThrow) {
+    throw new Error('boom, but later');
+  }
+  return <p>All good</p>;
+}
+
 describe('ErrorBoundary', () => {
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
@@ -44,6 +51,34 @@ describe('ErrorBoundary', () => {
 
     expect(screen.getByText('SOMETHING WENT WRONG')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Reload' })).toBeInTheDocument();
+  });
+
+  it('moves keyboard focus to its heading when a child throws, like the other main screens', () => {
+    render(
+      <ErrorBoundary>
+        <ThrowingComponent />
+      </ErrorBoundary>,
+    );
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveFocus();
+  });
+
+  it('moves keyboard focus to its heading when a child throws after a successful initial mount', () => {
+    const { rerender } = render(
+      <ErrorBoundary>
+        <ThrowsOnlyWhenAsked shouldThrow={false} />
+      </ErrorBoundary>,
+    );
+
+    expect(screen.getByText('All good')).toBeInTheDocument();
+
+    rerender(
+      <ErrorBoundary>
+        <ThrowsOnlyWhenAsked shouldThrow={true} />
+      </ErrorBoundary>,
+    );
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveFocus();
   });
 
   it('clears the saved mission and reloads the page when Reload is clicked', async () => {
