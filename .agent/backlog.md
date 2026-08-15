@@ -1386,7 +1386,83 @@ le `README.md` reste cohérent avec `src/app`/`src/ui`. Les trois points
 sous "Divers / à clarifier" restent des décisions en attente, pas des
 tâches actionnables en l'état.
 
+Revue du 2026-08-16 (40e passe, planification périodique) : au moment
+de cette revue, les quatre sections actionnables du backlog (Bugs
+connus, Features à ajouter, Tests manquants, Documentation) n'avaient
+plus aucune entrée non cochée. `npm test` (304 tests), `npm run lint`
+et `npx tsc --noEmit` sont propres, aucun `TODO`/`FIXME`/`XXX` dans
+`src/`/`tests/`. `npm run coverage` confirme 97.97 % de lignes /
+98.28 % de branches ; tout `src/simulation`, `src/rendering` et
+`src/ui` reste à 100 % de couverture, les seules lignes non couvertes
+restent `App.tsx:55,57` et `SimulationScreen.tsx:148-164`, déjà jugées
+trop marginales lors de passes précédentes. `npm outdated`/`npm audit`
+ne montrent rien de nouveau par rapport à la 16e passe (mêmes majeures
+et mêmes 6 vulnérabilités dev-only déjà documentées sous "Divers / à
+clarifier"). En poursuivant l'audit accessibilité entamé lors des
+17e/27e/28e/29e/30e/34e/35e passes (`grep -rn "aria-pressed\|aria-label\|
+role=" src/ui/*.tsx`, relancé pour cette passe, pour comparer
+systématiquement tous les boutons à état "on/off" de l'application) un
+vrai défaut d'incohérence a été identifié : le bouton Pause/Resume de
+`src/ui/SimulationControls.tsx` (`<button type="button" onClick=
+{onTogglePause}>{paused ? 'Resume (P)' : 'Pause (P)'}</button>`) est un
+vrai bouton bascule (son texte change selon `paused`), exactement comme
+le bouton "Select"/"Selected" des cartes de fusée de `MissionSetup.tsx`
+(`aria-pressed={selected}`, ligne 144) et le bouton "Engine" de
+`TouchControls.tsx` (`aria-pressed={engineActive}`, ligne 50) — les
+deux seuls autres boutons à état de l'application, tous deux déjà
+corrigés lors de passes antérieures de ce backlog. Mais contrairement à
+ces deux-là, le bouton Pause/Resume n'a ni `aria-pressed`, ni aucun
+autre attribut ARIA (`grep -n "aria-pressed\|aria-label\|role="
+src/ui/SimulationControls.tsx` ne renvoie aucun résultat). Un lecteur
+d'écran énonce donc "Pause (P), bouton" ou "Resume (P), bouton" selon
+l'état courant (le texte du bouton change bel et bien), mais sans le
+marquer sémantiquement comme un bouton à bascule actif/inactif — une
+différence de traitement difficile à justifier puisque c'est
+exactement le même type de contrôle (`paused`/`engine.active`/
+`selected` sont trois booléens d'état reflétés par un seul bouton) déjà
+traité de façon cohérente ailleurs dans le code. `tests/ui/
+SimulationControls.test.tsx` confirme qu'aucun test actuel ne vérifie
+d'attribut ARIA sur ce bouton (seul le texte affiché et l'appel au
+gestionnaire de clic sont vérifiés). Voir le nouvel item sous "Bugs
+connus" ci-dessous. Aucun autre bug, trou de couverture actionnable ou
+doc obsolète trouvé cette fois-ci — le `README.md` reste cohérent avec
+`src/app`/`src/ui`. Les trois points sous "Divers / à clarifier"
+restent des décisions en attente, pas des tâches actionnables en
+l'état.
+
 ## Bugs connus
+
+- [ ] Le bouton Pause/Resume de `SimulationControls` n'a pas
+  d'`aria-pressed`, contrairement aux deux autres boutons à bascule de
+  l'application
+
+  `src/ui/SimulationControls.tsx` affiche `<button type="button"
+  onClick={onTogglePause}>{paused ? 'Resume (P)' : 'Pause (P)'}</button>`
+  — un vrai bouton bascule, son texte reflétant l'état booléen `paused`.
+  Les deux autres boutons à état de l'application posent déjà
+  `aria-pressed` : le bouton "Select"/"Selected" de chaque carte de
+  fusée dans `MissionSetup.tsx:144` (`aria-pressed={selected}`) et le
+  bouton "Engine" de `TouchControls.tsx:50`
+  (`aria-pressed={engineActive}`, corrigé lors de la 34e passe de ce
+  backlog — voir l'item coché "Le bouton tactile 'Engine' de
+  `TouchControls` n'indique jamais si le moteur est actuellement allumé
+  ou éteint" sous "Bugs connus"). `grep -n "aria-pressed\|aria-label\|
+  role=" src/ui/SimulationControls.tsx` ne renvoie aucun résultat : le
+  bouton Pause/Resume reste sans aucun attribut ARIA. Un lecteur d'écran
+  énonce bien le texte changeant ("Pause (P)"/"Resume (P)"), mais sans
+  le marquer sémantiquement comme une bascule active/inactive — une
+  incohérence avec les deux autres boutons à état déjà corrigés dans ce
+  backlog, pour un contrôle de nature identique (un booléen reflété par
+  un seul bouton).
+
+  Piste : ajouter `aria-pressed={paused}` sur le bouton Pause/Resume de
+  `SimulationControls.tsx`, sur le même modèle que les deux correctifs
+  déjà appliqués à `MissionSetup.tsx`/`TouchControls.tsx`. Étendre
+  `tests/ui/SimulationControls.test.tsx` pour vérifier que le bouton
+  porte `aria-pressed="false"` quand `paused={false}` et
+  `aria-pressed="true"` quand `paused={true}`, sur le même modèle que
+  les tests d'accessibilité déjà ajoutés pour les deux autres boutons à
+  bascule.
 
 - [x] Le nouvel affichage APOAPSIS/PERIAPSIS du HUD montre des valeurs
   aberrantes tant que le vaisseau est immobile sur le pas de tir (avant
