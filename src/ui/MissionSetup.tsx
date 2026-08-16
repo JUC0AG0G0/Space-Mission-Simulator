@@ -99,6 +99,7 @@ export function MissionSetup({ onBack, onLaunch }: MissionSetupProps) {
           <span>Mission profile</span>
           <select
             value={configuration.missionProfileId}
+            aria-describedby="mission-setup-profile-hint"
             onChange={(event) => updateField('missionProfileId', event.target.value)}
           >
             {AVAILABLE_MISSION_PROFILES.map((profile) => (
@@ -109,7 +110,7 @@ export function MissionSetup({ onBack, onLaunch }: MissionSetupProps) {
             ))}
           </select>
         </label>
-        <p className="mission-setup__field-hint">
+        <p id="mission-setup-profile-hint" className="mission-setup__field-hint">
           {findMissionProfile(configuration.missionProfileId)?.description}
         </p>
         <div className="mission-setup__field">

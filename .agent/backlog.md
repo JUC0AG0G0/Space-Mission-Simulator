@@ -1820,7 +1820,7 @@ actionnables en l'état.
   n'implémentant pas `HTMLCanvasElement.getContext('2d')`) restent
   propres.
 
-- [ ] Le sélecteur "Mission profile" de `MissionSetup` a un texte de
+- [x] Le sélecteur "Mission profile" de `MissionSetup` a un texte de
   description affiché visuellement, mais jamais associé au `<select>`
   pour les lecteurs d'écran
 
@@ -1849,6 +1849,22 @@ actionnables en l'état.
   `getByRole('combobox', { description: ... })`) expose bien la
   description du profil actuellement sélectionné comme description
   accessible, et qu'elle change bien quand un autre profil est choisi.
+
+  Fait le 2026-08-16 : `src/ui/MissionSetup.tsx` donne désormais un `id`
+  fixe (`mission-setup-profile-hint`) au `<p
+  className="mission-setup__field-hint">`, et le `<select>` "Mission
+  profile" juste au-dessus porte `aria-describedby=
+  "mission-setup-profile-hint"` — exactement comme suggéré par la
+  piste. Deux tests ajoutés dans `tests/ui/MissionSetup.test.tsx`
+  ("exposes the selected mission profile description as an accessible
+  description", "updates the accessible description of the mission
+  profile select when another profile is chosen") vérifiant via
+  `screen.getByRole('combobox', { name: 'Mission profile', description:
+  ... })` que la description accessible correspond bien au profil
+  actuellement sélectionné, et qu'elle change après un `selectOptions`
+  vers un autre profil. `npm test` (329 tests), `npm run lint`, `npx
+  tsc --noEmit` et `npm run coverage` (`MissionSetup.tsx` reste à 100 %
+  de lignes/branches) restent propres.
 
 - [ ] Le nom accessible des boutons "Select"/"Selected" des cartes de
   fusée dans `MissionSetup` n'inclut ni les caractéristiques (masse,

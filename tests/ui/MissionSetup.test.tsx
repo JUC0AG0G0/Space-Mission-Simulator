@@ -114,6 +114,31 @@ describe('MissionSetup', () => {
     ]);
   });
 
+  it('exposes the selected mission profile description as an accessible description', () => {
+    render(<MissionSetup onBack={() => {}} onLaunch={() => {}} />);
+
+    expect(
+      screen.getByRole('combobox', {
+        name: 'Mission profile',
+        description: 'A first flight to a forgiving low Earth orbit.',
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('updates the accessible description of the mission profile select when another profile is chosen', async () => {
+    const user = userEvent.setup();
+    render(<MissionSetup onBack={() => {}} onLaunch={() => {}} />);
+
+    await user.selectOptions(screen.getByLabelText('Mission profile'), 'high-orbit');
+
+    expect(
+      screen.getByRole('combobox', {
+        name: 'Mission profile',
+        description: 'Climb further out to a higher orbit that takes more fuel to reach.',
+      }),
+    ).toBeInTheDocument();
+  });
+
   it('reflects the selected mission profile in the summary', async () => {
     const user = userEvent.setup();
     render(<MissionSetup onBack={() => {}} onLaunch={() => {}} />);
