@@ -2779,3 +2779,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Le sélecteur "Mission profile" de `MissionSetup` a un texte de
 - Branche/push: main (direct)
 - Coût estimé: 2.8009683 USD
+
+## 2026-08-16T18-04-20-660Z — bugfix
+- Description: Le nom accessible des boutons "Select"/"Selected" des cartes de
+- Branche/push: main (direct)
+- Coût estimé: 2.3131439999999994 USD
