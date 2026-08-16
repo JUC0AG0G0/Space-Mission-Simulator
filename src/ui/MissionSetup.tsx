@@ -118,6 +118,8 @@ export function MissionSetup({ onBack, onLaunch }: MissionSetupProps) {
           <div className="mission-setup__rocket-list">
             {AVAILABLE_ROCKET_MODELS.map((model) => {
               const selected = model.id === configuration.rocketModelId;
+              const specsId = `mission-setup-rocket-specs-${model.id}`;
+              const descriptionId = `mission-setup-rocket-description-${model.id}`;
               return (
                 <div
                   key={model.id}
@@ -128,7 +130,7 @@ export function MissionSetup({ onBack, onLaunch }: MissionSetupProps) {
                   }
                 >
                   <p className="mission-setup__rocket-card-name">{model.name}</p>
-                  <dl className="mission-setup__rocket-card-specs">
+                  <dl id={specsId} className="mission-setup__rocket-card-specs">
                     <dt>Mass</dt>
                     <dd>{formatTonnes(model.dryMass + model.fuelMass)}</dd>
                     <dt>Fuel</dt>
@@ -136,12 +138,13 @@ export function MissionSetup({ onBack, onLaunch }: MissionSetupProps) {
                     <dt>Thrust</dt>
                     <dd>{formatKilonewtons(model.engineThrust)}</dd>
                   </dl>
-                  <p className="mission-setup__rocket-card-description">
+                  <p id={descriptionId} className="mission-setup__rocket-card-description">
                     {model.description}
                   </p>
                   <button
                     type="button"
                     aria-label={`Select ${model.name}`}
+                    aria-describedby={`${specsId} ${descriptionId}`}
                     aria-pressed={selected}
                     onClick={() => updateField('rocketModelId', model.id)}
                   >

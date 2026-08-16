@@ -49,6 +49,17 @@ describe('MissionSetup', () => {
     );
   });
 
+  it('exposes each rocket model\'s mass, fuel, thrust, and description as the select button\'s accessible description', () => {
+    render(<MissionSetup onBack={() => {}} onLaunch={() => {}} />);
+
+    const button = screen.getByRole('button', {
+      name: 'Select Explorer I',
+      description:
+        'Mass 8.4 t Fuel 2400 kg Thrust 120 kN A balanced all-rounder, forgiving enough for a first flight.',
+    });
+    expect(button).toBeInTheDocument();
+  });
+
   it('switches the selected rocket model when another one is chosen', async () => {
     const user = userEvent.setup();
     render(<MissionSetup onBack={() => {}} onLaunch={() => {}} />);

@@ -1866,7 +1866,7 @@ actionnables en l'état.
   tsc --noEmit` et `npm run coverage` (`MissionSetup.tsx` reste à 100 %
   de lignes/branches) restent propres.
 
-- [ ] Le nom accessible des boutons "Select"/"Selected" des cartes de
+- [x] Le nom accessible des boutons "Select"/"Selected" des cartes de
   fusée dans `MissionSetup` n'inclut ni les caractéristiques (masse,
   carburant, poussée) ni la description du modèle
 
@@ -1900,6 +1900,30 @@ actionnables en l'état.
   description accessible du bouton de chaque carte contient bien la
   masse/le carburant/la poussée (ou la description), pas seulement le
   nom du modèle.
+
+  Fait le 2026-08-16 : deuxième option de la piste retenue (plus simple
+  à maintenir et cohérente avec le correctif déjà appliqué au hint de
+  profil de mission) — `src/ui/MissionSetup.tsx` donne désormais un
+  `id` calculé par modèle (`mission-setup-rocket-specs-${model.id}`,
+  `mission-setup-rocket-description-${model.id}`) à la `<dl
+  className="mission-setup__rocket-card-specs">` et au `<p
+  className="mission-setup__rocket-card-description">` de chaque carte,
+  et le `<button>` pose désormais `aria-describedby={`${specsId}
+  ${descriptionId}`}` en plus de son `aria-label` simple inchangé
+  (`Select ${model.name}`). Un utilisateur de lecteur d'écran qui
+  tabule jusqu'au bouton entend donc maintenant le nom du modèle suivi
+  de sa masse/son carburant/sa poussée puis sa description, exactement
+  la même information que celle affichée visuellement dans la carte.
+  Test ajouté dans `tests/ui/MissionSetup.test.tsx` ("exposes each
+  rocket model's mass, fuel, thrust, and description as the select
+  button's accessible description") vérifiant via
+  `screen.getByRole('button', { name: 'Select Explorer I', description:
+  ... })` que la description accessible du bouton contient bien la
+  masse ("8.4 t"), le carburant ("2400 kg"), la poussée ("120 kN") et
+  la description textuelle du modèle Explorer I. `npm test` (330
+  tests), `npm run lint`, `npx tsc --noEmit` et `npm run coverage`
+  (`MissionSetup.tsx` reste à 100 % de lignes/branches, 98.04 % de
+  couverture globale) restent propres.
 
 - [x] Le slider "Throttle" de `SimulationControls` reste interactif
   pendant la pause, mais son effet est silencieusement ignoré côté
