@@ -1439,6 +1439,54 @@ tsc --noEmit` et `npm run coverage` (`SimulationControls.tsx` et tout
 de cette mise à jour, les quatre sections actionnables du backlog
 n'avaient plus aucune entrée non cochée.
 
+Revue du 2026-08-16 (41e passe, planification périodique) : au moment
+de cette revue, les quatre sections actionnables du backlog (Bugs
+connus, Features à ajouter, Tests manquants, Documentation) n'avaient
+plus aucune entrée non cochée. `npm test` (306 tests), `npm run lint`
+et `npx tsc --noEmit` sont propres, aucun `TODO`/`FIXME`/`XXX` dans
+`src/`/`tests/`. `npm run coverage` confirme 97.97 % de lignes / 98.28 %
+de branches ; `src/simulation`, `src/rendering` et `src/ui` restent
+tous à 100 % de couverture, les seules lignes non couvertes restent
+`App.tsx:55,57` et `SimulationScreen.tsx:148-164`, déjà jugées trop
+marginales lors de passes précédentes. `npm outdated`/`npm audit` ne
+montrent rien de nouveau par rapport à la 16e passe (mêmes majeures et
+mêmes 6 vulnérabilités dev-only déjà documentées sous "Divers / à
+clarifier"). Une relecture de `spacecraft.ts`, `engine.ts`,
+`simulation-engine.ts`, `Hud.tsx`, `App.tsx`, `MissionSetup.tsx`,
+`mission-result.ts`, `MissionResult.tsx`, `SimulationControls.tsx`,
+`ControlsPanel.tsx` et `canvas-renderer.ts` (recherche de bugs de
+logique numérique, de couleurs CSS non synchronisées avec le rendu
+canvas, de confirmations manquantes sur les actions destructives) n'a
+fait remonter aucun bug ni trou de couverture supplémentaire — un léger
+écart de couleur entre le fond du canvas (`canvas-renderer.ts`,
+`#050914` en dur) et `--color-bg` (`styles.css`, `#05070d`) a été
+repéré mais jugé trop marginal pour un item dédié (deux teintes de noir
+quasi identiques, jamais visibles simultanément puisque le canvas
+recouvre entièrement son conteneur une fois monté). En relisant
+`spec.md` dans son intégralité — déjà fait lors de la 39e passe, mais
+en se concentrant cette fois sur la section 20 ("Gestion du temps"),
+jusqu'ici jamais comparée en détail au code livré — un vrai écart a été
+identifié : cette section demande explicitement que "le moteur doit
+permettre ultérieurement d'ajouter : Simulation x1 / x2 / x5 / x10 /
+Pause", donc un contrôle de la vitesse à laquelle le temps de simulation
+avance par rapport au temps réel, en plus de la pause déjà implémentée.
+`grep -rn "timeScale\|speedMultiplier\|simulationSpeed" src` ne renvoie
+aucun résultat : cette fonctionnalité n'existe sous aucune forme
+aujourd'hui — la seule vitesse possible est x1 (chaque frame de
+`requestAnimationFrame` avance la simulation d'exactement le temps réel
+écoulé, plafonné par `MAX_FRAME_DELTA`,
+`src/app/SimulationScreen.tsx`). C'est un des rares points de `spec.md`
+formulé comme une exigence de conception plutôt que comme une simple
+idée de roadmap lointaine (contrairement à la section 30, "Vision
+d'évolution", qui liste des dizaines d'idées explicitement hors
+périmètre V0) — la section 20 le présente comme quelque chose que le
+moteur doit déjà être architecturé pour accueillir, pas une fonctionnalité
+à exclure. Voir le nouvel item sous "Features à ajouter" ci-dessous.
+Aucun autre bug, trou de couverture actionnable ou doc obsolète trouvé
+cette fois-ci — le `README.md` reste cohérent avec `src/app`/`src/ui`.
+Les trois points sous "Divers / à clarifier" restent des décisions en
+attente, pas des tâches actionnables en l'état.
+
 ## Bugs connus
 
 - [x] Le bouton Pause/Resume de `SimulationControls` n'a pas
@@ -3044,6 +3092,60 @@ n'avaient plus aucune entrée non cochée.
   fois (`ENGINE ONLINE`).
 
 ## Features à ajouter
+
+- [ ] Ajouter un contrôle de la vitesse de simulation (x1 / x2 / x5 /
+  x10), explicitement demandé par `spec.md` mais jamais implémenté
+
+  `spec.md` (section 20, "Gestion du temps") distingue explicitement le
+  temps réel (boucle de rendu) du temps de simulation (moteur physique)
+  et demande : "Le moteur doit permettre ultérieurement d'ajouter :
+  Simulation x1 / Simulation x2 / Simulation x5 / Simulation x10 /
+  Pause." La pause existe déjà (`SimulationEngine.togglePause`,
+  `src/simulation/simulation-engine.ts`), mais aucune notion de vitesse
+  de simulation n'existe sous quelque forme que ce soit :
+  `grep -rn "timeScale\|speedMultiplier\|simulationSpeed" src` ne
+  renvoie aucun résultat. Aujourd'hui, chaque frame de
+  `requestAnimationFrame` (`src/app/SimulationScreen.tsx`) avance la
+  simulation d'exactement le temps réel écoulé depuis la frame
+  précédente (plafonné par `MAX_FRAME_DELTA = 0.25` pour éviter un
+  grand saut physique si l'onglet a été mis en arrière-plan) — il n'y a
+  donc qu'une seule vitesse possible, x1. Contrairement à la plupart des
+  idées listées dans `spec.md` section 30 ("Vision d'évolution",
+  explicitement hors périmètre V0 — "Ces fonctionnalités ne doivent pas
+  être implémentées dans la V0"), la section 20 formule ceci comme une
+  contrainte de conception que le moteur doit déjà satisfaire ("le
+  moteur doit permettre"), pas comme une idée lointaine à exclure.
+
+  Piste : introduire un `timeScale: number` (par défaut `1`) porté par
+  `GameState` (`src/types/simulation.ts`) ou par une méthode dédiée de
+  `SimulationEngine` (ex. `setTimeScale(scale: number)`, avec un
+  ensemble de valeurs autorisées `[1, 2, 5, 10]` plutôt qu'un nombre
+  arbitraire, pour rester simple et cohérent avec l'énoncé du spec).
+  Dans `SimulationScreen.tsx`, multiplier le `deltaTime` réel (déjà
+  plafonné par `MAX_FRAME_DELTA`) par `timeScale` avant de l'passer à
+  `engine.step(...)` — plafonner *avant* la multiplication, pas après,
+  pour qu'un saut de frame réel important combiné à une vitesse x10 ne
+  produise pas un pas de simulation démesuré (ex. `step(Math.min(realDelta,
+  MAX_FRAME_DELTA) * timeScale)`). Ajouter un petit groupe de boutons
+  (ex. dans `SimulationControls.tsx`, à côté de Pause/Restart) pour
+  choisir la vitesse, avec `aria-pressed` sur le bouton actif (même
+  motif que les boutons à bascule déjà corrigés dans ce backlog — voir
+  "Le bouton Pause/Resume de `SimulationControls` n'a pas
+  d'`aria-pressed`..." ci-dessous). Réfléchir à la garde `paused`/
+  `countdown`/mission terminée déjà présente dans `step`/`applyCommand`
+  : la vitesse ne doit probablement s'appliquer qu'en vol actif, pas
+  pendant le compte à rebours (où le temps réel ne doit justement pas
+  avancer la simulation, cf. `advanceCountdown`). Ajouter des tests
+  dans `tests/simulation-engine.test.ts` (un `step` à `timeScale: 2`
+  avance l'état de deux fois plus que `timeScale: 1` pour le même
+  `deltaTime` réel, sur une grandeur déterministe comme
+  `simulationTime` ou `spacecraft.position`) et dans
+  `tests/ui/SimulationControls.test.tsx`/`SimulationScreen.test.tsx`
+  pour le câblage UI. Rester sur un diff limité : implémenter
+  uniquement x1/x2/x5/x10 + le câblage UI minimal, sans étendre à
+  d'autres mécaniques (pas de ralenti x0.5, pas de persistance du choix
+  entre sessions) sauf si cela s'avère trivial une fois la fonction de
+  base en place.
 
 - [x] Le HUD n'affiche jamais l'apoapside/périapside de l'orbite
   courante, alors que le calcul existe déjà et que le HUD d'exemple du
