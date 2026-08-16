@@ -1552,6 +1552,63 @@ actionnable ou doc obsolète trouvé cette fois-ci. Les trois points sous
 "Divers / à clarifier" restent des décisions en attente, pas des tâches
 actionnables en l'état.
 
+Revue du 2026-08-16 (43e passe, planification périodique) : au moment
+de cette revue, les quatre sections actionnables du backlog (Bugs
+connus, Features à ajouter, Tests manquants, Documentation) n'avaient
+plus aucune entrée non cochée — la lacune de documentation sur les
+boutons Pause/Restart/vitesse identifiée lors de la 42e passe est
+désormais corrigée dans `README.md`. `npm test` (316 tests), `npm run
+lint` et `npx tsc --noEmit` sont propres, aucun `TODO`/`FIXME`/`XXX`
+dans `src/`/`tests/`. `npm run coverage` confirme 98 % de lignes /
+98.29 % de branches ; tout `src/simulation`, `src/rendering` et
+`src/ui` reste à 100 % de couverture, les seules lignes non couvertes
+restent `App.tsx:55,57` et `SimulationScreen.tsx:148-164`, déjà jugées
+trop marginales lors de passes précédentes. `npm outdated`/`npm audit`
+ne montrent rien de nouveau par rapport à la 16e passe (mêmes majeures
+et mêmes 6 vulnérabilités dev-only déjà documentées sous "Divers / à
+clarifier"). Vérifié par un test numérique jetable (comparaison de la
+dérive du rayon d'une orbite circulaire simulée avec `integrate` sur
+plusieurs milliers de pas, à `timeScale` 1 contre 10, y compris le pas
+le plus défavorable admis par `MAX_FRAME_DELTA`) que l'intégration
+semi-implicite d'Euler reste largement assez précise à `timeScale: 10`
+pour un vol normal (dérive de rayon sous 0.03 % sur une heure simulée à
+framerate normal, sous 0.5 % même dans le pire cas où chaque frame réelle
+serait plafonnée à `MAX_FRAME_DELTA = 0.25s` en continu — un scénario de
+dégradation de performance soutenue, pas un cas normal) : pas de bug
+numérique actionnable trouvé de ce côté. Vérifié aussi dans un vrai
+navigateur (Playwright headless, émulation iPhone 13 portrait tactile)
+que les quatre nouveaux boutons de vitesse de `SimulationControls`
+(ajoutés lors du run précédent) ne chevauchent ni le reste du panneau
+latéral ni les commandes tactiles, et que `aria-pressed` bascule
+correctement au clic — aucune régression visuelle de la 42e passe.
+
+En relisant `spec.md` section 17.2 ("Feature absente") — qui documente
+explicitement l'un des défauts volontaires prévus pour la V0 initiale
+("Le joueur ne peut pas encore modifier la puissance du moteur avec
+précision depuis l'interface" ; "Le backlog doit demander l'ajout d'un
+throttle configurable de 0 à 100 %") — face à l'implémentation actuelle
+du pilotage, un vrai écart a été confirmé : ce défaut volontaire n'a
+jamais été comblé. `SimulationCommand`
+(`src/types/simulation.ts:156-160`) n'expose que `throttleDelta`
+(relatif, appliqué à `THROTTLE_RATE = 0.5`/s tant que `W`/`↑`/`S`/`↓`
+ou le bouton tactile équivalent est maintenu) — aucun champ pour fixer
+le throttle à une valeur absolue. Le HUD (`src/ui/Hud.tsx:54,92`)
+affiche `throttlePercent` en lecture seule seulement. `grep -rn
+"type=\"range\"" src/ui/*.tsx` ne renvoie aucun résultat : aucun
+slider ni champ numérique n'existe nulle part dans l'UI. Fait notable :
+la primitive nécessaire existe déjà côté moteur —
+`setThrottle(engine, throttle)` (`src/simulation/spacecraft/engine.ts:
+19-22`, clampée à `[0, 1]`) est déjà utilisée en interne par
+`adjustThrottle`, mais n'est appelée nulle part avec une valeur choisie
+par le joueur. Un joueur qui veut, par exemple, mettre le moteur à
+exactement 50 % doit deviner combien de temps maintenir `S` depuis
+100 % — aucun moyen de viser une valeur précise. Voir le nouvel item
+sous "Features à ajouter" ci-dessous. Aucun autre bug, trou de
+couverture actionnable ou doc obsolète trouvé cette fois-ci — le
+`README.md` reste cohérent avec `src/app`/`src/ui`. Les trois points
+sous "Divers / à clarifier" restent des décisions en attente, pas des
+tâches actionnables en l'état.
+
 ## Bugs connus
 
 - [x] `SimulationEngine.applyCommand` ignore `timeScale` : le pilotage
@@ -3250,6 +3307,62 @@ actionnables en l'état.
   fois (`ENGINE ONLINE`).
 
 ## Features à ajouter
+
+- [ ] Ajouter un contrôle précis du throttle (0 à 100 %), depuis
+  l'interface, en plus des touches +/- déjà existantes
+
+  `spec.md` (section 17.2, "Feature absente") documente explicitement
+  ce manque comme l'un des défauts volontaires prévus pour la V0
+  initiale : "Le joueur ne peut pas encore modifier la puissance du
+  moteur avec précision depuis l'interface" — "Le backlog doit demander
+  l'ajout d'un throttle configurable de 0 à 100 %." Ce défaut n'a
+  jamais été comblé : `SimulationCommand`
+  (`src/types/simulation.ts:156-160`) n'expose que `throttleDelta`, un
+  ajustement *relatif* appliqué à `THROTTLE_RATE = 0.5`/s tant que
+  `W`/`↑` (augmenter) ou `S`/`↓` (diminuer) — ou le bouton tactile
+  équivalent — est maintenu enfoncé. Le HUD
+  (`src/ui/Hud.tsx:54,92`) affiche `throttlePercent` en lecture seule
+  uniquement. `grep -rn "type=\"range\"" src/ui/*.tsx` ne renvoie aucun
+  résultat : aucun slider ni champ numérique n'existe nulle part dans
+  l'UI. Un joueur qui veut, par exemple, mettre le moteur à exactement
+  50 % doit deviner combien de temps maintenir `S` en partant de
+  100 % — impossible de viser une valeur précise autrement qu'en
+  tâtonnant en observant le HUD.
+
+  La primitive nécessaire existe déjà côté moteur : `setThrottle(engine,
+  throttle)` (`src/simulation/spacecraft/engine.ts:19-22`) clampe déjà
+  la valeur à `[0, 1]` et est utilisée en interne par `adjustThrottle` —
+  il ne manque qu'un chemin pour qu'une valeur choisie par le joueur
+  l'atteigne.
+
+  Piste : ajouter un champ optionnel `setThrottle?: number` (0 à 1) à
+  `SimulationCommand` (`src/types/simulation.ts`), et le traiter dans
+  `SimulationEngine.applyCommand`
+  (`src/simulation/simulation-engine.ts`) en appelant directement
+  `setThrottle(spacecraft.engine, command.setThrottle)` — à appliquer
+  immédiatement, indépendamment de `deltaTime`/`timeScale`, contrairement
+  à `throttleDelta` (qui reste un ajustement continu par seconde), puisque
+  c'est une instruction ponctuelle ("mets le throttle à X %"), pas un
+  taux à intégrer dans le temps. Exposer ce champ côté UI avec un
+  `<input type="range" min="0" max="100">` (accessible, avec un `<label>`
+  explicite) — le plus simple est de l'ajouter dans `SimulationControls
+  .tsx` (qui a déjà accès à `engineRef` via ses props depuis
+  `SimulationScreen.tsx`, sur le même modèle que les boutons de vitesse
+  de simulation ajoutés lors d'un run précédent) plutôt que dans
+  `Hud.tsx` (purement un composant d'affichage aujourd'hui, sans callback
+  vers le moteur). Ne pas retirer `throttleDelta`/les touches W/S/le
+  D-pad tactile existants : le slider est un complément pour un réglage
+  précis, pas un remplacement du contrôle continu déjà en place (les deux
+  doivent pouvoir coexister sans conflit — le slider fixe une valeur
+  ponctuelle, les touches continuent d'ajuster depuis cette valeur).
+  Ajouter des tests dans `tests/simulation-engine.test.ts` (`applyCommand`
+  avec `{ setThrottle: 0.5 }` fixe bien `engine.throttle` à `0.5`,
+  clampé à `[0, 1]` pour une valeur hors bornes, sans dépendre de
+  `deltaTime`/`timeScale`) et dans `tests/ui/SimulationControls.test.tsx`
+  (interaction avec le slider, valeur affichée/appelée). Garder le diff
+  limité : pas besoin de synchroniser visuellement la position du slider
+  avec les ajustements faits au clavier au-delà de ce que React fait déjà
+  nativement via la prop `value` contrôlée à partir de l'état du moteur.
 
 - [x] Ajouter un contrôle de la vitesse de simulation (x1 / x2 / x5 /
   x10), explicitement demandé par `spec.md` mais jamais implémenté
