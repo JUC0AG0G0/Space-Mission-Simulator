@@ -1651,7 +1651,124 @@ actionnable ou doc obsolète trouvé cette fois-ci. Les trois points sous
 "Divers / à clarifier" restent des décisions en attente, pas des tâches
 actionnables en l'état.
 
+Revue du 2026-08-16 (45e passe, planification périodique) : au moment
+de cette revue, les quatre sections actionnables du backlog (Bugs
+connus, Features à ajouter, Tests manquants, Documentation) n'avaient
+plus aucune entrée non cochée — la lacune de documentation sur le
+slider de throttle identifiée lors de la 44e passe est désormais
+corrigée dans `README.md`. `npm test` (323 tests), `npm run lint` et
+`npx tsc --noEmit` sont propres, aucun `TODO`/`FIXME`/`XXX` dans
+`src/`/`tests/`. `npm run coverage` confirme 98.03 % de lignes / 98.3 %
+de branches ; tout `src/simulation`, `src/rendering` et `src/ui` reste
+à 100 % de couverture, les seules lignes non couvertes restent
+`App.tsx:55,57` et `SimulationScreen.tsx:148-164`, déjà jugées trop
+marginales lors de passes précédentes. `npm outdated`/`npm audit` ne
+montrent rien de nouveau par rapport à la 16e passe (mêmes majeures et
+mêmes 6 vulnérabilités dev-only déjà documentées sous "Divers / à
+clarifier"). En relisant en détail le nouveau slider de throttle et sa
+traversée jusqu'au moteur (`SimulationControls.tsx`,
+`SimulationScreen.tsx`, `SimulationEngine.applyCommand`) — le câblage
+lui-même avait déjà été vérifié correct lors de la 44e passe, mais pas
+son interaction avec la boucle de rendu React — un vrai bug d'UX a été
+identifié : `applyCommand` (`src/simulation/simulation-engine.ts:205-207`)
+ignore silencieusement `setThrottle` tant que `this.state.paused` est
+vrai (déjà testé côté moteur, `tests/simulation-engine.test.ts:412`,
+"ignores setThrottle while paused"), mais rien n'empêche l'utilisateur
+d'interagir avec le `<input type="range">` pendant la pause — et la
+boucle de jeu (`SimulationScreen.tsx:122-172`) continue d'appeler
+`requestAnimationFrame`/`engine.step`/`setState` à chaque frame même en
+pause, sans jamais vérifier `state.paused`. Comme `step`/`applyCommand`
+retournent tous les deux immédiatement sans modifier `this.state`
+pendant la pause, `engine.getState()` renvoie exactement la même
+référence d'objet à chaque frame, donc `setState(nextState)` est un
+no-op pour React (comparaison par référence) : aucun re-rendu n'est
+déclenché tant que la pause dure. Concrètement, si le joueur fait
+glisser le slider "Throttle" pendant la pause, `onSetThrottle` appelle
+bien `applyCommand({ setThrottle }, 0)`, qui ne fait rien côté moteur
+— mais comme aucun re-rendu ne suit, React ne remet pas non plus la
+valeur affichée du `<input>` à sa vraie valeur côté moteur : le curseur
+reste visuellement là où le joueur l'a laissé, alors que le throttle
+réel n'a pas bougé. Ce n'est qu'à la reprise (`P`/bouton Resume), dès
+que le premier `step` non ignoré produit un nouvel état (position/
+vitesse/carburant modifiés), qu'un re-rendu survient et que le slider
+"saute" brutalement à la valeur réelle du moteur — un comportement
+trompeur (le joueur croit avoir réglé le throttle à une valeur précise
+pendant la pause, découvre au dégel qu'il n'en est rien) que
+`tests/ui/SimulationControls.test.tsx`/`tests/ui/
+SimulationScreen.test.tsx` ne couvrent pas (les tests existants du
+slider ne rendent jamais `paused={true}` en interagissant avec
+l'input). Les boutons Pause/Restart et le groupe de vitesse
+n'ont pas ce défaut : ils appellent directement `engine.togglePause()`/
+`engine.reset()`/`engine.setTimeScale()`, jamais gatés par
+`applyCommand`, donc restent toujours réactifs pendant la pause — voir
+le nouvel item sous "Bugs connus" ci-dessous. Aucun autre bug, trou de
+couverture actionnable ou doc obsolète trouvé cette fois-ci — le
+`README.md` reste cohérent avec `src/app`/`src/ui`. Les trois points
+sous "Divers / à clarifier" restent des décisions en attente, pas des
+tâches actionnables en l'état.
+
 ## Bugs connus
+
+- [ ] Le slider "Throttle" de `SimulationControls` reste interactif
+  pendant la pause, mais son effet est silencieusement ignoré côté
+  moteur — le curseur affiché se désynchronise de la vraie valeur puis
+  "saute" brutalement à la reprise
+
+  `SimulationEngine.applyCommand` (`src/simulation/simulation-engine.ts:
+  205-207`) retourne immédiatement sans rien modifier tant que
+  `this.state.paused` est vrai — y compris pour `command.setThrottle`,
+  qui vient du nouveau slider "Throttle (X%)" de
+  `src/ui/SimulationControls.tsx`. Ce comportement moteur est déjà
+  couvert par un test ("ignores setThrottle while paused",
+  `tests/simulation-engine.test.ts:412`), mais rien côté UI n'empêche
+  l'utilisateur de faire glisser le `<input type="range">` pendant la
+  pause : l'élément n'a pas d'attribut `disabled`, et
+  `onSetThrottle`/`onChange` (`src/ui/SimulationControls.tsx:56`)
+  appellent `applyCommand` sans condition sur `paused`.
+
+  Le vrai problème est plus subtil qu'un simple appel ignoré : la
+  boucle de jeu (`src/app/SimulationScreen.tsx:122-172`) continue
+  d'appeler `requestAnimationFrame`/`engine.applyCommand`/`engine.step`/
+  `setState` à chaque frame même pendant la pause, sans jamais vérifier
+  `state.paused`. Comme `step`/`applyCommand` retournent tous deux
+  immédiatement sans modifier `this.state` tant que la pause dure,
+  `engine.getState()` renvoie exactement la même référence d'objet à
+  chaque frame — `setState(nextState)` devient donc un no-op pour React
+  (comparaison par référence, aucun re-rendu déclenché). Résultat
+  observable : si le joueur fait glisser le slider pendant la pause,
+  `onSetThrottle` appelle bien `applyCommand({ setThrottle }, 0)`, qui
+  ne change rien côté moteur — mais comme aucun re-rendu ne suit,
+  React ne remet pas non plus la valeur affichée du `<input>` à sa
+  vraie valeur : le curseur reste visuellement là où le joueur l'a
+  laissé, donnant l'illusion que le réglage a été pris en compte. Ce
+  n'est qu'à la reprise (touche `P` ou bouton "Resume"), dès que le
+  premier `step` non ignoré produit un nouvel état, qu'un re-rendu
+  survient et que le slider "saute" brutalement à la vraie valeur du
+  moteur — un comportement trompeur pour le joueur, qui découvre après
+  coup que son réglage pendant la pause n'a jamais été appliqué. Les
+  boutons Pause/Restart et le groupe de boutons de vitesse n'ont pas ce
+  défaut : ils appellent directement `engine.togglePause()`/
+  `engine.reset()`/`engine.setTimeScale()`, jamais gatés par
+  `applyCommand`, donc restent toujours réactifs et cohérents avec
+  l'affichage pendant la pause.
+
+  Piste : le plus simple et le plus cohérent avec le reste de l'UI est
+  de désactiver le slider pendant la pause plutôt que de changer le
+  comportement du moteur — ajouter `disabled={paused}` sur l'`<input>`
+  de `SimulationControls.tsx` (le composant reçoit déjà `paused` en
+  prop). Un `<input>` désactivé ne peut plus être glissé par
+  l'utilisateur, donc plus de désynchronisation possible entre la
+  position affichée et la valeur réelle du moteur ; envisager aussi un
+  style visuel `:disabled` discret (curseur grisé) pour signaler
+  clairement que le contrôle est temporairement inactif, cohérent avec
+  le fait que le vaisseau lui-même est figé pendant la pause. Étendre
+  `tests/ui/SimulationControls.test.tsx` pour vérifier que l'`<input>`
+  porte l'attribut `disabled` quand `paused={true}` et non quand
+  `paused={false}`. Ne pas modifier `SimulationEngine.applyCommand` : le
+  comportement moteur (ignorer `setThrottle` pendant la pause) reste
+  correct et voulu, seul le contrôle visuel doit refléter cette
+  contrainte pour éviter la désynchronisation d'affichage.
+
 
 - [x] `SimulationEngine.applyCommand` ignore `timeScale` : le pilotage
   manuel (throttle/cap) reste calé sur le temps réel alors que la
