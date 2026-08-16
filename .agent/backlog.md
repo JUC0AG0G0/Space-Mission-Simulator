@@ -1487,7 +1487,138 @@ cette fois-ci — le `README.md` reste cohérent avec `src/app`/`src/ui`.
 Les trois points sous "Divers / à clarifier" restent des décisions en
 attente, pas des tâches actionnables en l'état.
 
+Revue du 2026-08-16 (42e passe, planification périodique) : au moment
+de cette revue, les quatre sections actionnables du backlog (Bugs
+connus, Features à ajouter, Tests manquants, Documentation) n'avaient
+plus aucune entrée non cochée — la fonctionnalité de vitesse de
+simulation (x1/x2/x5/x10) ajoutée lors du run précédent était le
+dernier item actionnable. `npm test` (314 tests), `npm run lint`, `npx
+tsc --noEmit` et `npm run build` (`tsc && vite build`, 66 modules,
+aucun avertissement) sont tous propres, aucun `TODO`/`FIXME`/`XXX` dans
+`src/`/`tests/`. `npm run coverage` confirme 98 % de lignes / 98.29 %
+de branches ; tout `src/simulation`, `src/rendering` et `src/ui` reste
+à 100 % de couverture, les seules lignes non couvertes restent
+`App.tsx:55,57` et `SimulationScreen.tsx:148-164`, déjà jugées trop
+marginales lors de passes précédentes. `npm outdated`/`npm audit` ne
+montrent rien de nouveau par rapport à la 16e passe (mêmes majeures et
+mêmes 6 vulnérabilités dev-only déjà documentées sous "Divers / à
+clarifier"). En relisant en détail la toute nouvelle fonctionnalité de
+vitesse de simulation (`SimulationEngine.step`/`applyCommand`,
+`src/simulation/simulation-engine.ts`, ajoutée lors du run précédent —
+jamais encore auditée par une passe de relecture indépendante), un vrai
+bug de logique a été identifié : `step` multiplie bien `deltaTime` par
+`this.state.timeScale` avant d'intégrer la physique, de consommer le
+carburant et d'avancer `simulationTime` (`scaledDeltaTime = deltaTime *
+this.state.timeScale`, ligne 252), mais `applyCommand`
+(lignes 204-233), qui traduit les commandes du joueur (`throttleDelta`,
+`turnDelta`) en changement de throttle/cap, utilise le `deltaTime` reçu
+tel quel, sans jamais le multiplier par `timeScale` — alors qu'il est
+appelé avec exactement le même `deltaTime` réel non mis à l'échelle que
+`step` (`engine.applyCommand(command, deltaSeconds); engine.step
+(deltaSeconds);`, `src/app/SimulationScreen.tsx:138-139`). Concrètement,
+`TURN_RATE`/`THROTTLE_RATE` (`src/simulation/simulation-engine.ts:30-32`,
+documentées comme des taux "par seconde") restent donc calées sur le
+temps réel quel que soit `timeScale`, alors que toute la physique qui
+détermine si un virage est encore pertinent (position, vitesse,
+carburant, minuteur de mission) avance elle à `timeScale` fois la
+vitesse réelle. À x10, la fusée ne tourne/n'accélère donc plus qu'à un
+dixième de son taux habituel *par seconde simulée* — un joueur qui
+garde le cap à x10 pendant 1 seconde réelle voit sa trajectoire évoluer
+comme si 10 secondes de vol s'étaient écoulées, mais ne peut corriger
+son cap que d'un dixième de ce qu'il aurait pu corriger à x1 pour la
+même durée simulée, ce qui rend le pilotage manuel proportionnellement
+de moins en moins réactif à mesure que la vitesse augmente — un
+comportement non documenté (ni dans `spec.md`, section 20, qui ne
+précise rien sur le pilotage manuel pendant l'accéléré, ni dans le
+correctif lui-même) et qui contredit le choix déjà fait pour tout le
+reste de `step` de faire avancer `TURN_RATE`/`THROTTLE_RATE` en secondes
+simulées plutôt qu'en secondes réelles.
+`tests/simulation-engine.test.ts` (`describe('SimulationEngine time
+scale', ...)`, ajouté lors du run précédent) confirme qu'aucun test
+actuel n'exerce `applyCommand` avec un `timeScale` différent de 1 — les
+tests existants de `applyCommand`/`turnDelta`/`throttleDelta`
+(`describe('SimulationEngine commands', ...)`) utilisent tous la
+vitesse par défaut. Voir le nouvel item sous "Bugs connus" ci-dessous.
+Une lacune de documentation a aussi été trouvée en comparant le
+`README.md` au nouveau composant `SimulationControls.tsx` : ni les
+boutons Pause/Restart (`src/ui/SimulationControls.tsx`, déjà présents
+avant ce run) ni les quatre nouveaux boutons de vitesse (`1x`/`2x`/
+`5x`/`10x`) ne sont mentionnés dans la section "## Controls" du
+`README.md`, qui ne documente toujours que le clavier de pilotage et
+les commandes tactiles — `grep -i "speed\|pause\|x1\|x2\|x5\|x10"
+README.md` ne renvoie aucun résultat pertinent. Voir le nouvel item
+sous "Documentation" ci-dessous. Aucun autre bug, trou de couverture
+actionnable ou doc obsolète trouvé cette fois-ci. Les trois points sous
+"Divers / à clarifier" restent des décisions en attente, pas des tâches
+actionnables en l'état.
+
 ## Bugs connus
+
+- [ ] `SimulationEngine.applyCommand` ignore `timeScale` : le pilotage
+  manuel (throttle/cap) reste calé sur le temps réel alors que la
+  physique, le carburant et les minuteurs de mission accélèrent avec la
+  vitesse de simulation choisie
+
+  `step` (`src/simulation/simulation-engine.ts:241-311`) calcule
+  `scaledDeltaTime = deltaTime * this.state.timeScale` (ligne 252) et
+  l'utilise pour l'intégration physique (`integrate`), la consommation
+  de carburant (`applyFuelConsumption`), l'avancement de
+  `simulationTime`, l'horodatage de la trajectoire et l'évaluation de
+  mission (`evaluateMission`) — toute la simulation avance donc bien
+  `timeScale` fois plus vite que le temps réel une fois une vitesse
+  x2/x5/x10 sélectionnée (fonctionnalité ajoutée lors du run précédent,
+  voir l'item coché "Ajouter un contrôle de la vitesse de simulation..."
+  sous "Features à ajouter" ci-dessous). Mais `applyCommand`
+  (lignes 204-233), qui traduit les commandes du joueur en changement de
+  throttle/cap (`adjustThrottle`/`turnSpacecraft`, avec `TURN_RATE =
+  1.5` rad/s et `THROTTLE_RATE = 0.5`/s, lignes 30-32), utilise le
+  `deltaTime` reçu tel quel — sans jamais le multiplier par
+  `this.state.timeScale`. `SimulationScreen.tsx:137-139` appelle
+  pourtant les deux méthodes avec exactement le même `deltaSeconds` réel
+  non mis à l'échelle (`engine.applyCommand(command, deltaSeconds);
+  engine.step(deltaSeconds);`) : `step` fait ensuite sa propre mise à
+  l'échelle en interne, mais `applyCommand` n'en fait aucune.
+
+  Concrètement : à `timeScale = 10`, une seconde réelle passée à
+  maintenir la touche `A`/`D` ne fait tourner le vaisseau que de
+  `TURN_RATE * 1 = 1.5` rad (comme à x1), alors que la même seconde
+  réelle fait avancer la position/vitesse/carburant/le minuteur de
+  mission de `10` secondes simulées — soit un virage 10 fois plus lent
+  *relativement au déroulement de la trajectoire* qu'à vitesse normale.
+  Le pilotage manuel devient donc proportionnellement de moins en moins
+  réactif à mesure que la vitesse augmente, un comportement qui n'est
+  précisé nulle part (`spec.md`, section 20, ne dit rien du pilotage
+  manuel pendant l'accéléré) et qui contredit le choix déjà fait pour le
+  reste de `step` de faire avancer ces taux en secondes simulées plutôt
+  qu'en secondes réelles. `tests/simulation-engine.test.ts` (`describe
+  ('SimulationEngine time scale', ...)`) ne teste `applyCommand`
+  qu'indirectement via `toggleEngine` (`deltaTime: 0`, insensible à
+  toute mise à l'échelle) ; `describe('SimulationEngine commands', ...)`
+  teste `turnDelta`/`throttleDelta` mais uniquement à la vitesse par
+  défaut (`timeScale: 1`), donc l'écart entre les deux méthodes n'est
+  couvert par aucun test existant.
+
+  Piste : dans `applyCommand`, calculer `const scaledDeltaTime =
+  deltaTime * this.state.timeScale;` (même formule qu'au début de
+  `step`) juste après la garde `paused`/`isMissionActive`/`countdown`,
+  et l'utiliser à la place de `deltaTime` dans les deux appels qui en
+  dépendent (`adjustThrottle(..., command.throttleDelta * THROTTLE_RATE
+  * scaledDeltaTime)` et `turnSpacecraft(..., command.turnDelta *
+  TURN_RATE * scaledDeltaTime)`) — `toggleEngine` n'est pas concerné
+  (appelé avec `deltaTime: 0` depuis `SimulationScreen`/`TouchControls`,
+  indépendant de toute échelle). Comportement inchangé à `timeScale: 1`
+  (valeur par défaut, `scaledDeltaTime === deltaTime`), donc aucune
+  régression attendue sur les tests existants de `describe
+  ('SimulationEngine commands', ...)`. Ajouter un test dans
+  `tests/simulation-engine.test.ts` (à côté de `describe
+  ('SimulationEngine time scale', ...)`) comparant deux moteurs
+  identiques, l'un à `timeScale: 1` et l'autre à `timeScale: 5`, tous
+  deux recevant `applyCommand({ turnDelta: 1 }, 1)` pour le même
+  `deltaTime` réel : vérifier que le second tourne bien 5 fois plus
+  (`heading` proportionnel), sur le même modèle que le test existant
+  "scales fuel consumption along with simulated time". Ajouter un test
+  équivalent pour `throttleDelta`.
+
 
 - [x] Le bouton Pause/Resume de `SimulationControls` n'a pas
   d'`aria-pressed`, contrairement aux deux autres boutons à bascule de
@@ -4456,6 +4587,35 @@ attente, pas des tâches actionnables en l'état.
   `origin`, hors du contrôle direct de ce run.
 
 ## Documentation
+
+- [ ] `README.md` ne mentionne ni les boutons Pause/Restart, ni les
+  nouveaux boutons de vitesse de simulation (x1/x2/x5/x10)
+
+  `src/ui/SimulationControls.tsx` affiche, dans la barre latérale de
+  l'écran de vol, deux boutons d'action (Pause/Resume, Restart mission)
+  et, depuis le run précédent, un groupe de quatre boutons de vitesse
+  (`role="group" aria-label="Simulation speed"`, `1x`/`2x`/`5x`/`10x`,
+  voir l'item coché "Ajouter un contrôle de la vitesse de simulation..."
+  sous "Features à ajouter" ci-dessus). `grep -i
+  "speed\|pause\|restart\|x1\|x2\|x5\|x10" README.md` ne renvoie aucun
+  résultat pertinent : la section "## Controls" du `README.md` ne
+  documente que le pilotage clavier (WASD/flèches) et les commandes
+  tactiles, et la section "## Gameplay" ne mentionne ni la pause, ni le
+  redémarrage, ni la vitesse de simulation dans son paragraphe "Launch /
+  Flight". Un nouveau lecteur du README n'a donc aucun moyen de savoir
+  que ces commandes existent, alors qu'elles sont déjà pleinement
+  fonctionnelles et visibles sur l'écran de vol.
+
+  Piste : ajouter une ligne ou deux dans "## Controls" (ex. sous le
+  tableau clavier existant, une mention des boutons Pause/Restart et du
+  sélecteur de vitesse dans la barre latérale — les touches `P`/`R`
+  existent déjà comme raccourcis pour Pause/Restart et pourraient être
+  ajoutées au tableau existant), et/ou élargir le paragraphe "Launch /
+  Flight" de "## Gameplay" pour mentionner que la vitesse de simulation
+  peut être ajustée (x1/x2/x5/x10) indépendamment de la boucle de
+  rendu. Item documentation pure — aucun changement de code ni de test
+  attendu, sur le même modèle que les items déjà cochés dans cette
+  section.
 
 - [x] `README.md` ne mentionne pas l'intégration continue (CI)
   désormais configurée sur GitHub
