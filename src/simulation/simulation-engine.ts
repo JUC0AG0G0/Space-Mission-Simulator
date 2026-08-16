@@ -212,12 +212,17 @@ export class SimulationEngine {
       spacecraft = { ...spacecraft, engine: toggleEngine(spacecraft.engine) };
     }
 
+    // Manual throttle/turn rates advance at the same simulation speed as
+    // physics/fuel/mission timers in `step`, so piloting stays proportionally
+    // as responsive at higher time scales, not increasingly sluggish.
+    const scaledDeltaTime = deltaTime * this.state.timeScale;
+
     if (command.throttleDelta) {
       spacecraft = {
         ...spacecraft,
         engine: adjustThrottle(
           spacecraft.engine,
-          command.throttleDelta * THROTTLE_RATE * deltaTime,
+          command.throttleDelta * THROTTLE_RATE * scaledDeltaTime,
         ),
       };
     }
@@ -225,7 +230,7 @@ export class SimulationEngine {
     if (command.turnDelta) {
       spacecraft = turnSpacecraft(
         spacecraft,
-        command.turnDelta * TURN_RATE * deltaTime,
+        command.turnDelta * TURN_RATE * scaledDeltaTime,
       );
     }
 

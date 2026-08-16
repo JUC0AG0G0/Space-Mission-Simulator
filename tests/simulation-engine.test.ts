@@ -282,6 +282,34 @@ describe('SimulationEngine time scale', () => {
     expect(engine.getState().timeScale).toBe(1);
   });
 
+  it('scales manual turning along with simulated time, so piloting stays proportionally responsive', () => {
+    const baseline = new SimulationEngine(createFlightReadyState());
+    baseline.applyCommand({ turnDelta: 1 }, 0.1);
+
+    const spedUp = new SimulationEngine(createFlightReadyState());
+    spedUp.setTimeScale(5);
+    spedUp.applyCommand({ turnDelta: 1 }, 0.1);
+
+    const initialHeading = createFlightReadyState().spacecraft.heading;
+    const baselineTurn = baseline.getState().spacecraft.heading - initialHeading;
+    const spedUpTurn = spedUp.getState().spacecraft.heading - initialHeading;
+    expect(spedUpTurn).toBeCloseTo(baselineTurn * 5, 6);
+  });
+
+  it('scales manual throttle changes along with simulated time', () => {
+    const baseline = new SimulationEngine(createFlightReadyState());
+    baseline.applyCommand({ throttleDelta: -1 }, 0.1);
+
+    const spedUp = new SimulationEngine(createFlightReadyState());
+    spedUp.setTimeScale(5);
+    spedUp.applyCommand({ throttleDelta: -1 }, 0.1);
+
+    const initialThrottle = createFlightReadyState().spacecraft.engine.throttle;
+    const baselineChange = initialThrottle - baseline.getState().spacecraft.engine.throttle;
+    const spedUpChange = initialThrottle - spedUp.getState().spacecraft.engine.throttle;
+    expect(spedUpChange).toBeCloseTo(baselineChange * 5, 6);
+  });
+
   it('never speeds up the pre-flight countdown, only flight once it clears', () => {
     const engine = new SimulationEngine(createInitialGameState());
     engine.setTimeScale(10);

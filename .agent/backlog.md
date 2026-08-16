@@ -1554,7 +1554,7 @@ actionnables en l'état.
 
 ## Bugs connus
 
-- [ ] `SimulationEngine.applyCommand` ignore `timeScale` : le pilotage
+- [x] `SimulationEngine.applyCommand` ignore `timeScale` : le pilotage
   manuel (throttle/cap) reste calé sur le temps réel alors que la
   physique, le carburant et les minuteurs de mission accélèrent avec la
   vitesse de simulation choisie
@@ -1619,6 +1619,33 @@ actionnables en l'état.
   "scales fuel consumption along with simulated time". Ajouter un test
   équivalent pour `throttleDelta`.
 
+  Fait le 2026-08-16 : `applyCommand`
+  (`src/simulation/simulation-engine.ts`) calcule désormais
+  `const scaledDeltaTime = deltaTime * this.state.timeScale;` juste
+  après la garde `paused`/`isMissionActive`/`countdown`, et l'utilise à
+  la place de `deltaTime` dans les deux appels qui en dépendent
+  (`adjustThrottle(..., command.throttleDelta * THROTTLE_RATE *
+  scaledDeltaTime)` et `turnSpacecraft(..., command.turnDelta *
+  TURN_RATE * scaledDeltaTime)`), exactement comme suggéré par la
+  piste — `toggleEngine` n'est pas concerné (appelé avec `deltaTime: 0`
+  depuis `SimulationScreen`/`TouchControls`). Comportement inchangé à
+  `timeScale: 1` (valeur par défaut, `scaledDeltaTime === deltaTime`) :
+  aucune régression sur les tests existants de `describe
+  ('SimulationEngine commands', ...)`. Deux tests ajoutés dans
+  `tests/simulation-engine.test.ts`, à côté de `describe
+  ('SimulationEngine time scale', ...)` : "scales manual turning along
+  with simulated time..." (deux moteurs identiques, l'un à
+  `timeScale: 1` et l'autre à `timeScale: 5`, tous deux recevant
+  `applyCommand({ turnDelta: 1 }, 0.1)` pour le même `deltaTime` réel —
+  vérifie que le second tourne 5 fois plus, `heading` proportionnel) et
+  "scales manual throttle changes along with simulated time..." (même
+  schéma avec `applyCommand({ throttleDelta: -1 }, 0.1)`, un
+  `throttleDelta` négatif choisi pour éviter que le throttle par défaut
+  à 1 ne soit tronqué par son plafond `setThrottle`, ce qui aurait
+  masqué la mise à l'échelle). `npm test` (316 tests), `npm run lint`,
+  `npx tsc --noEmit` et `npm run coverage` (`simulation-engine.ts`
+  reste à 100 % de lignes/branches/fonctions, 98 % de couverture
+  globale) restent propres.
 
 - [x] Le bouton Pause/Resume de `SimulationControls` n'a pas
   d'`aria-pressed`, contrairement aux deux autres boutons à bascule de
