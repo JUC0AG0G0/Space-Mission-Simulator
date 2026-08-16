@@ -2709,3 +2709,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Ajouter un contrôle précis du throttle (0 à 100 %), depuis
 - Branche/push: main (direct)
 - Coût estimé: 4.332607250000001 USD
+
+## 2026-08-16T15-55-01-805Z — planning
+- Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
+- Branche/push: main (direct)
+- Coût estimé: 2.3131463499999994 USD
