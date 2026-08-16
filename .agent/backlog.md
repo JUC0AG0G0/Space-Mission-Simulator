@@ -1707,7 +1707,146 @@ couverture actionnable ou doc obsolète trouvé cette fois-ci — le
 sous "Divers / à clarifier" restent des décisions en attente, pas des
 tâches actionnables en l'état.
 
+Nouveau sprint du 2026-08-16 (46e passe, planification périodique) : au
+moment de cette revue, les quatre sections actionnables du backlog
+n'avaient plus aucune entrée non cochée. `npm test` (325 tests), `npm
+run lint` et `npx tsc --noEmit` sont propres, aucun `TODO`/`FIXME`/
+`XXX` dans `src/`/`tests/`. `npm run coverage` confirme 98.03 % de
+lignes / 98.3 % de branches ; `src/simulation`, `src/rendering` et
+`src/ui` sont tous à 100 % de couverture, les seules lignes non
+couvertes restent `App.tsx:55,57` et `SimulationScreen.tsx:148-164`,
+déjà jugées trop marginales lors de passes précédentes. `npm outdated`/
+`npm audit` ne montrent rien de nouveau par rapport à la 16e passe
+(mêmes majeures et mêmes 6 vulnérabilités dev-only déjà documentées
+sous "Divers / à clarifier"). Après 45 passes précédentes très
+exhaustives (bugs de logique, accessibilité, responsive, couverture de
+tests, documentation — toutes déjà traitées), une revue ciblée n'a fait
+remonter qu'un nombre restreint de points réellement actionnables
+plutôt que d'en forcer artificiellement dix : deux lacunes
+d'accessibilité de `MissionSetup.tsx` jamais auditées sous cet angle
+précis (le hint de description du profil de mission non associé au
+`<select>` via `aria-describedby`, et le nom accessible des boutons de
+sélection de fusée qui omet masse/carburant/poussée/description — voir
+les deux nouveaux items sous "Bugs connus"), la boucle
+`requestAnimationFrame` qui continue de tourner après la fin de mission
+(déjà analysée en détail sous "Divers / à clarifier" depuis la 24e
+passe mais jamais transformée en tâche concrète — promue ici en bug
+actionnable avec une piste de correctif précise), la mise à jour
+majeure de `vite`/`vitest` pour fermer les 6 vulnérabilités `npm audit`
+connues (documentée depuis la 16e passe mais jamais planifiée comme une
+tâche à part entière), un vecteur de vitesse sur le canvas de vol
+(explicitement listé comme optionnel par `spec.md` section 10, jamais
+implémenté), et un test de robustesse combinatoire manquant (aucun test
+n'exerce les 9 combinaisons modèle de fusée × profil de mission pour
+vérifier l'absence de `NaN`/carburant négatif). Aucune nouvelle lacune
+de documentation trouvée cette fois-ci — le `README.md` reste cohérent
+avec `src/app`/`src/ui`. Les trois points déjà présents sous "Divers /
+à clarifier" restent des décisions en attente, pas des tâches
+actionnables en l'état.
+
 ## Bugs connus
+
+- [ ] La boucle de jeu (`requestAnimationFrame`) de `SimulationScreen`
+  continue de tourner indéfiniment une fois la mission terminée, au lieu
+  de s'arrêter et de reprendre proprement au redémarrage
+
+  L'effet de boucle de jeu (`src/app/SimulationScreen.tsx`, bloc
+  `// Main game loop.`, lignes ~121-168) est monté une seule fois
+  (dépendances `[]`) et `tick` rappelle inconditionnellement
+  `requestAnimationFrame(tick)` à la fin de chaque frame, sans jamais
+  vérifier si `isMissionOver` (calculé plus bas dans le composant à
+  partir de `determineGamePhase('simulation', state)`) est vrai. Une
+  fois `MISSION COMPLETE`/`MISSION FAILED` affiché, tant que le joueur
+  reste sur cet écran sans cliquer, le navigateur continue d'appeler
+  `engine.applyCommand`/`engine.step`/`engine.getState`/`setState` à
+  chaque frame d'affichage, indéfiniment — déjà documenté et analysé en
+  détail sous "Divers / à clarifier" ci-dessous ("La boucle
+  `requestAnimationFrame` de `SimulationScreen` continue de tourner
+  indéfiniment..."), mais jamais corrigé faute de décision tranchée.
+
+  Piste (reprend celle déjà esquissée sous "Divers / à clarifier") :
+  dans `tick`, calculer `isMissionOver` à partir de l'état retourné par
+  `engine.getState()` (via `determineGamePhase`) et ne pas rappeler
+  `requestAnimationFrame(tick)` quand c'est vrai — arrêter la boucle
+  plutôt que la laisser tourner à vide. Pour que "Replay" (bouton ou
+  touche `R`) et le retour au menu ("Menu") continuent de fonctionner
+  sans écran figé : soit relancer explicitement la planification
+  (`requestAnimationFrame(tick)`) au moment de l'appel à
+  `engineRef.current.reset(...)` (dans `onReplay` et dans le handler
+  clavier `R`), soit restructurer l'effet pour qu'il se re-déclenche
+  proprement sur un signal de reset (ex. un compteur de génération
+  incrémenté à chaque `reset()`, ajouté aux dépendances de l'effet).
+  Étendre `tests/ui/SimulationScreen.test.tsx` (le mock de
+  `requestAnimationFrame` y est déjà utilisé) : après qu'une mission se
+  termine, vérifier qu'aucune nouvelle frame n'est planifiée ; puis,
+  après un clic sur "Replay", vérifier que la boucle reprend
+  normalement (le vaisseau redevient pilotable, un nouveau
+  `requestAnimationFrame` est bien planifié).
+
+- [ ] Le sélecteur "Mission profile" de `MissionSetup` a un texte de
+  description affiché visuellement, mais jamais associé au `<select>`
+  pour les lecteurs d'écran
+
+  `src/ui/MissionSetup.tsx:112-114` affiche
+  `<p className="mission-setup__field-hint">{findMissionProfile(
+  configuration.missionProfileId)?.description}</p>` juste après le
+  `<select>` "Mission profile" (lignes 98-108) — un simple élément
+  frère dans le DOM, sans `id` ni `aria-describedby` reliant les deux.
+  Un joueur voyant lit la phrase descriptive du profil sélectionné
+  (ex. "Thread a narrow orbital band and hold it despite the tighter
+  margin.") en plus des trois lignes du menu déroulant ; un utilisateur
+  de lecteur d'écran qui parcourt le formulaire au clavier n'entend que
+  le contenu des `<option>` (nom, destination, difficulté) et jamais
+  cette description, alors qu'elle contient une information de
+  difficulté supplémentaire pertinente pour choisir. C'est la même
+  famille de défaut (contenu utile non exposé à l'assistance technique)
+  que plusieurs bugs déjà corrigés dans ce backlog pour `MainMenu`/
+  `Hud`/`CountdownOverlay`/`MissionPanel`, jamais appliquée à ce hint
+  précis.
+
+  Piste : donner un `id` fixe (ex. `mission-setup-profile-hint`) au
+  `<p className="mission-setup__field-hint">`, et ajouter
+  `aria-describedby="mission-setup-profile-hint"` sur le `<select>`
+  juste au-dessus. Étendre `tests/ui/MissionSetup.test.tsx` : vérifier
+  que `screen.getByLabelText('Mission profile')` (ou l'équivalent
+  `getByRole('combobox', { description: ... })`) expose bien la
+  description du profil actuellement sélectionné comme description
+  accessible, et qu'elle change bien quand un autre profil est choisi.
+
+- [ ] Le nom accessible des boutons "Select"/"Selected" des cartes de
+  fusée dans `MissionSetup` n'inclut ni les caractéristiques (masse,
+  carburant, poussée) ni la description du modèle
+
+  Chaque carte de fusée (`src/ui/MissionSetup.tsx:117-149`) affiche
+  visuellement le nom, une `<dl>` de caractéristiques (masse totale,
+  carburant, poussée) et une description, mais seul le `<button>` final
+  reçoit le focus clavier — avec `aria-label={`Select ${model.name}`}`
+  (ligne 143), qui ne reprend que le nom. Un utilisateur de lecteur
+  d'écran qui tabule jusqu'à ce bouton entend donc uniquement "Select
+  Explorer I, button" / "Select Stalwart, button" / "Select Javelin,
+  button", sans jamais entendre la masse, le carburant ou la poussée
+  affichés juste au-dessus dans la `<dl>`, ni la description sous forme
+  de texte — l'information qui permet précisément de choisir entre les
+  trois modèles n'est donc accessible qu'à la vue, pas au clavier/
+  lecteur d'écran. C'est un défaut plus sévère que celui déjà corrigé
+  pour le bouton tactile "Engine" (`TouchControls`, déjà coché
+  ci-dessous) : là il manquait un simple état, ici c'est tout le
+  contenu de décision qui est absent du nom accessible.
+
+  Piste : soit enrichir `aria-label` du bouton pour inclure les
+  caractéristiques clé (ex. `` `Select ${model.name} — mass
+  ${formatTonnes(model.dryMass + model.fuelMass)}, fuel
+  ${model.fuelMass} kg, thrust ${formatKilonewtons(model.engineThrust)}`
+  ``), soit — plus simple à maintenir et plus proche du motif déjà
+  utilisé pour le hint de profil de mission ci-dessus — donner un `id`
+  à la `<dl className="mission-setup__rocket-card-specs">` et au `<p
+  className="mission-setup__rocket-card-description">`, et poser
+  `aria-describedby` (les deux `id`, séparés par un espace) sur le
+  `<button>`, en gardant `aria-label` simple ("Select Explorer I").
+  Étendre `tests/ui/MissionSetup.test.tsx` pour vérifier que le nom/la
+  description accessible du bouton de chaque carte contient bien la
+  masse/le carburant/la poussée (ou la description), pas seulement le
+  nom du modèle.
 
 - [x] Le slider "Throttle" de `SimulationControls` reste interactif
   pendant la pause, mais son effet est silencieusement ignoré côté
@@ -3488,6 +3627,76 @@ tâches actionnables en l'état.
 
 ## Features à ajouter
 
+- [ ] Mettre à jour `vite`/`vitest`/`@vitest/coverage-v8` (et leurs
+  dépendances associées) pour fermer les 6 vulnérabilités connues de
+  `npm audit`, restées non traitées depuis plusieurs passes
+
+  `npm audit` signale toujours 6 vulnérabilités (3 modérées, 1 haute, 2
+  critiques), toutes dans la chaîne `esbuild <=0.24.2` utilisée par
+  `vite <=6.4.2` (dépendance de `vitest <=3.2.5`, `@vitest/mocker`,
+  `vite-node` et `@vitest/coverage-v8`) : "esbuild enables any website
+  to send any requests to the development server and read the
+  response". Ce sont des dépendances de développement uniquement (`npm
+  run dev`, suite de tests) — rien n'est présent dans le bundle produit
+  par `npm run build` — mais ce défaut est documenté et laissé de côté
+  depuis la 16e passe de ce backlog (voir l'item correspondant sous
+  "Divers / à clarifier" ci-dessous) sans jamais avoir été planifié
+  comme une tâche à part entière.
+
+  Piste : mettre à jour `vite` vers la 8.x et `vitest`/
+  `@vitest/coverage-v8` vers la 4.x dans `package.json`
+  (`npm install --save-dev vite@^8 vitest@^4 @vitest/coverage-v8@^4`,
+  en gardant les autres dépendances inchangées sauf si `npm install`
+  force une résolution différente), puis vérifier un par un `npm run
+  dev` (démarre sans erreur), `npm test`, `npm run lint`, `npx tsc
+  --noEmit`, `npm run build` et `npm run coverage`. Consulter le guide
+  de migration Vite 5→8 et Vitest 2→4 pour les changements cassants
+  connus (ex. changements de `vite.config.ts`, de la configuration du
+  provider de couverture, ou du comportement de certains matchers de
+  `@testing-library/jest-dom` avec la nouvelle version de `jsdom` déjà
+  disponible en 30.x). Si la migration s'avère trop large pour un seul
+  run (beaucoup de tests cassés par un changement de comportement),
+  documenter précisément ce qui bloque dans ce même item plutôt que de
+  forcer un correctif risqué, et laisser la case décochée. Item de
+  dépendances pur : aucun nouveau test métier attendu au-delà de la
+  suite déjà existante, qui doit rester intégralement verte après la
+  migration.
+
+- [ ] Dessiner un vecteur de vitesse sur le canvas de vol, en plus de la
+  direction (heading) déjà affichée par la silhouette du vaisseau
+
+  `spec.md` (section 10, "Vue principale") liste, parmi ce que doit
+  afficher le canvas principal : "planète ; vaisseau ; trajectoire ;
+  direction du vaisseau ; éventuellement un vecteur de vitesse." Les
+  quatre premiers sont déjà rendus (`src/rendering/canvas-renderer.ts`,
+  `spacecraft-renderer.ts` fait pointer la silhouette du vaisseau selon
+  `spacecraft.heading`), mais `grep -n "velocity" src/rendering/
+  spacecraft-renderer.ts` ne renvoie aucun résultat : rien ne représente
+  visuellement le vecteur vitesse. Or `heading` (où pointe le nez du
+  vaisseau) et la direction réelle du déplacement (`spacecraft.velocity`)
+  divergent dès que le joueur tourne sans réaligner sa poussée sur sa
+  trajectoire — un cas courant en orbite — ce qui rend difficile de
+  juger visuellement où le vaisseau va réellement finir sans lire les
+  chiffres du HUD (`VELOCITY`, direction non affichée numériquement non
+  plus).
+
+  Piste : dans `renderSpacecraft` (`src/rendering/spacecraft-renderer.ts`)
+  ou une nouvelle fonction dédiée appelée depuis `canvas-renderer.ts`
+  (au même niveau que `renderTrajectory`), dessiner un simple segment
+  depuis la position à l'écran du vaisseau dans la direction de
+  `spacecraft.velocity` (convertie en angle écran avec la même
+  inversion d'axe Y que `heading`), avec une longueur fixe en pixels
+  (indépendante de la magnitude réelle de la vitesse, pour rester
+  lisible à toute vitesse) et une couleur distincte de la trajectoire
+  et de la flamme du moteur. Ne rien dessiner (ou une longueur nulle)
+  quand la vitesse est quasi nulle (même seuil que
+  `MIN_SPEED_FOR_ORBIT_BOUNDS` déjà utilisé par `Hud.tsx` pour éviter un
+  vecteur qui flicker au décollage). Ajouter des tests dans
+  `tests/rendering/spacecraft-renderer.test.ts` (sur le même modèle que
+  les tests existants espionnant `ctx.moveTo`/`ctx.lineTo`/`ctx.stroke`)
+  vérifiant les coordonnées du segment pour une vitesse connue, et
+  l'absence de tracé pour une vitesse quasi nulle.
+
 - [x] Ajouter un contrôle précis du throttle (0 à 100 %), depuis
   l'interface, en plus des touches +/- déjà existantes
 
@@ -4550,6 +4759,47 @@ tâches actionnables en l'état.
   (279 tests), `npm run lint` et `npx tsc --noEmit` restent propres.
 
 ## Tests manquants
+
+- [ ] Aucun test ne vérifie que le moteur de simulation reste sain
+  (pas de `NaN`, pas de carburant négatif) pour les 9 combinaisons de
+  modèle de fusée × profil de mission
+
+  `tests/simulation-engine.test.ts` construit ses fixtures avec un seul
+  modèle de fusée à la fois (souvent `AVAILABLE_ROCKET_MODELS[1]` ou la
+  configuration par défaut), et aucun fichier de test n'itère sur
+  `AVAILABLE_ROCKET_MODELS` (`src/simulation/spacecraft/
+  rocket-models.ts`, 3 modèles) croisé avec
+  `AVAILABLE_MISSION_PROFILES` (`src/simulation/missions/
+  mission-configuration.ts`, 3 profils) pour vérifier que
+  `createInitialGameState`/`SimulationEngine.step` restent corrects
+  pour les 9 combinaisons possibles que `MissionSetup` permet
+  réellement au joueur de choisir. Chaque modèle a des `dryMass`/
+  `fuelMass`/`engineThrust`/`engineFuelConsumption` différents, et
+  chaque profil a des `successCriteria` différents
+  (`minAltitude`/`maxAltitude`/`holdDurationSeconds`) — une régression
+  future dans `createInitialSpacecraft`/`computeThrustAcceleration`/
+  `applyFuelConsumption` qui ne se manifesterait que pour certaines
+  combinaisons de valeurs (ex. une division impliquant `dryMass` ou
+  `fuelMass` d'un modèle particulier) pourrait passer inaperçue si les
+  tests existants n'utilisent presque toujours que la même
+  configuration par défaut.
+
+  Piste : ajouter un test paramétré (`it.each` ou une double boucle)
+  dans `tests/simulation-engine.test.ts` qui, pour chacune des 9
+  combinaisons `AVAILABLE_ROCKET_MODELS × AVAILABLE_MISSION_PROFILES`,
+  construit une `MissionConfiguration` correspondante, crée un
+  `SimulationEngine` via `createInitialGameState`, active le moteur à
+  pleine poussée (`applyCommand({ toggleEngine: true }, 0)`) et exécute
+  un nombre borné de `step(dt)` (ex. quelques centaines d'itérations à
+  `dt = 0.1`, suffisant pour dépasser le compte à rebours et consommer
+  une partie significative du carburant sans faire tourner le test trop
+  longtemps) ; puis vérifier que l'état retourné ne contient aucun
+  `NaN`/`Infinity` (position, vitesse, altitude) et que `fuelMass` reste
+  toujours `>= 0` et `<= maxFuel`. Ce test ne vérifie pas la réussite de
+  la mission (pas de pilotage, poussée verticale constante), seulement
+  l'absence de valeurs aberrantes/de crash à travers toutes les
+  combinaisons — un simple test de robustesse, pas un test de
+  gameplay/équilibrage.
 
 - [x] La branche "trajectoire non liée" d'`isStrandedOutsideTargetBand`
   n'est pas exercée par les tests
