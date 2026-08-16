@@ -42,6 +42,11 @@ function buildCommandFromKeys(held: Set<string>): SimulationCommand {
   return { throttleDelta, turnDelta };
 }
 
+function isMissionOverState(gameState: GameState): boolean {
+  const phase = determineGamePhase('simulation', gameState);
+  return phase === 'mission-complete' || phase === 'mission-failed';
+}
+
 interface SimulationScreenProps {
   missionConfiguration: MissionConfiguration;
   /** Called when the player leaves the simulation from the mission result screen. */
@@ -62,6 +67,21 @@ export function SimulationScreen({ missionConfiguration, onExit }: SimulationScr
   const missionConfigurationRef = useRef(missionConfiguration);
   missionConfigurationRef.current = missionConfiguration;
   const [state, setState] = useState<GameState>(() => engineRef.current.getState());
+  // Bumped on every reset to make the main game loop effect below re-run:
+  // the loop stops scheduling frames once the mission is over (see `tick`),
+  // so restarting it after a reset needs an explicit signal rather than a
+  // one-time `[]` effect.
+  const [loopGeneration, setLoopGeneration] = useState(0);
+
+  // Resets the engine, immediately reflects the fresh state in React state
+  // (so the UI doesn't stay stuck on the mission result screen), and
+  // restarts the game loop if it had stopped because the previous mission
+  // was over.
+  function performReset(config: MissionConfiguration) {
+    engineRef.current.reset(createInitialGameState(config));
+    setState(engineRef.current.getState());
+    setLoopGeneration((generation) => generation + 1);
+  }
 
   // Keyboard input: continuous movement keys are tracked in a ref and
   // sampled every frame; discrete actions (toggle engine, pause, restart)
@@ -97,7 +117,7 @@ export function SimulationScreen({ missionConfiguration, onExit }: SimulationScr
         } else if (key === 'p') {
           engineRef.current.togglePause();
         } else {
-          engineRef.current.reset(createInitialGameState(missionConfigurationRef.current));
+          performReset(missionConfigurationRef.current);
         }
         event.preventDefault();
       }
@@ -164,12 +184,19 @@ export function SimulationScreen({ missionConfiguration, onExit }: SimulationScr
         }
       }
 
+      // Stop the loop once the mission is over instead of scheduling
+      // another frame that would just re-apply no-op commands: a reset
+      // (Replay/Restart/R) bumps `loopGeneration` to restart it.
+      if (isMissionOverState(nextState)) {
+        return;
+      }
+
       animationFrame = requestAnimationFrame(tick);
     }
 
     animationFrame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(animationFrame);
-  }, []);
+  }, [loopGeneration]);
 
   // Record progression once the active mission succeeds. `state` changes on
   // every frame, but the effect only fires again when the mission status or
@@ -188,17 +215,12 @@ export function SimulationScreen({ missionConfiguration, onExit }: SimulationScr
     }
   }
 
-  const gamePhase = determineGamePhase('simulation', state);
-  const isMissionOver = gamePhase === 'mission-complete' || gamePhase === 'mission-failed';
-
-  if (isMissionOver) {
+  if (isMissionOverState(state)) {
     return (
       <MissionResult
         stats={buildMissionResultStats(state)}
         onMenu={onExit}
-        onReplay={() =>
-          engineRef.current.reset(createInitialGameState(missionConfiguration))
-        }
+        onReplay={() => performReset(missionConfiguration)}
       />
     );
   }
@@ -217,7 +239,7 @@ export function SimulationScreen({ missionConfiguration, onExit }: SimulationScr
         <SimulationControls
           paused={state.paused}
           onTogglePause={() => engineRef.current.togglePause()}
-          onRestart={() => engineRef.current.reset(createInitialGameState(missionConfiguration))}
+          onRestart={() => performReset(missionConfiguration)}
           timeScale={state.timeScale}
           onSetTimeScale={(scale) => engineRef.current.setTimeScale(scale)}
           throttle={state.spacecraft.engine.throttle}

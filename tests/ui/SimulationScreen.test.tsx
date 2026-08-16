@@ -352,6 +352,75 @@ describe('SimulationScreen', () => {
     getStateSpy.mockRestore();
   });
 
+  it('stops scheduling animation frames once the mission is over, instead of looping forever', () => {
+    const frame = renderScreen();
+
+    const failedState: GameState = {
+      ...createInitialGameState(createDefaultMissionConfiguration()),
+      countdown: null,
+      activeMission: {
+        id: 'ORBIT-01',
+        name: 'Mission 01',
+        description: 'Reach a stable orbit.',
+        status: 'failed',
+        objectives: [],
+        successCriteria: DEFAULT_ORBIT_SUCCESS_CRITERIA,
+        failureReason: 'crashed',
+      },
+    };
+    const getStateSpy = vi
+      .spyOn(SimulationEngine.prototype, 'getState')
+      .mockReturnValue(failedState);
+
+    frame.advance(16);
+    expect(screen.getByText('MISSION FAILED')).toBeInTheDocument();
+
+    // No frame was re-scheduled from within `tick` once the mission ended,
+    // so this second `advance()` has no pending callback to run at all.
+    const stepSpy = vi.spyOn(SimulationEngine.prototype, 'step');
+    frame.advance(16);
+    expect(stepSpy).not.toHaveBeenCalled();
+
+    stepSpy.mockRestore();
+    getStateSpy.mockRestore();
+  });
+
+  it('resumes the game loop after "Replay" is clicked, making the ship controllable again', () => {
+    const frame = renderScreen();
+
+    const failedState: GameState = {
+      ...createInitialGameState(createDefaultMissionConfiguration()),
+      countdown: null,
+      activeMission: {
+        id: 'ORBIT-01',
+        name: 'Mission 01',
+        description: 'Reach a stable orbit.',
+        status: 'failed',
+        objectives: [],
+        successCriteria: DEFAULT_ORBIT_SUCCESS_CRITERIA,
+        failureReason: 'crashed',
+      },
+    };
+    const getStateSpy = vi
+      .spyOn(SimulationEngine.prototype, 'getState')
+      .mockReturnValue(failedState);
+    frame.advance(16);
+    expect(screen.getByText('MISSION FAILED')).toBeInTheDocument();
+
+    // Restore the real `getState` before replaying so the freshly reset
+    // engine state (not the stale failed one) drives the next render.
+    getStateSpy.mockRestore();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Replay' }));
+    expect(screen.getByText('MISSION READY')).toBeInTheDocument();
+
+    // The loop must actually be running again (not stuck since it stopped
+    // scheduling frames when the previous mission ended) for the countdown
+    // to clear and manual control to resume.
+    clearCountdown(frame);
+    expect(screen.getByText('PRE-LAUNCH')).toBeInTheDocument();
+  });
+
   it('resets the engine when "Replay" is clicked from the mission result screen', () => {
     const frame = renderScreen();
 

@@ -1746,7 +1746,7 @@ actionnables en l'état.
 
 ## Bugs connus
 
-- [ ] La boucle de jeu (`requestAnimationFrame`) de `SimulationScreen`
+- [x] La boucle de jeu (`requestAnimationFrame`) de `SimulationScreen`
   continue de tourner indéfiniment une fois la mission terminée, au lieu
   de s'arrêter et de reprendre proprement au redémarrage
 
@@ -1782,6 +1782,43 @@ actionnables en l'état.
   après un clic sur "Replay", vérifier que la boucle reprend
   normalement (le vaisseau redevient pilotable, un nouveau
   `requestAnimationFrame` est bien planifié).
+
+  Fait le 2026-08-16 : `tick` (`src/app/SimulationScreen.tsx`) calcule
+  désormais `isMissionOverState(nextState)` (nouvel helper au niveau
+  module, réutilisant `determineGamePhase('simulation', gameState)`) et
+  retourne sans rappeler `requestAnimationFrame(tick)` quand la mission
+  est terminée — la boucle s'arrête au lieu de tourner à vide, exactement
+  comme suggéré par la piste. Pour que "Replay"/"Restart"/la touche `R`
+  continuent de fonctionner sans écran figé, la deuxième option de la
+  piste a été retenue (restructurer l'effet plutôt que relancer la
+  planification à la main dans chaque appelant) : un nouvel état
+  `loopGeneration` (incrémenté à chaque reset) est ajouté aux dépendances
+  de l'effet de boucle de jeu (`[loopGeneration]` au lieu de `[]`), et les
+  trois points d'appel de reset (`onReplay`, `onRestart` de
+  `SimulationControls`, le handler clavier `R`) passent désormais par une
+  nouvelle fonction `performReset(config)` qui appelle `engine.reset(...)`,
+  remet immédiatement `state` à jour via `setState(engine.getState())`
+  (pour ne pas rester affiché sur l'écran de résultat le temps qu'une
+  frame s'exécute) puis incrémente `loopGeneration` — ce qui fait
+  re-déclencher l'effet de boucle de jeu et reschedule un nouveau
+  `requestAnimationFrame(tick)`. `isMissionOverState` est aussi réutilisée
+  côté rendu (remplace le calcul dupliqué `gamePhase`/`isMissionOver`), un
+  petit nettoyage sans changement de comportement. Deux tests ajoutés dans
+  `tests/ui/SimulationScreen.test.tsx` : "stops scheduling animation
+  frames once the mission is over, instead of looping forever" (après
+  passage en `MISSION FAILED`, un `frame.advance()` supplémentaire
+  n'appelle plus `SimulationEngine.prototype.step`, preuve qu'aucune
+  frame n'était plus en attente) et "resumes the game loop after
+  'Replay' is clicked, making the ship controllable again" (après clic
+  sur "Replay" depuis l'écran de résultat, `MISSION READY` s'affiche puis
+  le compte à rebours se déroule normalement jusqu'à `PRE-LAUNCH`,
+  prouvant que la boucle est bien repartie). `npm test` (327 tests), `npm
+  run lint`, `npx tsc --noEmit` et `npm run coverage` (98.04 % de lignes
+  globale, `SimulationScreen.tsx` passe de 90.5 % à 91.32 % de lignes —
+  les lignes non couvertes restantes, 168-184, restent le même bloc de
+  rendu canvas déjà jugé marginal par des passes précédentes, jsdom
+  n'implémentant pas `HTMLCanvasElement.getContext('2d')`) restent
+  propres.
 
 - [ ] Le sélecteur "Mission profile" de `MissionSetup` a un texte de
   description affiché visuellement, mais jamais associé au `<select>`
@@ -5615,57 +5652,14 @@ actionnables en l'état.
   `npm test`/`npm run lint`/`npx tsc --noEmit`/`npm run coverage` pour
   détecter toute régression de compatibilité).
 
-- [ ] La boucle `requestAnimationFrame` de `SimulationScreen` continue
-  de tourner indéfiniment une fois la mission terminée, sans qu'il soit
-  évident que ça vaille la peine de la stopper
-
-  L'effet de boucle de jeu (`src/app/SimulationScreen.tsx:122-172`) est
-  monté une seule fois (dépendances `[]`) pour toute la durée de vie du
-  composant, et `tick` rappelle inconditionnellement
-  `requestAnimationFrame(tick)` à la fin de chaque frame (ligne 167),
-  sans jamais vérifier si la mission est terminée. Or `isMissionOver`
-  (calculé à partir de `determineGamePhase`, ligne 191-192) ne change
-  que le JSX renvoyé par le composant — il ne démonte ni ne nettoie cet
-  effet, qui reste sur la même instance de composant tant que le joueur
-  ne quitte pas l'écran (clic sur "Menu" ou "Replay" depuis
-  `MissionResult`). Concrètement : une fois `MISSION COMPLETE`/`MISSION
-  FAILED` affiché, tant que le joueur reste sur cet écran à lire ses
-  statistiques sans cliquer, le navigateur continue d'appeler `tick` à
-  chaque frame d'affichage (`engine.applyCommand`, `engine.step`,
-  `engine.getState`), indéfiniment — vérifié en instrumentant le mock
-  `requestAnimationFrame` déjà utilisé par `tests/ui/
-  SimulationScreen.test.tsx` (`vi.fn` sur `requestAnimationFrame`), qui
-  confirme que chaque frame re-planifie bien la suivante sans jamais
-  s'arrêter.
-
-  Cela dit, l'impact réel semble faible : une fois la mission inactive,
-  `applyCommand`/`step` (`src/simulation/simulation-engine.ts:191,228`)
-  retournent immédiatement (`!isMissionActive()`), `engine.getState()`
-  renvoie donc la même référence d'état qu'avant, et `setState` avec une
-  référence inchangée ne déclenche pas de nouveau rendu React — le
-  travail par frame se limite à quelques lectures de propriétés, sans
-  re-rendu ni accès au canvas (`canvasRef.current` est `null` puisque
-  `<canvas>` n'est plus monté sur l'écran `MissionResult`). Corriger
-  proprement demande par ailleurs plus qu'un simple arrêt de la
-  planification : le bouton "Replay"/la touche `R`
-  (`engineRef.current.reset(...)`, lignes 100 et 199-201) s'appuie
-  justement sur le fait que la boucle continue de tourner pour détecter
-  le changement d'état au tick suivant et re-basculer l'écran de
-  `MissionResult` vers le vol — arrêter la planification sans
-  redémarrer la boucle au moment du reset figerait l'écran sur
-  `MissionResult` après un clic sur "Replay".
-
-  À trancher avant d'agir : soit laisser tel quel (coût par frame jugé
-  négligeable, code plus simple, comportement de "Replay" déjà fiable),
-  soit accepter la complexité d'un correctif qui arrête la
-  planification quand `isMissionOver` est vrai *et* relit
-  explicitement `engine.getState()` dans les gestionnaires "Replay"/`R`
-  pour rafraîchir l'état et relancer la boucle au même moment plutôt
-  que d'attendre la frame suivante. Si tranché en faveur d'un
-  correctif, prévoir un test sur le mock `requestAnimationFrame`
-  existant vérifiant qu'aucune frame n'est re-planifiée une fois la
-  mission terminée, et qu'un cycle complet Replay fonctionne toujours
-  sans écran figé.
+Décidé le 2026-08-16 : le point ci-dessus ("La boucle
+`requestAnimationFrame` de `SimulationScreen` continue de tourner
+indéfiniment...") a été tranché en faveur d'un correctif plutôt que
+laissé tel quel — voir l'item coché correspondant sous "Bugs connus"
+("La boucle de jeu (`requestAnimationFrame`) de `SimulationScreen`
+continue de tourner indéfiniment une fois la mission terminée...") pour
+le détail de l'implémentation (compteur `loopGeneration`, fonction
+`performReset` partagée par Replay/Restart/`R`).
 
 - [ ] Idées identifiées pour plus tard (non scopées, à détailler avant
   toute exécution)
