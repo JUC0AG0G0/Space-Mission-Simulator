@@ -220,6 +220,8 @@ export function SimulationScreen({ missionConfiguration, onExit }: SimulationScr
           onRestart={() => engineRef.current.reset(createInitialGameState(missionConfiguration))}
           timeScale={state.timeScale}
           onSetTimeScale={(scale) => engineRef.current.setTimeScale(scale)}
+          throttle={state.spacecraft.engine.throttle}
+          onSetThrottle={(throttle) => engineRef.current.applyCommand({ setThrottle: throttle }, 0)}
         />
         <ControlsPanel />
       </div>

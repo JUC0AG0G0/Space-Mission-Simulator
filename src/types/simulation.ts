@@ -157,4 +157,11 @@ export interface SimulationCommand {
   throttleDelta?: number;
   turnDelta?: number;
   toggleEngine?: boolean;
+  /**
+   * Sets the throttle to an absolute value (0 to 1), clamped. Applied
+   * immediately, independent of `deltaTime`/simulation speed, unlike
+   * `throttleDelta` (a per-second rate meant to be held down) — this is a
+   * one-shot "set throttle to X" instruction, e.g. from a slider.
+   */
+  setThrottle?: number;
 }

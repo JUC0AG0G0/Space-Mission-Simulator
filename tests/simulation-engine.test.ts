@@ -380,6 +380,42 @@ describe('SimulationEngine commands', () => {
 
     expect(engine.getState().spacecraft).toEqual(spacecraftBefore);
   });
+
+  it('sets the throttle to an absolute value via setThrottle', () => {
+    const engine = new SimulationEngine(createFlightReadyState());
+    engine.applyCommand({ setThrottle: 0.5 }, 1);
+    expect(engine.getState().spacecraft.engine.throttle).toBe(0.5);
+  });
+
+  it('clamps setThrottle to [0, 1] for out-of-range values', () => {
+    const engine = new SimulationEngine(createFlightReadyState());
+    engine.applyCommand({ setThrottle: 1.5 }, 1);
+    expect(engine.getState().spacecraft.engine.throttle).toBe(1);
+    engine.applyCommand({ setThrottle: -0.5 }, 1);
+    expect(engine.getState().spacecraft.engine.throttle).toBe(0);
+  });
+
+  it('applies setThrottle immediately, independent of deltaTime or timeScale', () => {
+    const engine = new SimulationEngine(createFlightReadyState());
+    engine.setTimeScale(10);
+    engine.applyCommand({ setThrottle: 0.3 }, 0);
+    expect(engine.getState().spacecraft.engine.throttle).toBe(0.3);
+  });
+
+  it('lets a held throttleDelta continue adjusting from a value just set by setThrottle', () => {
+    const engine = new SimulationEngine(createFlightReadyState());
+    engine.applyCommand({ setThrottle: 0.5, throttleDelta: 1 }, 0.1);
+    // THROTTLE_RATE (0.5/s) * 0.1s = 0.05 nudged up from the 0.5 baseline.
+    expect(engine.getState().spacecraft.engine.throttle).toBeCloseTo(0.55);
+  });
+
+  it('ignores setThrottle while paused', () => {
+    const engine = new SimulationEngine(createFlightReadyState());
+    engine.applyCommand({ setThrottle: 0.4 }, 0);
+    engine.setPaused(true);
+    engine.applyCommand({ setThrottle: 0.9 }, 0);
+    expect(engine.getState().spacecraft.engine.throttle).toBe(0.4);
+  });
 });
 
 describe('SimulationEngine trajectory recording', () => {

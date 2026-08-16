@@ -23,7 +23,7 @@ import {
   createSpacecraft,
   turnSpacecraft,
 } from './spacecraft/spacecraft';
-import { adjustThrottle, toggleEngine } from './spacecraft/engine';
+import { adjustThrottle, setThrottle, toggleEngine } from './spacecraft/engine';
 import { AVAILABLE_ROCKET_MODELS, findRocketModel, type RocketModel } from './spacecraft/rocket-models';
 
 /** Radians per second applied while a turn command is held. */
@@ -210,6 +210,15 @@ export class SimulationEngine {
 
     if (command.toggleEngine) {
       spacecraft = { ...spacecraft, engine: toggleEngine(spacecraft.engine) };
+    }
+
+    // A one-shot "set throttle to X" instruction (e.g. a slider), applied
+    // immediately rather than scaled by deltaTime/timeScale like the
+    // continuous throttleDelta below. Applied first so a held throttle key
+    // still nudges away from a value just set by the slider in the same
+    // command.
+    if (command.setThrottle !== undefined) {
+      spacecraft = { ...spacecraft, engine: setThrottle(spacecraft.engine, command.setThrottle) };
     }
 
     // Manual throttle/turn rates advance at the same simulation speed as

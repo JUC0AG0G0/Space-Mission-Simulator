@@ -318,6 +318,24 @@ body {
   outline-offset: 2px;
 }
 
+.simulation-controls__throttle {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.simulation-controls__throttle label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--color-text-dim);
+}
+
+.simulation-controls__throttle input[type='range'] {
+  width: 100%;
+  accent-color: var(--color-accent);
+}
+
 /* --- Main menu / mission setup ----------------------------------------- */
 
 .main-menu,

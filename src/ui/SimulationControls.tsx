@@ -6,6 +6,9 @@ interface SimulationControlsProps {
   onRestart: () => void;
   timeScale: TimeScale;
   onSetTimeScale: (timeScale: TimeScale) => void;
+  /** Current throttle, from 0 (idle) to 1 (full thrust). */
+  throttle: number;
+  onSetThrottle: (throttle: number) => void;
 }
 
 export function SimulationControls({
@@ -14,7 +17,11 @@ export function SimulationControls({
   onRestart,
   timeScale,
   onSetTimeScale,
+  throttle,
+  onSetThrottle,
 }: SimulationControlsProps) {
+  const throttlePercent = Math.round(throttle * 100);
+
   return (
     <div className="panel simulation-controls">
       <div className="simulation-controls__actions">
@@ -36,6 +43,18 @@ export function SimulationControls({
             {scale}x
           </button>
         ))}
+      </div>
+      <div className="simulation-controls__throttle">
+        <label htmlFor="simulation-controls-throttle">Throttle ({throttlePercent}%)</label>
+        <input
+          id="simulation-controls-throttle"
+          type="range"
+          min={0}
+          max={100}
+          step={1}
+          value={throttlePercent}
+          onChange={(event) => onSetThrottle(Number(event.target.value) / 100)}
+        />
       </div>
     </div>
   );

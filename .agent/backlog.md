@@ -3308,7 +3308,7 @@ tâches actionnables en l'état.
 
 ## Features à ajouter
 
-- [ ] Ajouter un contrôle précis du throttle (0 à 100 %), depuis
+- [x] Ajouter un contrôle précis du throttle (0 à 100 %), depuis
   l'interface, en plus des touches +/- déjà existantes
 
   `spec.md` (section 17.2, "Feature absente") documente explicitement
@@ -3363,6 +3363,50 @@ tâches actionnables en l'état.
   limité : pas besoin de synchroniser visuellement la position du slider
   avec les ajustements faits au clavier au-delà de ce que React fait déjà
   nativement via la prop `value` contrôlée à partir de l'état du moteur.
+
+  Fait le 2026-08-16 : `SimulationCommand`
+  (`src/types/simulation.ts`) porte désormais un champ optionnel
+  `setThrottle?: number` (0 à 1), documenté comme une instruction
+  ponctuelle appliquée immédiatement, indépendante de `deltaTime`/
+  `timeScale` — contrairement à `throttleDelta`. `SimulationEngine
+  .applyCommand` (`src/simulation/simulation-engine.ts`) le traite en
+  appelant `setThrottle(spacecraft.engine, command.setThrottle)`
+  (déjà clampée à `[0, 1]`), juste après `toggleEngine` et avant le
+  calcul de `scaledDeltaTime`/`throttleDelta` — dans cet ordre, un
+  `throttleDelta` fourni dans la même commande continue d'ajuster
+  depuis la valeur tout juste posée par `setThrottle`, plutôt que de
+  l'écraser, exactement comme demandé par la piste ("les deux doivent
+  pouvoir coexister sans conflit"). Toujours ignoré pendant la pause
+  (même garde que le reste d'`applyCommand`). Côté UI,
+  `SimulationControls.tsx` (qui avait déjà accès à `engineRef` via ses
+  props, sur le même modèle que les boutons de vitesse de simulation)
+  reçoit deux nouvelles props `throttle: number`/`onSetThrottle:
+  (throttle: number) => void`, et affiche un `<input type="range" min="0"
+  max="100">` avec un `<label htmlFor>` explicite ("Throttle (X%)"),
+  câblé depuis `SimulationScreen.tsx` via
+  `state.spacecraft.engine.throttle`/`engineRef.current.applyCommand({
+  setThrottle: throttle }, 0)`. `throttleDelta`/les touches W/S/le
+  D-pad tactile ne sont pas modifiés : le slider est un complément, pas
+  un remplacement — les deux mécanismes coexistent, vérifié dans un
+  vrai navigateur (Playwright headless) qu'ajuster le slider à 50 %
+  met bien à jour le HUD (`THROTTLE 50%`), confirmant que la commande
+  atteint réellement le moteur de simulation et pas seulement l'état
+  local du slider. Tests ajoutés dans `tests/simulation-engine.test.ts`
+  (`applyCommand({ setThrottle: 0.5 })` fixe `engine.throttle` à `0.5`,
+  clamp `[0, 1]` pour des valeurs hors bornes, application indépendante
+  de `deltaTime`/`timeScale` élevé, coexistence avec un `throttleDelta`
+  tenu dans la même commande, ignoré pendant la pause) et dans
+  `tests/ui/SimulationControls.test.tsx` (valeur/label du slider,
+  `onSetThrottle` appelé avec une valeur `0-1` au changement — les
+  rendus `SimulationControls` déjà existants dans ce fichier sont
+  étendus avec les deux nouvelles props obligatoires). Un CSS minimal
+  (`.simulation-controls__throttle`, `src/app/styles.css`) réutilise les
+  variables déjà en place (`--color-text-dim`, `--color-accent`) pour
+  rester cohérent avec le reste du panneau. `npm test` (323 tests),
+  `npm run lint`, `npx tsc --noEmit`, `npm run build` et `npm run
+  coverage` (`simulation-engine.ts` et `SimulationControls.tsx` restent
+  à 100 % de lignes/branches, 98.03 % de couverture globale) restent
+  propres.
 
 - [x] Ajouter un contrôle de la vitesse de simulation (x1 / x2 / x5 /
   x10), explicitement demandé par `spec.md` mais jamais implémenté
