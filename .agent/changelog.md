@@ -2749,3 +2749,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Le slider "Throttle" de `SimulationControls` reste interactif
 - Branche/push: main (direct)
 - Coût estimé: 2.7649404499999997 USD
+
+## 2026-08-16T17-49-59-844Z — planning
+- Description: Le sprint précédent est épuisé (plus de tâche actionnable dans .agent/backlog.md). Analyse le repo (structure, TODOs dans le code, couverture de tests, README, issues connues) et définis un NOUVEAU SPRINT d'environ 10 tâches concrètes et bien scopées dans .agent/backlog.md, réparties selon ce qui est réellement pertinent pour ce projet (pas de remplissage artificiel — si le projet n'a que 4 vrais sujets, n'en liste pas 10). Chaque item doit être assez précis pour être traité en une seule tâche future, sans reformulation ni analyse supplémentaire de ta part.
+- Branche/push: main (direct)
+- Coût estimé: 4.761914900000002 USD
