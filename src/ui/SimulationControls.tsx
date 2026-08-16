@@ -11,7 +11,7 @@ export function SimulationControls({
 }: SimulationControlsProps) {
   return (
     <div className="panel simulation-controls">
-      <button type="button" onClick={onTogglePause}>
+      <button type="button" onClick={onTogglePause} aria-pressed={paused}>
         {paused ? 'Resume (P)' : 'Pause (P)'}
       </button>
       <button type="button" onClick={onRestart}>

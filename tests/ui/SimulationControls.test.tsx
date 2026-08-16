@@ -18,6 +18,26 @@ describe('SimulationControls', () => {
     expect(screen.getByRole('button', { name: 'Resume (P)' })).toBeInTheDocument();
   });
 
+  it('marks the toggle button as not pressed while running', () => {
+    render(
+      <SimulationControls paused={false} onTogglePause={() => {}} onRestart={() => {}} />,
+    );
+    expect(screen.getByRole('button', { name: 'Pause (P)' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+  });
+
+  it('marks the toggle button as pressed while paused', () => {
+    render(
+      <SimulationControls paused={true} onTogglePause={() => {}} onRestart={() => {}} />,
+    );
+    expect(screen.getByRole('button', { name: 'Resume (P)' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+
   it('calls onTogglePause when the pause button is clicked', async () => {
     const onTogglePause = vi.fn();
     const user = userEvent.setup();

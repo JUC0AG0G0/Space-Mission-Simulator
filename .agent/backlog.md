@@ -1430,9 +1430,18 @@ doc obsolète trouvé cette fois-ci — le `README.md` reste cohérent avec
 restent des décisions en attente, pas des tâches actionnables en
 l'état.
 
+Suivi du 2026-08-16 : le bug d'`aria-pressed` manquant sur le bouton
+Pause/Resume de `SimulationControls`, identifié lors de la 40e passe
+ci-dessus, est désormais corrigé (voir l'entrée cochée correspondante
+et `.agent/changelog.md`). `npm test` (306 tests), `npm run lint`, `npx
+tsc --noEmit` et `npm run coverage` (`SimulationControls.tsx` et tout
+`src/ui` restent à 100 % de lignes/branches) restent propres. Au moment
+de cette mise à jour, les quatre sections actionnables du backlog
+n'avaient plus aucune entrée non cochée.
+
 ## Bugs connus
 
-- [ ] Le bouton Pause/Resume de `SimulationControls` n'a pas
+- [x] Le bouton Pause/Resume de `SimulationControls` n'a pas
   d'`aria-pressed`, contrairement aux deux autres boutons à bascule de
   l'application
 
@@ -1463,6 +1472,17 @@ l'état.
   `aria-pressed="true"` quand `paused={true}`, sur le même modèle que
   les tests d'accessibilité déjà ajoutés pour les deux autres boutons à
   bascule.
+
+  Fait le 2026-08-16 : `src/ui/SimulationControls.tsx` pose désormais
+  `aria-pressed={paused}` sur le bouton Pause/Resume, exactement comme
+  suggéré par la piste et sur le même modèle que les correctifs déjà
+  appliqués à `MissionSetup.tsx`/`TouchControls.tsx`. Deux tests ajoutés
+  dans `tests/ui/SimulationControls.test.tsx` ("marks the toggle button
+  as not pressed while running", "marks the toggle button as pressed
+  while paused") vérifiant `aria-pressed="false"`/`"true"` selon la prop
+  `paused`. `npm test` (306 tests), `npm run lint`, `npx tsc --noEmit`
+  et `npm run coverage` (`SimulationControls.tsx` reste à 100 % de
+  lignes/branches, tout `src/ui` à 100 %) restent propres.
 
 - [x] Le nouvel affichage APOAPSIS/PERIAPSIS du HUD montre des valeurs
   aberrantes tant que le vaisseau est immobile sur le pas de tir (avant
