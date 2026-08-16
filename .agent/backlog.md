@@ -1709,7 +1709,7 @@ tâches actionnables en l'état.
 
 ## Bugs connus
 
-- [ ] Le slider "Throttle" de `SimulationControls` reste interactif
+- [x] Le slider "Throttle" de `SimulationControls` reste interactif
   pendant la pause, mais son effet est silencieusement ignoré côté
   moteur — le curseur affiché se désynchronise de la vraie valeur puis
   "saute" brutalement à la reprise
@@ -1769,6 +1769,27 @@ tâches actionnables en l'état.
   correct et voulu, seul le contrôle visuel doit refléter cette
   contrainte pour éviter la désynchronisation d'affichage.
 
+  Fait le 2026-08-16 : `src/ui/SimulationControls.tsx` pose désormais
+  `disabled={paused}` sur l'`<input type="range">` du throttle,
+  exactement comme suggéré par la piste — un `<input>` désactivé ne peut
+  plus être glissé par l'utilisateur, donc plus de désynchronisation
+  possible entre la position affichée et la valeur réelle du moteur.
+  Un style `:disabled` discret est ajouté dans `src/app/styles.css`
+  (`.simulation-controls__throttle input[type='range']:disabled`,
+  curseur `not-allowed`, accent grisé via `--color-text-dim`, opacité
+  réduite) pour signaler visuellement que le contrôle est temporairement
+  inactif, cohérent avec le vaisseau figé pendant la pause.
+  `SimulationEngine.applyCommand` n'a pas été modifié : le comportement
+  moteur (ignorer `setThrottle` pendant la pause, déjà testé) reste
+  inchangé, seul le contrôle visuel a été corrigé. Deux tests ajoutés
+  dans `tests/ui/SimulationControls.test.tsx` ("enables the throttle
+  slider while running", "disables the throttle slider while paused,
+  to avoid a display that silently drifts from the engine") vérifiant
+  l'attribut `disabled` selon la prop `paused`. `npm test` (325 tests),
+  `npm run lint`, `npx tsc --noEmit` et `npm run coverage`
+  (`SimulationControls.tsx` et tout `src/ui` restent à 100 % de
+  lignes/branches, 98.03 % de couverture globale inchangée) restent
+  propres.
 
 - [x] `SimulationEngine.applyCommand` ignore `timeScale` : le pilotage
   manuel (throttle/cap) reste calé sur le temps réel alors que la

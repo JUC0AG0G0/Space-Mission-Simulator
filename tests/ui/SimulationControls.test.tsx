@@ -207,4 +207,36 @@ describe('SimulationControls', () => {
     expect(onSetThrottle).toHaveBeenCalledTimes(1);
     expect(onSetThrottle).toHaveBeenCalledWith(0.75);
   });
+
+  it('enables the throttle slider while running', () => {
+    render(
+      <SimulationControls
+        paused={false}
+        onTogglePause={noop}
+        onRestart={noop}
+        timeScale={1}
+        onSetTimeScale={noop}
+        throttle={0.5}
+        onSetThrottle={noop}
+      />,
+    );
+
+    expect(screen.getByRole('slider', { name: /throttle/i })).not.toBeDisabled();
+  });
+
+  it('disables the throttle slider while paused, to avoid a display that silently drifts from the engine', () => {
+    render(
+      <SimulationControls
+        paused={true}
+        onTogglePause={noop}
+        onRestart={noop}
+        timeScale={1}
+        onSetTimeScale={noop}
+        throttle={0.5}
+        onSetThrottle={noop}
+      />,
+    );
+
+    expect(screen.getByRole('slider', { name: /throttle/i })).toBeDisabled();
+  });
 });

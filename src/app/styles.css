@@ -336,6 +336,12 @@ body {
   accent-color: var(--color-accent);
 }
 
+.simulation-controls__throttle input[type='range']:disabled {
+  accent-color: var(--color-text-dim);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 /* --- Main menu / mission setup ----------------------------------------- */
 
 .main-menu,

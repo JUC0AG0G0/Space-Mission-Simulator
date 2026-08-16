@@ -2734,3 +2734,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Le backlog ne contient plus de tâche actionnable (bug/feature/test/doc). Analyse le repo (structure, TODOs dans le code, couverture de tests, README) et regénère un backlog priorisé dans .agent/backlog.md.
 - Branche/push: main (direct)
 - Coût estimé: 2.3612845499999997 USD
+
+## 2026-08-16T16-27-48-000Z — bugfix
+- Description: Le slider "Throttle" de `SimulationControls` reste interactif pendant la pause, mais son effet est silencieusement ignoré côté moteur — le curseur affiché se désynchronise puis "saute" à la reprise
+- Détail: `src/ui/SimulationControls.tsx` pose désormais `disabled={paused}` sur l'`<input type="range">` du throttle (plus de désynchronisation possible), avec un style `:disabled` discret ajouté dans `src/app/styles.css`. `SimulationEngine.applyCommand` inchangé. Deux tests ajoutés dans `tests/ui/SimulationControls.test.tsx`. `npm test` (325 tests), `npm run lint`, `npx tsc --noEmit` et `npm run coverage` (98.03 % global, `src/ui` à 100 %) restent propres.
+- Branche/push: main (direct, en attente de vérification par l'orchestrateur)

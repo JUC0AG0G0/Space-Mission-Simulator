@@ -53,6 +53,7 @@ export function SimulationControls({
           max={100}
           step={1}
           value={throttlePercent}
+          disabled={paused}
           onChange={(event) => onSetThrottle(Number(event.target.value) / 100)}
         />
       </div>
