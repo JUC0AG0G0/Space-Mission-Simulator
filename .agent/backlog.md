@@ -4814,7 +4814,7 @@ actionnables en l'état.
 
 ## Documentation
 
-- [ ] `README.md` ne mentionne pas le nouveau slider de throttle
+- [x] `README.md` ne mentionne pas le nouveau slider de throttle
   précis (0 à 100 %) ajouté à `SimulationControls`
 
   `src/ui/SimulationControls.tsx` affiche désormais, dans la barre
@@ -4845,6 +4845,20 @@ actionnables en l'état.
   touches continuent d'ajuster depuis cette valeur). Item documentation
   pure — aucun changement de code ni de test attendu, sur le même
   modèle que les items déjà cochés dans cette section.
+
+  Fait le 2026-08-16 : nouveau paragraphe ajouté dans la section
+  "## Controls" du `README.md`, juste après celui qui décrit déjà les
+  boutons Pause/Restart et le sélecteur de vitesse de la barre
+  latérale — exactement l'emplacement suggéré par la piste. Il
+  mentionne le slider **Throttle** (0–100 %, une valeur exacte en un
+  geste) et précise explicitement qu'il coexiste avec `W`/`S`/`↑`/`↓`
+  et les commandes tactiles plutôt que de les remplacer : le slider
+  fixe une valeur ponctuelle, les touches/le D-pad continuent d'ajuster
+  depuis cette valeur. Contenu vérifié par lecture directe de
+  `src/ui/SimulationControls.tsx` (libellé "Throttle (X%)",
+  `<input type="range" min="0" max="100">`, prop `onSetThrottle`) pour
+  rester fidèle au comportement réel. Item documentation pure : aucun
+  fichier de code ni de test modifié. `npm run lint` reste propre.
 
 - [x] `README.md` ne mentionne ni les boutons Pause/Restart, ni les
   nouveaux boutons de vitesse de simulation (x1/x2/x5/x10)

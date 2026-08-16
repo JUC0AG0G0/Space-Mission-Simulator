@@ -65,6 +65,12 @@ The sidebar also has **Pause/Resume** and **Restart mission** buttons
 (**1x** / **2x** / **5x** / **10x**) that scales how fast simulated time
 advances relative to real time, independent of the render loop.
 
+A **Throttle** slider in the sidebar sets the engine's power to an exact
+percentage (0–100%) in one move. It coexists with `W`/`S`/`↑`/`↓` and the
+on-screen touch controls: the slider jumps to a precise value, while the
+keys/touch controls keep nudging the throttle up or down from wherever it
+currently sits.
+
 ## Gameplay
 
 A playthrough moves through the following screens and flight phases:
