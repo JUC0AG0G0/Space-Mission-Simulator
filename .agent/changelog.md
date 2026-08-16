@@ -2769,3 +2769,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: La boucle de jeu (`requestAnimationFrame`) de `SimulationScreen`
 - Branche/push: main (direct)
 - Coût estimé: 3.6625127 USD
+
+## 2026-08-16T18-02-06-105Z — bugfix
+- Description: Le sélecteur "Mission profile" de `MissionSetup` a un texte de
+- Branche/push: main (direct)
+- Coût estimé: 2.8009683 USD
