@@ -1609,6 +1609,48 @@ couverture actionnable ou doc obsolète trouvé cette fois-ci — le
 sous "Divers / à clarifier" restent des décisions en attente, pas des
 tâches actionnables en l'état.
 
+Revue du 2026-08-16 (44e passe, planification périodique) : au moment
+de cette revue, les quatre sections actionnables du backlog (Bugs
+connus, Features à ajouter, Tests manquants, Documentation) n'avaient
+plus aucune entrée non cochée — le throttle configurable de 0 à 100 %
+demandé par `spec.md` (section 17.2) et ajouté lors du run précédent
+était le dernier item actionnable. `npm test` (323 tests), `npm run
+lint` et `npx tsc --noEmit` sont propres, aucun `TODO`/`FIXME`/`XXX`
+dans `src/`/`tests/`. `npm run coverage` confirme 98.03 % de lignes /
+98.3 % de branches ; tout `src/simulation`, `src/rendering` et `src/ui`
+reste à 100 % de couverture (`SimulationControls.tsx` inclus, avec son
+nouveau slider de throttle), les seules lignes non couvertes restent
+`App.tsx:55,57` et `SimulationScreen.tsx:148-164`, déjà jugées trop
+marginales lors de passes précédentes. `npm outdated`/`npm audit` ne
+montrent rien de nouveau par rapport à la 16e passe (mêmes majeures et
+mêmes 6 vulnérabilités dev-only déjà documentées sous "Divers / à
+clarifier"). En relisant `src/ui/SimulationControls.tsx` et
+`src/app/SimulationScreen.tsx` en détail — le nouveau slider de
+throttle ajouté lors du run précédent, jamais encore audité par une
+passe de relecture indépendante — le câblage `applyCommand`/`setThrottle`
+(garde `paused`/`!isMissionActive()`/`countdown`, ordre d'application
+`setThrottle` avant `throttleDelta` pour que les touches continues
+puissent encore ajuster depuis la valeur du slider) s'est confirmé
+correct et déjà bien couvert par `tests/simulation-engine.test.ts` ;
+aucun bug de logique trouvé de ce côté. Une vraie lacune de
+documentation a en revanche été trouvée en comparant le `README.md` au
+nouveau composant : `grep -n -i "throttle" README.md` ne montre que les
+deux lignes du tableau clavier ("Increase throttle"/"Decrease
+throttle", section "## Controls") et une mention générique dans le
+paragraphe "Launch / Flight" — aucune des deux ne signale l'existence
+du nouveau slider de précision (**Throttle (X%)**, `<input
+type="range">` dans la barre latérale, `src/ui/SimulationControls.tsx`)
+qui permet de fixer le throttle à une valeur exacte plutôt que de
+l'ajuster par incréments au clavier/tactile. C'est le même écart de
+séquencement déjà documenté à plusieurs reprises dans ce backlog
+(README qui prend du retard sur une fonctionnalité tout juste livrée,
+ex. les boutons Pause/Restart/vitesse après leur ajout, ou les
+commandes tactiles après `TouchControls`) — voir le nouvel item sous
+"Documentation" ci-dessous. Aucun autre bug, trou de couverture
+actionnable ou doc obsolète trouvé cette fois-ci. Les trois points sous
+"Divers / à clarifier" restent des décisions en attente, pas des tâches
+actionnables en l'état.
+
 ## Bugs connus
 
 - [x] `SimulationEngine.applyCommand` ignore `timeScale` : le pilotage
@@ -4771,6 +4813,38 @@ tâches actionnables en l'état.
   `origin`, hors du contrôle direct de ce run.
 
 ## Documentation
+
+- [ ] `README.md` ne mentionne pas le nouveau slider de throttle
+  précis (0 à 100 %) ajouté à `SimulationControls`
+
+  `src/ui/SimulationControls.tsx` affiche désormais, dans la barre
+  latérale de l'écran de vol, un `<input type="range" min="0" max="100">`
+  avec le libellé "Throttle (X%)" (voir l'item coché "Ajouter un
+  contrôle précis du throttle (0 à 100 %)..." sous "Features à ajouter"
+  ci-dessous), qui permet de fixer le throttle à une valeur exacte en
+  un geste plutôt que de l'ajuster par incréments continus au clavier
+  (`W`/`S`/`↑`/`↓`) ou au tactile (D-pad). `grep -n -i "throttle"
+  README.md` ne montre que les deux lignes déjà présentes du tableau
+  clavier ("Increase throttle" / "Decrease throttle", section
+  "## Controls") et une mention générique dans le paragraphe "Launch /
+  Flight" de "## Gameplay" ("Throttle and heading are controlled with
+  WASD/arrow keys, or the on-screen touch controls...") — aucune des
+  deux ne signale l'existence de ce nouveau slider de précision. Un
+  nouveau lecteur du README n'a donc aucun moyen de savoir qu'un
+  réglage exact du throttle est possible, alors que c'est précisément
+  la fonctionnalité que `spec.md` (section 17.2) demandait d'ajouter
+  pour combler ce défaut volontaire de la V0.
+
+  Piste : ajouter une phrase dans la section "## Controls" du
+  `README.md` (par exemple juste après le paragraphe qui décrit déjà
+  les boutons Pause/Restart et le sélecteur de vitesse dans la barre
+  latérale, lignes 63-66 — un endroit déjà utilisé pour documenter les
+  contrôles de la barre latérale qui ne sont pas des raccourcis
+  clavier) mentionnant le slider "Throttle" et précisant qu'il coexiste
+  avec les touches W/S/↑/↓ (l'un fixe une valeur ponctuelle, les
+  touches continuent d'ajuster depuis cette valeur). Item documentation
+  pure — aucun changement de code ni de test attendu, sur le même
+  modèle que les items déjà cochés dans cette section.
 
 - [x] `README.md` ne mentionne ni les boutons Pause/Restart, ni les
   nouveaux boutons de vitesse de simulation (x1/x2/x5/x10)
