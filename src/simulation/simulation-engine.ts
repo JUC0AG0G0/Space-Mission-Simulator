@@ -1,10 +1,12 @@
-import type {
-  CelestialBody,
-  GameState,
-  Spacecraft,
-  SimulationCommand,
-  TrajectoryPoint,
-  Vector2,
+import {
+  ALLOWED_TIME_SCALES,
+  type CelestialBody,
+  type GameState,
+  type Spacecraft,
+  type SimulationCommand,
+  type TimeScale,
+  type TrajectoryPoint,
+  type Vector2,
 } from '../types/simulation';
 import { createEarth } from './celestial/celestial-body';
 import { altitudeAboveSurface, createOrbitMission, evaluateMission } from './missions/mission';
@@ -32,6 +34,9 @@ export const THROTTLE_RATE = 0.5;
 export const MAX_TRAJECTORY_POINTS = 500;
 /** Length of the pre-flight countdown, in simulated seconds (T-3, T-2, T-1). */
 export const COUNTDOWN_DURATION_SECONDS = 3;
+
+export type { TimeScale };
+export { ALLOWED_TIME_SCALES };
 
 function createInitialSpacecraft(
   centralBody: CelestialBody,
@@ -95,6 +100,7 @@ export function createInitialGameState(
   return {
     simulationTime: 0,
     paused: false,
+    timeScale: 1,
     centralBody,
     spacecraft: createInitialSpacecraft(
       centralBody,
@@ -147,6 +153,14 @@ export class SimulationEngine {
 
   togglePause(): void {
     this.setPaused(!this.state.paused);
+  }
+
+  /** Ignores anything outside `ALLOWED_TIME_SCALES`, leaving the current speed untouched. */
+  setTimeScale(timeScale: TimeScale): void {
+    if (!ALLOWED_TIME_SCALES.includes(timeScale)) {
+      return;
+    }
+    this.state = { ...this.state, timeScale };
   }
 
   reset(initialState: GameState = createInitialGameState()): void {
@@ -233,6 +247,10 @@ export class SimulationEngine {
       return;
     }
 
+    // The countdown above always runs at real-time speed; flight physics
+    // from here on advance at the player-selected simulation speed.
+    const scaledDeltaTime = deltaTime * this.state.timeScale;
+
     const { centralBody } = this.state;
     let spacecraft = this.state.spacecraft;
 
@@ -246,14 +264,14 @@ export class SimulationEngine {
     const grounded = isGrounded(spacecraft, centralBody, totalAcceleration);
     const { position, velocity } = grounded
       ? { position: spacecraft.position, velocity: spacecraft.velocity }
-      : integrate(spacecraft.position, spacecraft.velocity, totalAcceleration, deltaTime);
+      : integrate(spacecraft.position, spacecraft.velocity, totalAcceleration, scaledDeltaTime);
 
     spacecraft = { ...spacecraft, position, velocity };
     if (!grounded) {
-      spacecraft = applyFuelConsumption(spacecraft, deltaTime);
+      spacecraft = applyFuelConsumption(spacecraft, scaledDeltaTime);
     }
 
-    const simulationTime = this.state.simulationTime + deltaTime;
+    const simulationTime = this.state.simulationTime + scaledDeltaTime;
     const trajectory = recordTrajectoryPoint(
       this.state.trajectory,
       spacecraft,
@@ -275,7 +293,7 @@ export class SimulationEngine {
           centralBody,
           secondsInOrbitRange: this.secondsInOrbitRange,
         },
-        deltaTime,
+        scaledDeltaTime,
       );
       activeMission = evaluation.mission;
       this.secondsInOrbitRange = evaluation.secondsInOrbitRange;

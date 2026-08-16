@@ -3093,7 +3093,7 @@ attente, pas des tâches actionnables en l'état.
 
 ## Features à ajouter
 
-- [ ] Ajouter un contrôle de la vitesse de simulation (x1 / x2 / x5 /
+- [x] Ajouter un contrôle de la vitesse de simulation (x1 / x2 / x5 /
   x10), explicitement demandé par `spec.md` mais jamais implémenté
 
   `spec.md` (section 20, "Gestion du temps") distingue explicitement le
@@ -3146,6 +3146,58 @@ attente, pas des tâches actionnables en l'état.
   d'autres mécaniques (pas de ralenti x0.5, pas de persistance du choix
   entre sessions) sauf si cela s'avère trivial une fois la fonction de
   base en place.
+
+  Fait le 2026-08-16 : `ALLOWED_TIME_SCALES = [1, 2, 5, 10] as const` et
+  le type `TimeScale` associé sont désormais définis dans
+  `src/types/simulation.ts` (ré-exportés par `simulation-engine.ts` pour
+  les composants UI), et `GameState` porte un nouveau champ
+  `timeScale: TimeScale` (par défaut `1` dans `createInitialGameState`).
+  `SimulationEngine.setTimeScale(timeScale)` ignore silencieusement
+  toute valeur hors de `ALLOWED_TIME_SCALES`, sur le même modèle que les
+  autres setters de l'engine. Plutôt que de faire porter la
+  multiplication par `SimulationScreen.tsx` (option laissée ouverte par
+  la piste), le calcul vit entièrement dans `SimulationEngine.step` :
+  après la vérification `if (this.state.countdown &&
+  this.advanceCountdown(deltaTime))` (qui continue de consommer le
+  `deltaTime` réel tel quel, donc le compte à rebours n'accélère jamais,
+  conformément à la piste), un `scaledDeltaTime = deltaTime *
+  this.state.timeScale` est calculé et utilisé pour `integrate`,
+  `applyFuelConsumption`, l'accumulation de `simulationTime`,
+  l'horodatage de la trajectoire et `evaluateMission` (donc la durée de
+  maintien en orbite requise par une mission est elle aussi mesurée en
+  temps simulé, pas en temps réel) — ce choix garde toute la logique de
+  vitesse encapsulée dans le moteur plutôt que dispersée entre
+  `SimulationScreen` et l'engine, sans changer le contrat d'appel de
+  `step(deltaTime)` (toujours le delta réel plafonné par
+  `MAX_FRAME_DELTA`, calculé et plafonné comme avant dans
+  `SimulationScreen.tsx`, qui n'a pas eu besoin d'être modifié pour la
+  boucle de jeu elle-même). Côté UI, `SimulationControls.tsx` affiche
+  désormais un second groupe de boutons ("1x"/"2x"/"5x"/"10x", `role=
+  "group" aria-label="Simulation speed"`) sous Pause/Restart, chacun
+  avec `aria-pressed` sur la vitesse active — même motif que le bouton
+  Pause/Resume déjà corrigé (voir l'item coché juste en dessous) — câblé
+  depuis `SimulationScreen.tsx` via `state.timeScale`/
+  `engineRef.current.setTimeScale(scale)`. Pas de garde supplémentaire
+  nécessaire dans `applyCommand`/`setTimeScale` : changer la vitesse
+  pendant la pause ou le compte à rebours est inoffensif, l'effet
+  n'apparaît qu'au prochain `step` en vol actif. Tests ajoutés dans
+  `tests/simulation-engine.test.ts` (nouveau bloc `describe`
+  "SimulationEngine time scale" : valeur par défaut, `simulationTime`
+  qui double/quintuple avec le delta réel, consommation de carburant
+  qui suit la même échelle, valeur hors `ALLOWED_TIME_SCALES` ignorée,
+  compte à rebours inchangé puis vitesse appliquée dès la levée du
+  compte à rebours) et dans `tests/ui/SimulationControls.test.tsx`
+  (rendu des quatre boutons, `aria-pressed` sur la vitesse active
+  uniquement, `onSetTimeScale` appelé avec la bonne valeur au clic) ;
+  les rendus `SimulationControls` déjà existants dans ce fichier de test
+  sont étendus avec les deux nouvelles props obligatoires. Vérifié aussi
+  dans un vrai navigateur (Playwright headless) que les quatre boutons
+  s'affichent sous Pause/Restart et que cliquer sur "10x" bascule bien
+  l'état `aria-pressed` sans erreur console. `npm test` (314 tests),
+  `npm run lint`, `npx tsc --noEmit`, `npm run build` et `npm run
+  coverage` (`simulation-engine.ts` et `SimulationControls.tsx` restent
+  à 100 % de lignes/branches, 98 % de couverture globale) restent
+  propres.
 
 - [x] Le HUD n'affiche jamais l'apoapside/périapside de l'orbite
   courante, alors que le calcul existe déjà et que le HUD d'exemple du

@@ -119,9 +119,19 @@ export type FlightPhase =
   | 'mission-complete'
   | 'mission-failed';
 
+/** Simulation speed multipliers the player can choose between, per `spec.md`. */
+export const ALLOWED_TIME_SCALES = [1, 2, 5, 10] as const;
+export type TimeScale = (typeof ALLOWED_TIME_SCALES)[number];
+
 export interface GameState {
   simulationTime: number;
   paused: boolean;
+  /**
+   * Multiplier applied to real elapsed time while advancing flight physics
+   * (see `SimulationEngine.step`); never applied to the pre-flight
+   * countdown, which always runs at real-time speed.
+   */
+  timeScale: TimeScale;
 
   centralBody: CelestialBody;
   spacecraft: Spacecraft;

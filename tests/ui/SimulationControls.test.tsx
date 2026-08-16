@@ -3,24 +3,44 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SimulationControls } from '../../src/ui/SimulationControls';
 
+const noop = () => {};
+
 describe('SimulationControls', () => {
   it('shows "Pause" when the simulation is running', () => {
     render(
-      <SimulationControls paused={false} onTogglePause={() => {}} onRestart={() => {}} />,
+      <SimulationControls
+        paused={false}
+        onTogglePause={noop}
+        onRestart={noop}
+        timeScale={1}
+        onSetTimeScale={noop}
+      />,
     );
     expect(screen.getByRole('button', { name: 'Pause (P)' })).toBeInTheDocument();
   });
 
   it('shows "Resume" when the simulation is paused', () => {
     render(
-      <SimulationControls paused={true} onTogglePause={() => {}} onRestart={() => {}} />,
+      <SimulationControls
+        paused={true}
+        onTogglePause={noop}
+        onRestart={noop}
+        timeScale={1}
+        onSetTimeScale={noop}
+      />,
     );
     expect(screen.getByRole('button', { name: 'Resume (P)' })).toBeInTheDocument();
   });
 
   it('marks the toggle button as not pressed while running', () => {
     render(
-      <SimulationControls paused={false} onTogglePause={() => {}} onRestart={() => {}} />,
+      <SimulationControls
+        paused={false}
+        onTogglePause={noop}
+        onRestart={noop}
+        timeScale={1}
+        onSetTimeScale={noop}
+      />,
     );
     expect(screen.getByRole('button', { name: 'Pause (P)' })).toHaveAttribute(
       'aria-pressed',
@@ -30,7 +50,13 @@ describe('SimulationControls', () => {
 
   it('marks the toggle button as pressed while paused', () => {
     render(
-      <SimulationControls paused={true} onTogglePause={() => {}} onRestart={() => {}} />,
+      <SimulationControls
+        paused={true}
+        onTogglePause={noop}
+        onRestart={noop}
+        timeScale={1}
+        onSetTimeScale={noop}
+      />,
     );
     expect(screen.getByRole('button', { name: 'Resume (P)' })).toHaveAttribute(
       'aria-pressed',
@@ -42,7 +68,13 @@ describe('SimulationControls', () => {
     const onTogglePause = vi.fn();
     const user = userEvent.setup();
     render(
-      <SimulationControls paused={false} onTogglePause={onTogglePause} onRestart={() => {}} />,
+      <SimulationControls
+        paused={false}
+        onTogglePause={onTogglePause}
+        onRestart={noop}
+        timeScale={1}
+        onSetTimeScale={noop}
+      />,
     );
 
     await user.click(screen.getByRole('button', { name: 'Pause (P)' }));
@@ -54,11 +86,69 @@ describe('SimulationControls', () => {
     const onRestart = vi.fn();
     const user = userEvent.setup();
     render(
-      <SimulationControls paused={false} onTogglePause={() => {}} onRestart={onRestart} />,
+      <SimulationControls
+        paused={false}
+        onTogglePause={noop}
+        onRestart={onRestart}
+        timeScale={1}
+        onSetTimeScale={noop}
+      />,
     );
 
     await user.click(screen.getByRole('button', { name: 'Restart mission (R)' }));
 
     expect(onRestart).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders one button per allowed simulation speed', () => {
+    render(
+      <SimulationControls
+        paused={false}
+        onTogglePause={noop}
+        onRestart={noop}
+        timeScale={1}
+        onSetTimeScale={noop}
+      />,
+    );
+
+    for (const label of ['1x', '2x', '5x', '10x']) {
+      expect(screen.getByRole('button', { name: label })).toBeInTheDocument();
+    }
+  });
+
+  it('marks only the current speed as pressed', () => {
+    render(
+      <SimulationControls
+        paused={false}
+        onTogglePause={noop}
+        onRestart={noop}
+        timeScale={5}
+        onSetTimeScale={noop}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: '5x' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: '1x' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: '2x' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: '10x' })).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('calls onSetTimeScale with the clicked speed', async () => {
+    const onSetTimeScale = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <SimulationControls
+        paused={false}
+        onTogglePause={noop}
+        onRestart={noop}
+        timeScale={1}
+        onSetTimeScale={onSetTimeScale}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: '10x' }));
+
+    expect(onSetTimeScale).toHaveBeenCalledTimes(1);
+    expect(onSetTimeScale).toHaveBeenCalledWith(10);
   });
 });

@@ -279,7 +279,20 @@ body {
 
 .simulation-controls {
   display: flex;
+  flex-direction: column;
   gap: 8px;
+}
+
+.simulation-controls__actions,
+.simulation-controls__speed {
+  display: flex;
+  gap: 8px;
+}
+
+.simulation-controls__speed button[aria-pressed='true'] {
+  background: rgba(107, 242, 161, 0.18);
+  border-color: var(--color-success);
+  color: var(--color-success);
 }
 
 .simulation-controls button {

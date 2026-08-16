@@ -218,6 +218,8 @@ export function SimulationScreen({ missionConfiguration, onExit }: SimulationScr
           paused={state.paused}
           onTogglePause={() => engineRef.current.togglePause()}
           onRestart={() => engineRef.current.reset(createInitialGameState(missionConfiguration))}
+          timeScale={state.timeScale}
+          onSetTimeScale={(scale) => engineRef.current.setTimeScale(scale)}
         />
         <ControlsPanel />
       </div>

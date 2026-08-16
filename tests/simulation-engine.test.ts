@@ -246,6 +246,59 @@ describe('SimulationEngine time progression', () => {
   });
 });
 
+describe('SimulationEngine time scale', () => {
+  it('defaults to 1x', () => {
+    const engine = new SimulationEngine(createFlightReadyState());
+    expect(engine.getState().timeScale).toBe(1);
+  });
+
+  it('advances simulationTime faster once a higher speed is selected', () => {
+    const engine = new SimulationEngine(createFlightReadyState());
+    engine.setTimeScale(5);
+    engine.step(1);
+    expect(engine.getState().simulationTime).toBeCloseTo(5, 8);
+  });
+
+  it('scales fuel consumption along with simulated time', () => {
+    const baseline = new SimulationEngine(createFlightReadyState());
+    baseline.applyCommand({ toggleEngine: true }, 0);
+    baseline.step(1);
+
+    const spedUp = new SimulationEngine(createFlightReadyState());
+    spedUp.applyCommand({ toggleEngine: true }, 0);
+    spedUp.setTimeScale(2);
+    spedUp.step(1);
+
+    const baselineFuelBurned =
+      createFlightReadyState().spacecraft.fuelMass - baseline.getState().spacecraft.fuelMass;
+    const spedUpFuelBurned =
+      createFlightReadyState().spacecraft.fuelMass - spedUp.getState().spacecraft.fuelMass;
+    expect(spedUpFuelBurned).toBeCloseTo(baselineFuelBurned * 2, 6);
+  });
+
+  it('ignores an unsupported value, keeping the previous speed', () => {
+    const engine = new SimulationEngine(createFlightReadyState());
+    engine.setTimeScale(3 as never);
+    expect(engine.getState().timeScale).toBe(1);
+  });
+
+  it('never speeds up the pre-flight countdown, only flight once it clears', () => {
+    const engine = new SimulationEngine(createInitialGameState());
+    engine.setTimeScale(10);
+
+    engine.step(1);
+    expect(engine.getState().countdown).toEqual({ remainingSeconds: 2 });
+
+    engine.step(COUNTDOWN_DURATION_SECONDS);
+    expect(engine.getState().countdown).toEqual({ remainingSeconds: 0 });
+    expect(engine.getState().simulationTime).toBe(0);
+
+    engine.step(1);
+    expect(engine.getState().countdown).toBeNull();
+    expect(engine.getState().simulationTime).toBeCloseTo(10, 8);
+  });
+});
+
 describe('SimulationEngine determinism', () => {
   it('produces identical spacecraft state for two engines given identical commands', () => {
     const engineA = new SimulationEngine(createFlightReadyState());

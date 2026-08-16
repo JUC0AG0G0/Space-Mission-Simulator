@@ -14,6 +14,7 @@ function buildState(activeMission: Mission | null = createOrbitMission()): GameS
   return {
     simulationTime: 0,
     paused: false,
+    timeScale: 1,
     centralBody,
     spacecraft: createSpacecraft({
       id: 'spacecraft-1',
