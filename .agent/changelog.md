@@ -2680,3 +2680,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: `SimulationEngine.applyCommand` ignore `timeScale` : le pilotage
 - Branche/push: main (direct)
 - Coût estimé: 2.9797670999999997 USD
+
+## 2026-08-16T14-53-40-257Z — doc
+- Description: `README.md` ne mentionne ni les boutons Pause/Restart, ni les
+- Branche/push: main (direct)
+- Coût estimé: 1.7550348000000002 USD
