@@ -2759,3 +2759,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: La boucle de jeu (`requestAnimationFrame`) de `SimulationScreen` continuait de tourner indéfiniment une fois la mission terminée, au lieu de s'arrêter et de reprendre proprement au redémarrage
 - Détail: `tick` (`src/app/SimulationScreen.tsx`) arrête désormais de replanifier `requestAnimationFrame` dès que la mission est terminée (`isMissionOverState(nextState)`, nouvel helper réutilisant `determineGamePhase`). Un nouvel état `loopGeneration`, incrémenté par une fonction `performReset` partagée par "Replay", "Restart" et la touche `R`, est ajouté aux dépendances de l'effet de boucle de jeu pour la relancer proprement à chaque redémarrage, sans figer l'écran sur `MissionResult`. Deux tests ajoutés dans `tests/ui/SimulationScreen.test.tsx` ("stops scheduling animation frames once the mission is over...", "resumes the game loop after 'Replay' is clicked..."). `npm test` (327 tests), `npm run lint`, `npx tsc --noEmit` et `npm run coverage` (98.04 % de lignes global, `src/simulation`/`src/rendering`/`src/ui` à 100 %) restent propres.
 - Branche/push: main (direct, en attente de vérification par l'orchestrateur)
+
+## 2026-08-16T17-57-56-739Z — bugfix
+- Description: La boucle de jeu (`requestAnimationFrame`) de `SimulationScreen`
+- Branche/push: main (direct)
+- Coût estimé: 3.6625127 USD
