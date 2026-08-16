@@ -4615,7 +4615,7 @@ actionnables en l'état.
 
 ## Documentation
 
-- [ ] `README.md` ne mentionne ni les boutons Pause/Restart, ni les
+- [x] `README.md` ne mentionne ni les boutons Pause/Restart, ni les
   nouveaux boutons de vitesse de simulation (x1/x2/x5/x10)
 
   `src/ui/SimulationControls.tsx` affiche, dans la barre latérale de
@@ -4643,6 +4643,22 @@ actionnables en l'état.
   rendu. Item documentation pure — aucun changement de code ni de test
   attendu, sur le même modèle que les items déjà cochés dans cette
   section.
+
+  Fait le 2026-08-16 : le tableau clavier de la section "## Controls" du
+  `README.md` gagne deux lignes (`P` → Pause/resume, `R` → Restart
+  mission), exactement comme suggéré par la piste. Un nouveau paragraphe
+  juste après la note sur les commandes tactiles (même endroit que la
+  note tactile déjà présente) mentionne les boutons **Pause/Resume** et
+  **Restart mission** de la barre latérale ainsi que le sélecteur de
+  vitesse de simulation (**1x**/**2x**/**5x**/**10x**) et précise qu'il
+  agit sur le temps simulé indépendamment de la boucle de rendu. Le
+  paragraphe "Launch / Flight" de "## Gameplay" est également élargi
+  d'une phrase mentionnant que la barre latérale permet de mettre en
+  pause, redémarrer ou accélérer le temps simulé (1x/2x/5x/10x) à tout
+  moment pendant le vol. Contenu vérifié par lecture directe de
+  `src/ui/SimulationControls.tsx` (libellés des boutons, `ALLOWED_TIME_SCALES`)
+  pour rester fidèle au comportement réel. Item documentation pure :
+  aucun fichier de code ni de test modifié. `npm run lint` reste propre.
 
 - [x] `README.md` ne mentionne pas l'intégration continue (CI)
   désormais configurée sur GitHub

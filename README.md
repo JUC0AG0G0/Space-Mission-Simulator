@@ -49,6 +49,8 @@ npm run lint
 | `S` / `↓` | Decrease throttle |
 | `A` / `←` | Turn left         |
 | `D` / `→` | Turn right        |
+| `P`       | Pause / resume    |
+| `R`       | Restart mission   |
 
 > Note: this table is not exhaustive — the in-app **Controls** panel is the
 > source of truth for all available keyboard shortcuts.
@@ -57,6 +59,11 @@ On touch devices (phone, tablet), an on-screen D-pad and an **Engine**
 button appear automatically in place of the keyboard table above — no
 setting to toggle, it shows up whenever a coarse pointer (touch) is
 detected.
+
+The sidebar also has **Pause/Resume** and **Restart mission** buttons
+(mirroring the `P`/`R` keys above), plus a simulation speed selector
+(**1x** / **2x** / **5x** / **10x**) that scales how fast simulated time
+advances relative to real time, independent of the render loop.
 
 ## Gameplay
 
@@ -93,7 +100,9 @@ Mission complete / Mission failed
   WASD/arrow keys, or the on-screen touch controls on touch devices (see
   **Controls**); the flight HUD shows live telemetry while the
   deterministic physics engine (two-body gravity, thrust, fuel
-  consumption) advances each frame.
+  consumption) advances each frame. The sidebar lets the player pause,
+  restart, or speed up simulated time (1x/2x/5x/10x) at any point during
+  flight.
 - **Mission complete / Mission failed** — reached when the active mission's
   success or failure conditions are met (e.g. holding a stable orbit inside
   the target altitude band, running out of fuel while stranded outside it,
