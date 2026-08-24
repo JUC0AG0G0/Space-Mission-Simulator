@@ -3739,6 +3739,56 @@ actionnables en l'état.
   suite déjà existante, qui doit rester intégralement verte après la
   migration.
 
+  Tenté le 2026-08-18, bloqué par la taille du diff : un run antérieur
+  (`.agent/runs/2026-08-18T19-16-49-334Z.md`) a implémenté exactement
+  cette migration (`vite` 5→8, `vitest` 2→4, `@vitest/coverage-v8` 2→4,
+  `@vitejs/plugin-react` 4→6, `jsdom` 29→30) avec succès au niveau du
+  code : le seul changement cassant rencontré était la suppression de
+  `test.environmentMatchGlobs` dans Vitest 4, remplacé dans
+  `vite.config.ts` par la nouvelle API `test.projects` (un projet
+  d'environnement `node` pour la majorité des tests, un projet
+  `jsdom` scopé à `tests/ui/**`) — les 330 tests, le lint, le
+  typecheck et le build restaient tous verts après la migration. Le run
+  a néanmoins été rejeté par le garde-fou de taille de diff de
+  l'orchestrateur (2999 lignes > 2400 autorisées, sans retry), puis le
+  working tree a été remis à l'état du dernier commit via git — ce qui
+  ne touche pas `node_modules` et a laissé le dépôt dans un état
+  incohérent (paquets installés en version majeure supérieure à celle
+  déclarée dans `package.json`/`package-lock.json`) jusqu'à ce que cette
+  passe le remarque (`npm test` échouait avec `ReferenceError: document
+  is not defined`, la config `environmentMatchGlobs` ne s'appliquant
+  plus avec Vitest 4 installé mais non déclaré) — corrigé au début de
+  cette passe par un `npm ci` qui resynchronise `node_modules` sur le
+  lockfile committé.
+
+  Retenté le 2026-08-24 (cette passe) : un `npm install --save-dev
+  vite@^8 vitest@^4 @vitest/coverage-v8@^4 @vitejs/plugin-react@^6
+  jsdom@^30` isolé (sans toucher au code applicatif) produit à lui seul
+  un diff de **2878 lignes** rien que pour `package.json` (10 lignes) +
+  `package-lock.json` (2868 lignes, quasi entièrement de la
+  régénération de lockfile pour de nombreuses dépendances transitives
+  d'esbuild/rollup/vite/vitest re-résolues) — déjà au-dessus des 2400
+  lignes autorisées avant même de toucher `vite.config.ts` ou un seul
+  fichier de test. Changement annulé (`git checkout -- package.json
+  package-lock.json && npm ci`), dépôt revérifié propre (330 tests,
+  lint, `npx tsc --noEmit` tous verts) avant de clore cette passe.
+
+  Conclusion : ce n'est pas un problème de qualité/risque de la
+  migration (le code fonctionne, prouvé deux fois), mais une limite
+  structurelle du garde-fou de diff appliqué à un fichier généré
+  (`package-lock.json`) qui grossit mécaniquement de ~2900 lignes pour
+  tout saut de version majeure de `vite`/`vitest` sur ce projet — aucune
+  réduction de périmètre côté code ne changera cette taille. Piste pour
+  une future tentative : soit obtenir une dérogation/un budget de diff
+  élargi spécifiquement pour ce type de changement de dépendances (le
+  lockfile n'est pas du code review-able ligne à ligne comme un diff
+  applicatif), soit scinder en plusieurs runs successifs si l'outillage
+  le permet (ex. un run dédié qui ne fait que committer le
+  `package-lock.json` régénéré sans changement de code, suivi d'un
+  second run pour les changements de `vite.config.ts`/tests) — à
+  valider avec l'orchestrateur plutôt qu'à retenter en aveugle une
+  troisième fois avec la même approche. Case laissée décochée.
+
 - [ ] Dessiner un vecteur de vitesse sur le canvas de vol, en plus de la
   direction (heading) déjà affichée par la silhouette du vaisseau
 
