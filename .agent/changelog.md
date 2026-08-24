@@ -2789,3 +2789,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Le nom accessible des boutons "Select"/"Selected" des cartes de
 - Branche/push: main (direct)
 - Coût estimé: 2.3131439999999994 USD
+
+## 2026-08-24T19-11-45-278Z — feature
+- Description: Mettre à jour `vite`/`vitest`/`@vitest/coverage-v8` (et leurs
+- Branche/push: main (direct)
+- Coût estimé: 2.6288232999999996 USD
