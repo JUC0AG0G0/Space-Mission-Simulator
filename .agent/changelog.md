@@ -2809,3 +2809,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Aucun test ne vérifie que le moteur de simulation reste sain
 - Branche/push: main (direct)
 - Coût estimé: 2.7990228 USD
+
+## 2026-08-26T19-18-30-658Z — feature
+- Description: Mettre à jour `vite`/`vitest`/`@vitest/coverage-v8` (et leurs
+- Branche/push: main (direct)
+- Coût estimé: 3.4556289999999996 USD
