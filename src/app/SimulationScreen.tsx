@@ -263,6 +263,7 @@ export function SimulationScreen({ missionConfiguration, onExit }: SimulationScr
           onSetTimeScale={(scale) => engineRef.current.setTimeScale(scale)}
           throttle={state.spacecraft.engine.throttle}
           onSetThrottle={(throttle) => engineRef.current.applyCommand({ setThrottle: throttle }, 0)}
+          countingDown={state.countdown !== null}
         />
         <ControlsPanel />
       </div>

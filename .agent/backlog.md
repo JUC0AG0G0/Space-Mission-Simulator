@@ -1803,7 +1803,97 @@ sous "Bugs connus" ci-dessous). `npm test` (344 tests), `npm run lint`,
 reste décochée, pour la même raison structurelle que les trois passes
 précédentes.
 
+Suivi du 2026-08-26 (quater) : la mise à jour majeure `vite`/`vitest` a
+été auto-sélectionnée une cinquième fois comme tâche du jour. Toujours
+pour la même raison structurelle déjà documentée à quatre reprises (un
+`package-lock.json` régénéré à lui seul entre 2878 et 2999 lignes, au-
+delà du budget de diff, pour tout saut de version majeure de `vite`/
+`vitest` sur ce projet), aucune nouvelle tentative n'a été faite. Un
+agent d'exploration dédié a de nouveau passé en revue les zones moins
+souvent auditées (physique/missions, interactions entre la vitesse de
+simulation x1/x2/x5/x10 et les autres systèmes, `SimulationScreen`) à la
+recherche d'un défaut concret. Un bug a été identifié et corrigé : le
+slider "Throttle" de `SimulationControls` n'était désactivé que pendant
+la pause (`disabled={paused}`), mais restait activement glissable
+pendant le compte à rebours de pré-lancement — alors que
+`SimulationEngine.applyCommand` ignore aussi silencieusement
+`setThrottle` tant que `this.state.countdown` est non nul (même garde
+que pour la pause). Comme le compte à rebours déclenche un re-rendu à
+chaque frame (contrairement à la pause, qui n'en déclenche aucun), le
+symptôme n'était pas un curseur qui dérive silencieusement puis "saute"
+à la reprise (le bug pause déjà corrigé), mais un curseur qui revenait
+à sa valeur réelle en l'espace d'une frame à chaque tentative de
+glissement, sans aucune indication visuelle (`:disabled`) que
+l'interaction était rejetée. Voir l'entrée cochée correspondante sous
+"Bugs connus" ci-dessous. `npm test` (345 tests), `npm run lint`, `npx
+tsc --noEmit`, `npm run build` et `npm run coverage` (`SimulationControls.tsx`
+reste à 100 % de couverture) restent propres. La case de l'item
+vite/vitest reste décochée, pour la même raison structurelle que les
+quatre passes précédentes.
+
 ## Bugs connus
+
+- [x] Le slider "Throttle" de `SimulationControls` reste activement
+  glissable pendant le compte à rebours de pré-lancement, alors que
+  l'engin ignore silencieusement `setThrottle` jusqu'à `LIFTOFF`
+
+  `SimulationEngine.applyCommand`
+  (`src/simulation/simulation-engine.ts:204-207`) retourne
+  immédiatement sans rien modifier tant que `this.state.paused`,
+  `!this.isMissionActive()` **ou `this.state.countdown`** est vrai — la
+  même garde s'applique donc pendant la pause et pendant le compte à
+  rebours de pré-lancement (`T-3`…`LIFTOFF`). Un correctif précédent de
+  ce backlog (voir l'entrée cochée "Le slider `Throttle`... reste
+  interactif pendant la pause..." plus bas dans cette section) a ajouté
+  `disabled={paused}` sur l'`<input type="range">` de
+  `SimulationControls.tsx` pour éviter que le curseur affiché ne se
+  désynchronise de la vraie valeur pendant la pause — mais ce correctif
+  n'avait câblé que la prop `paused`, pas `countdown`, alors que
+  `SimulationControls` est déjà rendu pendant tout le compte à rebours
+  (`SimulationScreen.tsx` affiche `CountdownOverlay`/`Hud` en
+  alternance dans la zone de vol, mais `.app__sidebar`, qui contient
+  `SimulationControls`, reste monté sans condition sur `state.countdown`).
+
+  Concrètement : pendant le compte à rebours, un joueur qui fait
+  glisser le slider "Throttle" (visible, activé, sans style `:disabled`)
+  déclenche bien `onSetThrottle`/`applyCommand({ setThrottle: ... }, 0)`,
+  qui est un no-op côté moteur. Contrairement au cas de la pause (où
+  `step`/`applyCommand` ne créent aucun nouvel objet d'état tant que la
+  pause dure, donc aucun re-rendu n'est déclenché et le curseur reste
+  visuellement figé là où le joueur l'a laissé jusqu'à la reprise),
+  `advanceCountdown` (appelée par `step` à chaque frame pendant le
+  compte à rebours) crée un nouvel objet d'état à chaque frame même si
+  seul `remainingSeconds` change — donc `SimulationScreen` re-rend à
+  chaque frame, et React (input contrôlé) remet immédiatement la valeur
+  affichée du slider à la vraie valeur du moteur. Le symptôme n'est donc
+  pas une dérive silencieuse suivie d'un "saut" à la reprise (déjà
+  corrigé pour la pause), mais un curseur qui semble impossible à
+  déplacer : il revient à sa position d'origine en une frame (moins de
+  16 ms) à chaque tentative de glissement, sans qu'aucun style visuel
+  n'indique que l'interaction est rejetée. `tests/ui/
+  SimulationControls.test.tsx` ne testait `disabled` que contre
+  `paused`, jamais contre un scénario de compte à rebours.
+
+  Fait le 2026-08-26 : `SimulationControlsProps` porte désormais un
+  nouveau champ `countingDown: boolean`, câblé depuis
+  `SimulationScreen.tsx` avec `state.countdown !== null` (juste à côté
+  de `paused={state.paused}`). L'`<input type="range">` du throttle
+  passe de `disabled={paused}` à `disabled={paused || countingDown}` —
+  désormais désactivé aussi bien pendant la pause que pendant tout le
+  compte à rebours, cohérent avec la garde déjà en place côté moteur.
+  `SimulationEngine.applyCommand` n'est pas modifié : le comportement
+  moteur (ignorer `setThrottle` pendant `countdown`, déjà correct)
+  reste inchangé, seul le contrôle visuel est corrigé. Nouveau test
+  ajouté dans `tests/ui/SimulationControls.test.tsx` ("disables the
+  throttle slider during the pre-launch countdown, since the engine
+  ignores setThrottle until liftoff"), sur le même modèle que le test
+  existant pour `paused` ; les treize rendus `SimulationControls`
+  préexistants dans ce fichier sont étendus avec la nouvelle prop
+  obligatoire `countingDown={false}`. `npm test` (345 tests), `npm run
+  lint`, `npx tsc --noEmit`, `npm run build` et `npm run coverage`
+  (`SimulationControls.tsx` et tout `src/ui` restent à 100 % de
+  lignes/branches, couverture globale inchangée) restent propres.
+
 
 - [x] Le raccourci clavier de vol (WASD/flèches) intercepte les flèches
   gauche/droite du slider "Throttle" focusé, empêchant son pas natif au

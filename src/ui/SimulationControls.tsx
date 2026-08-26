@@ -9,6 +9,8 @@ interface SimulationControlsProps {
   /** Current throttle, from 0 (idle) to 1 (full thrust). */
   throttle: number;
   onSetThrottle: (throttle: number) => void;
+  /** Whether the pre-flight countdown is still holding the engine back. */
+  countingDown: boolean;
 }
 
 export function SimulationControls({
@@ -19,6 +21,7 @@ export function SimulationControls({
   onSetTimeScale,
   throttle,
   onSetThrottle,
+  countingDown,
 }: SimulationControlsProps) {
   const throttlePercent = Math.round(throttle * 100);
 
@@ -53,7 +56,7 @@ export function SimulationControls({
           max={100}
           step={1}
           value={throttlePercent}
-          disabled={paused}
+          disabled={paused || countingDown}
           onChange={(event) => onSetThrottle(Number(event.target.value) / 100)}
         />
       </div>

@@ -16,6 +16,7 @@ describe('SimulationControls', () => {
         onSetTimeScale={noop}
         throttle={1}
         onSetThrottle={noop}
+        countingDown={false}
       />,
     );
     expect(screen.getByRole('button', { name: 'Pause (P)' })).toBeInTheDocument();
@@ -31,6 +32,7 @@ describe('SimulationControls', () => {
         onSetTimeScale={noop}
         throttle={1}
         onSetThrottle={noop}
+        countingDown={false}
       />,
     );
     expect(screen.getByRole('button', { name: 'Resume (P)' })).toBeInTheDocument();
@@ -46,6 +48,7 @@ describe('SimulationControls', () => {
         onSetTimeScale={noop}
         throttle={1}
         onSetThrottle={noop}
+        countingDown={false}
       />,
     );
     expect(screen.getByRole('button', { name: 'Pause (P)' })).toHaveAttribute(
@@ -64,6 +67,7 @@ describe('SimulationControls', () => {
         onSetTimeScale={noop}
         throttle={1}
         onSetThrottle={noop}
+        countingDown={false}
       />,
     );
     expect(screen.getByRole('button', { name: 'Resume (P)' })).toHaveAttribute(
@@ -84,6 +88,7 @@ describe('SimulationControls', () => {
         onSetTimeScale={noop}
         throttle={1}
         onSetThrottle={noop}
+        countingDown={false}
       />,
     );
 
@@ -104,6 +109,7 @@ describe('SimulationControls', () => {
         onSetTimeScale={noop}
         throttle={1}
         onSetThrottle={noop}
+        countingDown={false}
       />,
     );
 
@@ -122,6 +128,7 @@ describe('SimulationControls', () => {
         onSetTimeScale={noop}
         throttle={1}
         onSetThrottle={noop}
+        countingDown={false}
       />,
     );
 
@@ -140,6 +147,7 @@ describe('SimulationControls', () => {
         onSetTimeScale={noop}
         throttle={1}
         onSetThrottle={noop}
+        countingDown={false}
       />,
     );
 
@@ -161,6 +169,7 @@ describe('SimulationControls', () => {
         onSetTimeScale={onSetTimeScale}
         throttle={1}
         onSetThrottle={noop}
+        countingDown={false}
       />,
     );
 
@@ -180,6 +189,7 @@ describe('SimulationControls', () => {
         onSetTimeScale={noop}
         throttle={0.5}
         onSetThrottle={noop}
+        countingDown={false}
       />,
     );
 
@@ -198,6 +208,7 @@ describe('SimulationControls', () => {
         onSetTimeScale={noop}
         throttle={0}
         onSetThrottle={onSetThrottle}
+        countingDown={false}
       />,
     );
 
@@ -218,6 +229,7 @@ describe('SimulationControls', () => {
         onSetTimeScale={noop}
         throttle={0.5}
         onSetThrottle={noop}
+        countingDown={false}
       />,
     );
 
@@ -234,6 +246,24 @@ describe('SimulationControls', () => {
         onSetTimeScale={noop}
         throttle={0.5}
         onSetThrottle={noop}
+        countingDown={false}
+      />,
+    );
+
+    expect(screen.getByRole('slider', { name: /throttle/i })).toBeDisabled();
+  });
+
+  it('disables the throttle slider during the pre-launch countdown, since the engine ignores setThrottle until liftoff', () => {
+    render(
+      <SimulationControls
+        paused={false}
+        onTogglePause={noop}
+        onRestart={noop}
+        timeScale={1}
+        onSetTimeScale={noop}
+        throttle={1}
+        onSetThrottle={noop}
+        countingDown={true}
       />,
     );
 
