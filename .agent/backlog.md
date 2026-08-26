@@ -4887,7 +4887,7 @@ actionnables en l'état.
 
 ## Tests manquants
 
-- [ ] Aucun test ne vérifie que le moteur de simulation reste sain
+- [x] Aucun test ne vérifie que le moteur de simulation reste sain
   (pas de `NaN`, pas de carburant négatif) pour les 9 combinaisons de
   modèle de fusée × profil de mission
 
@@ -4927,6 +4927,26 @@ actionnables en l'état.
   l'absence de valeurs aberrantes/de crash à travers toutes les
   combinaisons — un simple test de robustesse, pas un test de
   gameplay/équilibrage.
+
+  Fait le 2026-08-26 : nouveau bloc `describe('SimulationEngine stays
+  numerically sound across every rocket model x mission profile
+  combination', ...)` dans `tests/simulation-engine.test.ts`, exactement
+  sur le modèle suggéré par la piste — une double boucle sur
+  `AVAILABLE_ROCKET_MODELS × AVAILABLE_MISSION_PROFILES` (9 combinaisons)
+  génère un `it(...)` par combinaison (titre dynamique nommant le modèle
+  et le profil, plutôt qu'un `it.each` moins lisible pour des objets).
+  Chaque test construit la `MissionConfiguration` correspondante, crée un
+  `SimulationEngine` via `createInitialGameState(configuration)` avec le
+  compte à rebours déjà effacé (`countdown: null`, pour ne pas consommer
+  les 300 pas de la boucle dans le décompte), active le moteur à pleine
+  poussée (`applyCommand({ toggleEngine: true, setThrottle: 1 }, 0)`) puis
+  exécute 300 `step(0.1)` (soit 30 secondes simulées, largement de quoi
+  dépasser l'altitude cible ou épuiser le carburant selon la combinaison).
+  Vérifie ensuite que `position`/`velocity`/`heading`/`fuelMass` restent
+  tous `Number.isFinite` (pas de `NaN`/`Infinity`), et que `fuelMass`
+  reste dans `[0, maxFuel]`. `npm test` (339 tests, +9 par rapport à la
+  passe précédente), `npm run lint` et `npx tsc --noEmit` restent
+  propres.
 
 - [x] La branche "trajectoire non liée" d'`isStrandedOutsideTargetBand`
   n'est pas exercée par les tests

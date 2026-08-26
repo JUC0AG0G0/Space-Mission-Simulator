@@ -7,7 +7,11 @@ import {
 } from '../src/simulation/simulation-engine';
 import { createSpacecraft } from '../src/simulation/spacecraft/spacecraft';
 import type { GameState } from '../src/types/simulation';
-import { createDefaultMissionConfiguration } from '../src/simulation/missions/mission-configuration';
+import {
+  AVAILABLE_MISSION_PROFILES,
+  createDefaultMissionConfiguration,
+  type MissionConfiguration,
+} from '../src/simulation/missions/mission-configuration';
 import { AVAILABLE_ROCKET_MODELS } from '../src/simulation/spacecraft/rocket-models';
 
 /**
@@ -624,4 +628,47 @@ describe('SimulationEngine countdown', () => {
     engine.applyCommand({ toggleEngine: true }, 0);
     expect(engine.getState().spacecraft.engine.active).toBe(true);
   });
+});
+
+describe('SimulationEngine stays numerically sound across every rocket model x mission profile combination', () => {
+  /**
+   * Not a gameplay/balance test (no piloting, constant full-vertical
+   * thrust): just a robustness sweep across the 9 combinations
+   * `MissionSetup` actually lets the player pick, to catch a future
+   * regression (e.g. a division involving a particular model's
+   * dryMass/fuelMass) that would only surface for some of them.
+   */
+  for (const rocketModel of AVAILABLE_ROCKET_MODELS) {
+    for (const missionProfile of AVAILABLE_MISSION_PROFILES) {
+      it(`keeps state finite and fuel within bounds for ${rocketModel.name} on ${missionProfile.name}`, () => {
+        const configuration: MissionConfiguration = {
+          missionName: 'Robustness sweep',
+          spacecraftName: rocketModel.name,
+          missionProfileId: missionProfile.id,
+          rocketModelId: rocketModel.id,
+        };
+        const engine = new SimulationEngine({
+          ...createInitialGameState(configuration),
+          countdown: null,
+        });
+
+        engine.applyCommand({ toggleEngine: true, setThrottle: 1 }, 0);
+        for (let i = 0; i < 300; i += 1) {
+          engine.step(0.1);
+        }
+
+        const { spacecraft } = engine.getState();
+
+        expect(Number.isFinite(spacecraft.position.x)).toBe(true);
+        expect(Number.isFinite(spacecraft.position.y)).toBe(true);
+        expect(Number.isFinite(spacecraft.velocity.x)).toBe(true);
+        expect(Number.isFinite(spacecraft.velocity.y)).toBe(true);
+        expect(Number.isFinite(spacecraft.heading)).toBe(true);
+        expect(Number.isFinite(spacecraft.fuelMass)).toBe(true);
+
+        expect(spacecraft.fuelMass).toBeGreaterThanOrEqual(0);
+        expect(spacecraft.fuelMass).toBeLessThanOrEqual(spacecraft.maxFuel);
+      });
+    }
+  }
 });
