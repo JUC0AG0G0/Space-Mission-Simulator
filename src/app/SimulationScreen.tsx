@@ -130,11 +130,21 @@ export function SimulationScreen({ missionConfiguration, onExit }: SimulationScr
       }
     }
 
+    // The browser never fires `keyup` for a key that's still physically held
+    // when the window loses focus (e.g. Alt/Cmd+Tab away while holding W) —
+    // without this, the key stays "stuck" in `heldKeysRef` and keeps steering
+    // the ship after focus returns, until the same key is pressed again.
+    function onWindowBlur() {
+      heldKeysRef.current.clear();
+    }
+
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', onWindowBlur);
     return () => {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', onWindowBlur);
     };
   }, []);
 

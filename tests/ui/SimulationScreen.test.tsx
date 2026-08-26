@@ -278,6 +278,27 @@ describe('SimulationScreen', () => {
     applyCommandSpy.mockRestore();
   });
 
+  it('clears held movement keys when the window loses focus, so a key that never receives keyup does not stay stuck', () => {
+    const frame = renderScreen();
+    clearCountdown(frame);
+
+    const applyCommandSpy = vi.spyOn(SimulationEngine.prototype, 'applyCommand');
+    applyCommandSpy.mockClear();
+
+    // Simulate holding "W" while alt-tabbing away: the browser never fires
+    // `keyup` for a key still physically held when focus leaves the window.
+    fireEvent.keyDown(window, { key: 'w' });
+    frame.advance(16);
+    expect(applyCommandSpy.mock.calls[0][0].throttleDelta).toBe(1);
+
+    fireEvent(window, new Event('blur'));
+    frame.advance(16);
+
+    expect(applyCommandSpy.mock.calls[1][0].throttleDelta).toBe(0);
+
+    applyCommandSpy.mockRestore();
+  });
+
   it('toggles the engine when the on-screen touch Engine button is tapped, and the button reflects the new state', () => {
     const frame = renderScreen();
     clearCountdown(frame);

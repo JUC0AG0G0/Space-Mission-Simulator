@@ -2814,3 +2814,15 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Mettre à jour `vite`/`vitest`/`@vitest/coverage-v8` (et leurs
 - Branche/push: main (direct)
 - Coût estimé: 3.4556289999999996 USD
+
+## 2026-08-26T19-35-55-000Z — bugfix
+- Description: Tâche auto-assignée (mise à jour majeure vite/vitest) de
+  nouveau écartée sans modification de code — bloquée pour la 3e fois par
+  le garde-fou de diff sur `package-lock.json` (raison structurelle déjà
+  documentée, pas de nouvelle tentative). À la place : correction d'un
+  bug clavier réel dans `SimulationScreen` — une touche de mouvement
+  continu (WASD/flèches) restait "collée" si la fenêtre perdait le focus
+  pendant qu'elle était tenue (Alt/Cmd+Tab), faute de gestionnaire
+  `blur` pour vider `heldKeysRef`. Ajout d'un gestionnaire `blur` sur
+  `window` et d'un test associé.
+- Branche/push: main (direct)

@@ -1760,7 +1760,76 @@ tests), `npm run lint`, `npx tsc --noEmit`, `npm run build` et `npm run
 coverage` (98.07 % de couverture globale, `src/rendering` toujours à
 100 %) restent propres.
 
+Suivi du 2026-08-26 (bis) : la mise à jour majeure `vite`/`vitest` a de
+nouveau été auto-sélectionnée comme tâche du jour (toujours en tête de
+"Features à ajouter", seul item restant hors "Divers / à clarifier").
+Plutôt que de retenter une quatrième fois la même approche déjà
+documentée comme bloquée deux fois de suite pour une raison purement
+structurelle (régénération de `package-lock.json`), cette passe a fait
+une relecture ciblée pour trouver un item concret à la place. Un bug
+a été identifié en lisant l'effet clavier de `SimulationScreen.tsx` :
+aucun gestionnaire `blur`/`visibilitychange` ne nettoyait
+`heldKeysRef` quand la fenêtre perdait le focus pendant qu'une touche
+de mouvement continu (WASD/flèches) était tenue — une touche relâchée
+"hors focus" (Alt/Cmd+Tab pendant qu'elle est maintenue) ne reçoit
+jamais son `keyup`, donc elle restait "collée" et continuait de piloter
+le vaisseau au retour du focus. Corrigé (voir l'entrée cochée
+correspondante sous "Bugs connus" ci-dessous). `npm test` (343 tests),
+`npm run lint`, `npx tsc --noEmit`, `npm run build` et `npm run
+coverage` restent propres. La case de l'item vite/vitest reste
+décochée : rien de nouveau à tenter tant que le garde-fou de taille de
+diff n'a pas de dérogation pour les fichiers de lockfile générés (voir
+la piste déjà documentée sous cet item).
+
 ## Bugs connus
+
+- [x] Une touche de mouvement continu (WASD/flèches) maintenue enfoncée
+  reste "collée" si la fenêtre perd le focus pendant qu'elle est
+  physiquement tenue (ex. Alt/Cmd+Tab), et continue de piloter le
+  vaisseau au retour du focus jusqu'à ce que la même touche soit
+  pressée à nouveau
+
+  `SimulationScreen.tsx` suit les touches de mouvement continu (`w`/
+  `s`/`a`/`d`/flèches) dans `heldKeysRef.current`, ajoutées sur
+  `keydown` et retirées sur `keyup` (`onKeyDown`/`onKeyUp`,
+  lignes 90-131 avant ce correctif) — `buildCommandFromKeys` lit ce
+  `Set` à chaque frame pour dériver `throttleDelta`/`turnDelta`. Le
+  problème : un `keyup` n'est jamais délivré par le navigateur pour une
+  touche encore physiquement enfoncée au moment où la fenêtre perd le
+  focus (Alt+Tab/Cmd+Tab vers une autre application, clic sur la barre
+  des tâches, changement d'onglet avec certains navigateurs) — c'est un
+  comportement standard des événements clavier DOM, pas un bug du
+  navigateur. `grep -rn "blur\|visibilitychange" src/app src/ui` ne
+  montrait aucun résultat avant ce correctif : rien ne nettoyait
+  `heldKeysRef` dans ce cas. Concrètement, un joueur qui maintient `W`
+  en montée, puis change de fenêtre sans relâcher la touche
+  (volontairement ou par réflexe), revient sur le jeu avec le vaisseau
+  qui continue d'accélérer tout seul — jusqu'à ce qu'il presse et
+  relâche `W` une nouvelle fois pour que `onKeyUp` retire enfin la
+  touche du set. C'est la même famille de défaut que le bug de
+  key-repeat déjà corrigé pour les touches discrètes (`SPACE`/`P`/`R`),
+  mais pour les touches continues et déclenché par un changement de
+  focus plutôt que par le système de répétition du clavier.
+
+  Fait le 2026-08-26 : un nouveau gestionnaire `onWindowBlur` est ajouté
+  à l'effet clavier de `SimulationScreen.tsx`, écoutant l'événement
+  `blur` sur `window` (le même objet que `keydown`/`keyup`) et vidant
+  `heldKeysRef.current` sans condition — dès que la fenêtre reperd le
+  focus, plus aucune touche n'est considérée "tenue", quelle que soit la
+  raison pour laquelle son `keyup` n'a jamais été reçu. Comme
+  `handleTouchHoldChange` (les commandes tactiles) utilise le même
+  `heldKeysRef`, ce correctif couvre aussi le cas marginal d'un doigt
+  resté sur un bouton tactile pendant un changement de focus. Le
+  gestionnaire est retiré au démontage comme `onKeyDown`/`onKeyUp`.
+  Test ajouté dans `tests/ui/SimulationScreen.test.tsx` ("clears held
+  movement keys when the window loses focus, so a key that never
+  receives keyup does not stay stuck") : `keydown` sur `'w'` (throttle
+  qui monte), puis un événement `blur` sur `window` (sans `keyup`
+  correspondant), vérifiant que la commande appliquée à la frame
+  suivante a bien `throttleDelta: 0`. `npm test` (343 tests), `npm run
+  lint`, `npx tsc --noEmit`, `npm run build` et `npm run coverage`
+  (`SimulationScreen.tsx` reste sur les mêmes lignes non couvertes déjà
+  jugées marginales, 98.07 % de couverture globale) restent propres.
 
 - [x] La boucle de jeu (`requestAnimationFrame`) de `SimulationScreen`
   continue de tourner indéfiniment une fois la mission terminée, au lieu
