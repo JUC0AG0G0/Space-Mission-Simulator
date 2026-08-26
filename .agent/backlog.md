@@ -1781,7 +1781,72 @@ décochée : rien de nouveau à tenter tant que le garde-fou de taille de
 diff n'a pas de dérogation pour les fichiers de lockfile générés (voir
 la piste déjà documentée sous cet item).
 
+Suivi du 2026-08-26 (ter) : la mise à jour majeure `vite`/`vitest` a été
+auto-sélectionnée une quatrième fois comme tâche du jour. Comme lors des
+deux passes précédentes, aucune nouvelle tentative n'a été faite (la
+cause du blocage — un `package-lock.json` régénéré à lui seul au-delà du
+budget de diff pour tout saut de version majeure de `vite`/`vitest` sur
+ce projet, mesurée à trois reprises entre 2878 et 2999 lignes — est déjà
+documentée comme purement structurelle, indépendante de toute réduction
+de périmètre côté code). À la place, un agent d'exploration dédié a
+passé en revue les zones du code les moins souvent auditées (physique/
+missions, modèles de fusée x profils de mission, accessibilité `src/
+ui`, machine à états `app-state.ts`/`game-phase.ts`, CSS) à la recherche
+d'un défaut réel et concret non déjà documenté dans ce fichier. Un bug
+a été identifié et corrigé : l'écouteur clavier global de vol
+(`SimulationScreen.onKeyDown`) interceptait les flèches Gauche/Droite
+même quand elles étaient pressées sur le slider "Throttle" focusé,
+empêchant son pas natif au clavier (voir l'entrée cochée correspondante
+sous "Bugs connus" ci-dessous). `npm test` (344 tests), `npm run lint`,
+`npx tsc --noEmit`, `npm run build` et `npm run coverage` (`src/` reste
+à 100 % de couverture) restent propres. La case de l'item vite/vitest
+reste décochée, pour la même raison structurelle que les trois passes
+précédentes.
+
 ## Bugs connus
+
+- [x] Le raccourci clavier de vol (WASD/flèches) intercepte les flèches
+  gauche/droite du slider "Throttle" focusé, empêchant son pas natif au
+  clavier
+
+  L'écouteur `onKeyDown` de `SimulationScreen.tsx` est posé sur `window`
+  et intercepte inconditionnellement `w`/`a`/`s`/`d`/les flèches (avec
+  `event.preventDefault()`) dès qu'aucun modificateur `ctrl`/`meta`/`alt`
+  n'est actif — sans jamais vérifier `event.target`. Le slider "Throttle"
+  de `SimulationControls.tsx` (`<input type="range" min="0" max="100">`,
+  ajouté pour permettre de fixer le throttle à une valeur exacte, voir
+  l'item "Ajouter un contrôle précis du throttle..." déjà coché sous
+  "Features à ajouter") est un élément focusable au clavier (`Tab`) dont
+  le comportement natif standard est de faire varier sa valeur avec les
+  flèches Gauche/Droite/Haut/Bas — précisément le mécanisme d'accès
+  clavier attendu pour ce contrôle. Comme un `keydown` déclenché sur un
+  élément focusé remonte (bubble) jusqu'à `window`, et que le navigateur
+  n'exécute l'action par défaut d'un élément focusé qu'après avoir
+  vérifié que rien dans toute la phase de propagation n'a appelé
+  `preventDefault()`, un joueur qui atteint le slider par tabulation puis
+  appuie sur `→` ne voit pas sa valeur augmenter de 1 % comme attendu :
+  la pression est silencieusement redirigée vers la commande de vol
+  globale (`turnDelta`) à la place, sans que le slider ne bouge. Aucun
+  test existant ne rendait le slider avec le focus puis ne déclenchait de
+  `keydown` dessus pour vérifier ce cas.
+
+  Fait le 2026-08-26 : ajout d'une garde `if (event.target instanceof
+  HTMLInputElement) { return; }` dans `onKeyDown`
+  (`src/app/SimulationScreen.tsx`), juste après la garde existante sur
+  les modificateurs Ctrl/Cmd/Alt — un `keydown` dont la cible est un
+  `<input>` (le slider Throttle est le seul champ de formulaire de cet
+  écran) n'est donc plus intercepté par les commandes de vol globales,
+  laissant le navigateur exécuter le pas natif du slider. Test ajouté
+  dans `tests/ui/SimulationScreen.test.tsx` ("does not hijack arrow keys
+  pressed on the focused Throttle slider, leaving its native stepping
+  alone") : focus du slider puis `fireEvent.keyDown(slider, { key:
+  'ArrowRight' })`, vérifiant que l'événement n'est pas marqué
+  `defaultPrevented` (valeur de retour de `fireEvent.keyDown`) et
+  qu'`applyCommand` reçoit `throttleDelta: 0`/`turnDelta: 0` plutôt
+  qu'une commande de vol — confirmé que ce test échoue sans le correctif
+  (`expected false to be true` sur `defaultPrevented`). `npm test` (344
+  tests), `npm run lint`, `npx tsc --noEmit`, `npm run build` et `npm run
+  coverage` (`src/` reste à 100 % de couverture) restent propres.
 
 - [x] Une touche de mouvement continu (WASD/flèches) maintenue enfoncée
   reste "collée" si la fenêtre perd le focus pendant qu'elle est

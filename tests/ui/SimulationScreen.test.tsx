@@ -193,6 +193,30 @@ describe('SimulationScreen', () => {
     applyCommandSpy.mockRestore();
   });
 
+  it('does not hijack arrow keys pressed on the focused Throttle slider, leaving its native stepping alone', () => {
+    const frame = renderScreen();
+    clearCountdown(frame);
+
+    const applyCommandSpy = vi.spyOn(SimulationEngine.prototype, 'applyCommand');
+    applyCommandSpy.mockClear();
+
+    const slider = screen.getByRole('slider', { name: /throttle/i });
+    slider.focus();
+    const notPrevented = fireEvent.keyDown(slider, { key: 'ArrowRight' });
+    frame.advance(16);
+
+    // A native <input type="range"> steps its own value on Arrow Left/
+    // Right/Up/Down; that only happens if nothing upstream called
+    // preventDefault() on the event.
+    expect(notPrevented).toBe(true);
+    expect(applyCommandSpy).toHaveBeenCalledTimes(1);
+    const [command] = applyCommandSpy.mock.calls[0];
+    expect(command.throttleDelta).toBe(0);
+    expect(command.turnDelta).toBe(0);
+
+    applyCommandSpy.mockRestore();
+  });
+
   it('ignores OS key-repeat on SPACE, toggling the engine only once per physical press', () => {
     const frame = renderScreen();
     clearCountdown(frame);

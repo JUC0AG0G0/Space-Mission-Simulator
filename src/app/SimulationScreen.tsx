@@ -99,6 +99,15 @@ export function SimulationScreen({ missionConfiguration, onExit }: SimulationScr
         return;
       }
 
+      // Don't hijack a focused form control's own keyboard interaction —
+      // e.g. the Throttle <input type="range"> in SimulationControls relies
+      // on the browser's native Arrow Left/Right/Up/Down stepping, which
+      // this window-level listener would otherwise suppress via
+      // preventDefault() below before it ever runs.
+      if (event.target instanceof HTMLInputElement) {
+        return;
+      }
+
       if (CONTINUOUS_KEYS.has(key)) {
         heldKeysRef.current.add(key);
         event.preventDefault();
