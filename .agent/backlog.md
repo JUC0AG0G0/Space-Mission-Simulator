@@ -1744,6 +1744,22 @@ avec `src/app`/`src/ui`. Les trois points déjà présents sous "Divers /
 à clarifier" restent des décisions en attente, pas des tâches
 actionnables en l'état.
 
+Suivi du 2026-08-26 : la mise à jour majeure `vite`/`vitest` (tâche
+sélectionnée automatiquement en tête de "Features à ajouter") a été
+retentée puis de nouveau écartée sans modifier le code — voir la note
+"Retenté le 2026-08-24" déjà présente sous cet item : un simple `npm
+install` isolé des nouvelles versions majeures régénère à lui seul
+~2878 lignes de `package-lock.json`, au-dessus du budget de diff avant
+même de toucher un fichier applicatif. Plutôt que de forcer une
+troisième tentative identique, cette passe a traité l'item suivant
+d'"Features à ajouter" : le vecteur de vitesse sur le canvas de vol,
+explicitement listé comme optionnel par `spec.md` (section 10) et
+identifié comme manquant lors de la 46e passe. Implémenté et testé
+(voir l'entrée cochée correspondante ci-dessous) ; `npm test` (342
+tests), `npm run lint`, `npx tsc --noEmit`, `npm run build` et `npm run
+coverage` (98.07 % de couverture globale, `src/rendering` toujours à
+100 %) restent propres.
+
 ## Bugs connus
 
 - [x] La boucle de jeu (`requestAnimationFrame`) de `SimulationScreen`
@@ -3789,7 +3805,7 @@ actionnables en l'état.
   valider avec l'orchestrateur plutôt qu'à retenter en aveugle une
   troisième fois avec la même approche. Case laissée décochée.
 
-- [ ] Dessiner un vecteur de vitesse sur le canvas de vol, en plus de la
+- [x] Dessiner un vecteur de vitesse sur le canvas de vol, en plus de la
   direction (heading) déjà affichée par la silhouette du vaisseau
 
   `spec.md` (section 10, "Vue principale") liste, parmi ce que doit
@@ -3823,6 +3839,36 @@ actionnables en l'état.
   les tests existants espionnant `ctx.moveTo`/`ctx.lineTo`/`ctx.stroke`)
   vérifiant les coordonnées du segment pour une vitesse connue, et
   l'absence de tracé pour une vitesse quasi nulle.
+
+  Fait le 2026-08-26 : nouvelle fonction exportée `renderVelocityVector`
+  dans `src/rendering/spacecraft-renderer.ts` (option retenue plutôt que
+  d'étendre `renderSpacecraft`, pour garder chaque fonction responsable
+  d'un seul tracé, comme `renderTrajectory`/`renderPlanet` juste à côté)
+  — appelée depuis `canvas-renderer.ts` juste avant `renderSpacecraft`
+  (pour que la coque/flamme du vaisseau restent dessinées par-dessus le
+  segment plutôt que masquées dessous). Le segment part de la position
+  écran du vaisseau (`worldToScreen`) vers `normalize(spacecraft.velocity)`
+  (réutilise `magnitude`/`normalize` déjà exportées par
+  `src/simulation/physics/vectors.ts`), avec la même inversion d'axe Y
+  que `heading` dans `renderSpacecraft`, une longueur fixe de 40px
+  (`VELOCITY_VECTOR_LENGTH_PX`, indépendante de la vitesse réelle et du
+  zoom caméra, sur le même principe que `SHIP_SIZE_PX`) et une couleur
+  verte (`#7cffb2`) distincte de la trajectoire (bleu) et de la flamme
+  (orange). En dessous d'une vitesse de 1 m/s (seuil dupliqué localement
+  en tant que `MIN_SPEED_FOR_VELOCITY_VECTOR`, même valeur que
+  `MIN_SPEED_FOR_ORBIT_BOUNDS` de `Hud.tsx` — dupliqué plutôt
+  qu'importé depuis `src/ui`, pour ne pas faire dépendre le module de
+  rendu du module UI), la fonction ne dessine rien, évitant un vecteur
+  qui flickerait au décollage. Trois tests ajoutés dans
+  `tests/rendering/spacecraft-renderer.test.ts` (`describe
+  ('renderVelocityVector', ...)`) : segment horizontal de longueur fixe
+  pour une vitesse connue le long de +x, inversion de l'axe Y pour une
+  vitesse le long de +y, et absence totale de tracé (`beginPath`/
+  `moveTo`/`lineTo`/`stroke` jamais appelés) pour une vitesse
+  quasi nulle. `npm test` (342 tests), `npm run lint`, `npx tsc
+  --noEmit`, `npm run build` et `npm run coverage`
+  (`spacecraft-renderer.ts`/`canvas-renderer.ts` restent à 100 % de
+  lignes/branches, 98.07 % de couverture globale) restent propres.
 
 - [x] Ajouter un contrôle précis du throttle (0 à 100 %), depuis
   l'interface, en plus des touches +/- déjà existantes

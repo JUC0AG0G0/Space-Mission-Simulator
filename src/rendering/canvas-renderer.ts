@@ -1,7 +1,7 @@
 import type { GameState } from '../types/simulation';
 import type { Camera, ScreenSize } from './canvas/world-to-screen';
 import { renderPlanet } from './planet-renderer';
-import { renderSpacecraft } from './spacecraft-renderer';
+import { renderSpacecraft, renderVelocityVector } from './spacecraft-renderer';
 import { renderTrajectory } from './trajectory-renderer';
 
 /**
@@ -50,5 +50,6 @@ export function renderScene(
 
   renderTrajectory(ctx, state.trajectory, camera, screen);
   renderPlanet(ctx, state.centralBody, camera, screen);
+  renderVelocityVector(ctx, state.spacecraft, camera, screen);
   renderSpacecraft(ctx, state.spacecraft, camera, screen);
 }
