@@ -2836,3 +2836,8 @@ plutôt que codées en dur dans l'UI ou le moteur.
 - Description: Mettre à jour `vite`/`vitest`/`@vitest/coverage-v8` (et leurs
 - Branche/push: main (direct)
 - Coût estimé: 3.4230244999999995 USD
+
+## 2026-08-26T19-37-40-426Z — feature
+- Description: Mettre à jour `vite`/`vitest`/`@vitest/coverage-v8` (et leurs
+- Branche/push: main (direct)
+- Coût estimé: 7.051551749999999 USD
